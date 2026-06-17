@@ -1,0 +1,1114 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AMC ― プロト（詠唱時間・ステ・装備）</title>
+<style>
+ *{box-sizing:border-box}html,body{margin:0;height:100%;background:#070a08;color:#e8eefc;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;}
+ .wrap{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:14px;}
+ h1{font-size:15px;font-weight:600;margin:0;color:#d9c98f;}h1 small{color:#7e8a82;font-weight:400;margin-left:8px}
+ #game{background:#0c1410;border:2px solid #2a2118;border-radius:10px;box-shadow:0 10px 40px #000a;max-width:100%;height:auto;}
+ .hint{font-size:12px;color:#8a9690;max-width:1000px;line-height:1.7;text-align:center}.hint b{color:#cdb86a}
+ .ref{font-size:11px;color:#7e8a82;max-width:1000px;line-height:1.8;text-align:left;background:#0d1310;border:1px solid #21281f;border-radius:8px;padding:8px 14px;}
+ .ref b{color:#cdb86a}.ref .fire{color:#ff8a5a}.ref .water{color:#5ab0ff}.ref .wind{color:#6fe0c8}.ref .earth{color:#caa46a}.ref .rune{color:#ffcf8a}
+ kbd{background:#1c1812;border:1px solid #4a3f2a;border-bottom-width:2px;border-radius:4px;padding:1px 6px;color:#e8dcae;font-size:11px}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <h1>AMC（A Mana Circulation）<small>詠唱時間・ステータス・装備試作</small></h1>
+ <canvas id="game" width="900" height="600"></canvas>
+ <div class="hint">
+  <kbd>WASD</kbd>移動 / <kbd>Space</kbd>詠唱開始・確定 / <kbd>Esc</kbd>中断 / <kbd>Shift</kbd>バリア(押した瞬間=<b>パリィ</b>) / <kbd>Ctrl</kbd>テレポート / <kbd>1</kbd>HP薬 <kbd>2</kbd>MP薬 / <kbd>M</kbd>魔法一覧 / <kbd>I</kbd>キャラ画面　※開始地点の<b>町ルーン</b>に5施設<br>
+  入力中の文字はキャラの頭上に表示。詠唱中も移動・連続詠唱OK。大魔法ほど詠唱が長く<b>DEX</b>で短縮。敵を倒すと<b>装備品</b>がドロップ。
+ </div>
+ <div class="ref" id="ref"></div>
+</div>
+<script>
+(function(){'use strict';
+const cv=document.getElementById('game'),ctx=cv.getContext('2d');
+const W=cv.width,H=cv.height,FIELD_H=H-96,AGGRO=270,WORLD_W=2600,WORLD_H=2000;
+const BOSS_AGGRO=470;
+
+// ローマ字→かな
+const RT={a:'あ',i:'い',u:'う',e:'え',o:'お',ka:'か',ki:'き',ku:'く',ke:'け',ko:'こ',kya:'きゃ',kyu:'きゅ',kyo:'きょ',
+ga:'が',gi:'ぎ',gu:'ぐ',ge:'げ',go:'ご',sa:'さ',si:'し',shi:'し',su:'す',se:'せ',so:'そ',sha:'しゃ',shu:'しゅ',sho:'しょ',sya:'しゃ',syu:'しゅ',syo:'しょ',
+za:'ざ',zi:'じ',ji:'じ',zu:'ず',ze:'ぜ',zo:'ぞ',ja:'じゃ',ju:'じゅ',jo:'じょ',ta:'た',ti:'ち',chi:'ち',tu:'つ',tsu:'つ',te:'て',to:'と',
+cha:'ちゃ',chu:'ちゅ',cho:'ちょ',da:'だ',di:'ぢ',du:'づ',de:'で',do:'ど',na:'な',ni:'に',nu:'ぬ',ne:'ね',no:'の',nya:'にゃ',nyu:'にゅ',nyo:'にょ',
+ha:'は',hi:'ひ',hu:'ふ',fu:'ふ',he:'へ',ho:'ほ',hya:'ひゃ',hyu:'ひゅ',hyo:'ひょ',fa:'ふぁ',fi:'ふぃ',fe:'ふぇ',fo:'ふぉ',
+ba:'ば',bi:'び',bu:'ぶ',be:'べ',bo:'ぼ',pa:'ぱ',pi:'ぴ',pu:'ぷ',pe:'ぺ',po:'ぽ',ma:'ま',mi:'み',mu:'む',me:'め',mo:'も',
+ya:'や',yu:'ゆ',yo:'よ',ra:'ら',ri:'り',ru:'る',re:'れ',ro:'ろ',rya:'りゃ',ryu:'りゅ',ryo:'りょ',wa:'わ',wo:'を',who:'うぉ',wi:'うぃ',we:'うぇ',vu:'ゔ',
+nn:'ん',"n'":'ん','-':'ー',xa:'ぁ',xi:'ぃ',xu:'ぅ',xe:'ぇ',xo:'ぉ',xya:'ゃ',xyu:'ゅ',xyo:'ょ',xtu:'っ',xtsu:'っ',la:'ぁ',li:'ぃ',lu:'ぅ',le:'ぇ',lo:'ぉ',ltu:'っ',
+gya:'ぎゃ',gyu:'ぎゅ',gyo:'ぎょ',jya:'じゃ',jyu:'じゅ',jyo:'じょ',zya:'じゃ',zyu:'じゅ',zyo:'じょ',
+bya:'びゃ',byu:'びゅ',byo:'びょ',pya:'ぴゃ',pyu:'ぴゅ',pyo:'ぴょ',mya:'みゃ',myu:'みゅ',myo:'みょ',
+tya:'ちゃ',tyu:'ちゅ',tyo:'ちょ',cya:'ちゃ',cyu:'ちゅ',cyo:'ちょ',dya:'ぢゃ',dyu:'ぢゅ',dyo:'ぢょ',hya:'ひゃ',
+va:'ゔぁ',vi:'ゔぃ',ve:'ゔぇ',vo:'ゔぉ',she:'しぇ',je:'じぇ',che:'ちぇ',thi:'てぃ',dhi:'でぃ',twu:'とぅ',dwu:'どぅ',dyu:'でゅ',
+fya:'ふゃ',fyu:'ふゅ',fyo:'ふょ',wha:'うぁ',ye:'いぇ',xwa:'ゎ',xka:'ヵ',ca:'か',ci:'し',cu:'く',co:'こ',qa:'くぁ',qi:'くぃ',qu:'く',qe:'くぇ',qo:'くぉ'};
+const dn=k=>k.replace(/ー/g,'');const VOW='aiueo';
+function flush(){let ch=true;while(ch){ch=false;if(!P.pend.length)break;const c=P.pend[0];
+ if(!VOW.includes(c)&&!'nxl'.includes(c)&&P.pend[1]===c){P.kana+='っ';P.pend=P.pend.slice(1);ch=true;continue;}
+ if(c==='n'&&P.pend.length>=2){const n2=P.pend[1];if(n2==="'"){P.kana+='ん';P.pend=P.pend.slice(2);ch=true;continue;}if(!'aiueoyn'.includes(n2)){P.kana+='ん';P.pend=P.pend.slice(1);ch=true;continue;}}
+ let mt=null,ml=0;for(let l=Math.min(3,P.pend.length);l>=1;l--){const g=P.pend.substr(0,l);if(RT[g]!==undefined){mt=RT[g];ml=l;break;}}
+ if(mt){P.kana+=mt;P.pend=P.pend.slice(ml);ch=true;continue;}break;}}
+function finalize(){if(P.pend==='n')P.kana+='ん';P.pend='';}
+
+// スペル
+function S(name,read,cost,kind,o,buffs){return Object.assign({name,read,cost,kind,buffs:buffs||[]},o);}
+const SPELLS=[
+ // ===== 火：小魔法20 =====
+ S('ファイア',['ふぁいあ'],8,'bolt',{el:'火',power:1.0,speed:6.2,r:9,color:'#ff7a36'},[['pow',0.08,32]]),
+ S('スパーク',['すぱーく'],9,'bolt',{el:'火',power:0.9,speed:7.5,r:7,color:'#ff9a3a'},[['pow',0.06,28]]),
+ S('フレアバレット',['ふれあばれっと'],10,'bolt',{el:'火',power:0.7,speed:8.6,r:6,color:'#ff9a3a'},[['crit',0.05,30]]),
+ S('ファイアアロー',['ふぁいああろー'],11,'pierce',{el:'火',power:1.0,speed:8.4,r:6,color:'#ffb24a'},[['pow',0.1,22]]),
+ S('チャージフレア',['ちゃーじふれあ'],12,'bolt',{el:'火',power:1.3,speed:5.2,r:10,burn:5,color:'#ff6a2a'},[['burn',0.2,20]]),
+ S('ボム',['ぼむ'],12,'impact',{el:'火',power:0.95,speed:5.4,r:9,splash:62,burn:7,color:'#ff5a36'},[['burn',0.30,28]]),
+ S('イグニッション',['いぐにっしょん'],13,'buff',{el:'火',color:'#ffcf5a'},[['pow',0.16,16],['burn',0.2,16]]),
+ S('フレイムランス',['ふれいむらんす'],14,'pierce',{el:'火',power:1.05,speed:8.4,r:6,color:'#ffb24a'},[['pow',0.15,20]]),
+ S('ヒートウェーブ',['ひーとうぇーぶ'],14,'self',{el:'火',power:0.85,radius:104,burn:4,color:'#ff8a4a'},[['pow',0.12,22]]),
+ S('ファイアウォール',['ふぁいあうぉーる'],15,'front',{el:'火',power:0.65,radius:66,offset:58,burn:12,color:'#ff6a2a'},[['burn',0.40,24]]),
+ S('ブレイズ',['ぶれいず'],16,'buff',{el:'火',color:'#ffcf5a'},[['pow',0.20,18],['crit',0.10,18]]),
+ S('フレイムファン',['ふれいむふぁん'],16,'fan',{el:'火',power:0.95,radius:170,fan:0.7,burn:5,color:'#ff7a3a'},[['pow',0.12,18]]),
+ S('オーバーヒート',['おーばーひーと'],17,'buff',{el:'火',color:'#ff8a4a'},[['pow',0.28,12],['crit',0.12,12]]),
+ S('バースト',['ばーすと'],18,'self',{el:'火',power:1.5,radius:92,color:'#ffd24a'},[['crit',0.12,14]]),
+ S('メテオシャワー',['めておしゃわー'],19,'multi',{el:'火',power:1.0,speed:6,r:38,tickDmg:0.2,rate:0.12,dur:1.3,burn:4,color:'#ff7a3a'},[['pow',0.1,16]]),
+ S('ヘルファイア',['へるふぁいあ'],20,'zone',{el:'火',power:1.0,radius:110,offset:120,tickDmg:0.3,rate:0.4,dur:4.5,burn:5,color:'#ff5230'},[['burn',0.2,16]]),
+ S('インフェルノ',['いんふぇるの'],20,'self',{el:'火',power:1.3,radius:152,burn:8,color:'#ff5230'},[['pow',0.18,16]]),
+ S('サラマンダー',['さらまんだー'],21,'aura',{el:'火',power:0.9,radius:120,tickDmg:0.24,rate:0.35,dur:6,burn:4,color:'#ff8a4a'},[['pow',0.12,18]]),
+ S('エクスプロード',['えくすぷろーど'],22,'impact',{el:'火',power:1.9,speed:5,r:10,splash:86,burn:13,color:'#ff3a1a'},[['pow',0.22,12]]),
+ S('フレイムファンネル',['ふれいむふぁんねる'],22,'funnel',{el:'火',power:1.0,count:3,boltDmg:0.5,speed:8,rate:0.5,dur:6,color:'#ff8a4a'},[['pow',0.1,16]]),
+ // ===== 火：大魔法4 =====
+ S('ヴォルカノ',['ゔぉるかの'],46,'impact',{el:'火',power:2.2,speed:6,r:12,splash:180,burn:18,big:true,color:'#ff4a1a'},[]),
+ S('フレアノヴァ',['ふれあのゔぁ'],48,'self',{el:'火',power:2.0,radius:206,burn:14,big:true,color:'#ff5230'},[]),
+ S('メテオ',['めてお'],50,'meteo',{el:'火',power:1.7,radius:200,burn:22,big:true,color:'#ff2a10'},[]),
+ S('ラグナロク',['らぐなろく'],52,'meteo',{el:'火',power:2.1,radius:230,burn:26,big:true,color:'#ff3a1a'},[]),
+ // ===== 水：小魔法20 =====
+ S('アクア',['あくあ'],8,'bolt',{el:'水',power:1.0,speed:6,r:9,color:'#36a8ff'},[['regen',0.03,30]]),
+ S('アイス',['あいす'],10,'bolt',{el:'水',power:0.85,speed:6,r:8,slow:2,color:'#7fe0ff'},[['def',0.06,28]]),
+ S('アクアアロー',['あくああろー'],11,'pierce',{el:'水',power:1.0,speed:8,r:6,color:'#5ab0ff'},[['def',0.06,22]]),
+ S('バブル',['ばぶる'],11,'impact',{el:'水',power:0.9,speed:5,r:9,splash:70,color:'#7fe0ff'},[['def',0.08,24]]),
+ S('フロストショット',['ふろすとしょっと'],12,'bolt',{el:'水',power:0.95,speed:6,r:8,slow:3,color:'#bfefff'},[['def',0.06,24]]),
+ S('スプラッシュ',['すぷらっしゅ'],12,'impact',{el:'水',power:0.9,speed:5.4,r:9,splash:60,color:'#3ac0ff'},[['def',0.08,26]]),
+ S('アイススピア',['あいすすぴあ'],13,'pierce',{el:'水',power:1.1,speed:8,r:6,slow:2,color:'#9fe8ff'},[['def',0.08,20]]),
+ S('ハイドロビーム',['はいどろびーむ'],14,'pierce',{el:'水',power:1.2,speed:9,r:6,color:'#5ab0ff'},[['def',0.06,20]]),
+ S('ヒール',['ひーる'],14,'heal',{el:'水',heal:0.30,color:'#7CFFA0'},[['regen',0.03,16]]),
+ S('アクアシールド',['あくあしーるど'],14,'buff',{el:'水',color:'#6fd0ff'},[['def',0.25,14],['regen',0.03,14]]),
+ S('マナスプリング',['まなすぷりんぐ'],14,'buff',{el:'水',color:'#6fe0ff'},[['mpregen',1.2,18],['regen',0.03,18]]),
+ S('アイスバリケード',['あいすばりけーど'],15,'front',{el:'水',power:0.65,radius:66,offset:58,slow:4,color:'#9fe8ff'},[['def',0.2,20]]),
+ S('アイスファン',['あいすふぁん'],16,'fan',{el:'水',power:0.9,radius:170,fan:0.7,slow:2,color:'#7fe0ff'},[['def',0.1,18]]),
+ S('フリーズ',['ふりーず'],16,'self',{el:'水',power:0.9,radius:112,slow:3,color:'#9fe8ff'},[['def',0.12,16]]),
+ S('アクアランス',['あくあらんす'],16,'multi',{el:'水',power:1.0,speed:5.5,r:34,tickDmg:0.22,rate:0.12,dur:1.2,slow:2,color:'#5ab0ff'},[['def',0.08,16]]),
+ S('アイシクルレイン',['あいしくるれいん'],18,'zone',{el:'水',power:1.0,radius:110,offset:120,tickDmg:0.3,rate:0.4,dur:4.5,slow:3,color:'#bfefff'},[['def',0.1,16]]),
+ S('ヒーリングレイン',['ひーりんぐれいん'],18,'heal',{el:'水',heal:0.18,color:'#9CFFB8'},[['regen',0.06,18]]),
+ S('ブリザード',['ぶりざーど'],19,'self',{el:'水',power:1.1,radius:150,slow:3,color:'#bfefff'},[['def',0.1,16]]),
+ S('フロストオーラ',['ふろすとおーら'],20,'aura',{el:'水',power:0.9,radius:120,tickDmg:0.24,rate:0.35,dur:6,slow:2,color:'#bfefff'},[['def',0.12,18]]),
+ S('アクアファンネル',['あくあふぁんねる'],22,'funnel',{el:'水',power:1.0,count:4,boltDmg:0.45,speed:8,rate:0.45,dur:6,slow:1,color:'#6fd0ff'},[['def',0.08,16]]),
+ // ===== 水：大魔法4 =====
+ S('アイシクル',['あいしくる'],44,'impact',{el:'水',power:2.2,speed:7,r:12,splash:170,slow:4,big:true,color:'#bfefff'},[]),
+ S('タイダルウェーブ',['たいだるうぇーぶ'],46,'meteo',{el:'水',power:1.6,radius:210,slow:3,big:true,color:'#2aa0ff'},[]),
+ S('メイルシュトローム',['めいるしゅとろーむ'],50,'zone',{el:'水',power:2.0,radius:210,offset:150,tickDmg:0.5,rate:0.3,dur:4,slow:4,big:true,color:'#2aa0ff'},[]),
+ S('ダイアモンドダスト',['だいあもんどだすと'],50,'self',{el:'水',power:1.9,radius:196,slow:4,big:true,color:'#bfefff'},[]),
+ // ===== 風：小魔法20 =====
+ S('エアロ',['えあろ'],8,'bolt',{el:'風',power:0.9,speed:8,r:7,color:'#46e0c0'},[['crit',0.05,30]]),
+ S('ガスト',['がすと'],9,'bolt',{el:'風',power:0.95,speed:8.5,r:7,color:'#7fe6cf'},[['crit',0.05,28]]),
+ S('エアショット',['えあしょっと'],10,'bolt',{el:'風',power:0.85,speed:9,r:6,color:'#7fe6cf'},[['crit',0.06,26]]),
+ S('ウィンドカッター',['うぃんどかったー'],12,'pierce',{el:'風',power:0.9,speed:9,r:6,color:'#7fe6cf'},[['crit',0.08,22]]),
+ S('スタティック',['すたてぃっく'],12,'bolt',{el:'風',power:1.0,speed:9,r:6,color:'#ffe14a'},[['crit',0.1,20]]),
+ S('ウィンドニードル',['うぃんどにーどる'],13,'pierce',{el:'風',power:1.0,speed:9.5,r:5,color:'#9af0dd'},[['crit',0.08,20]]),
+ S('テイルウィンド',['ているうぃんど'],13,'buff',{el:'風',color:'#9af0dd'},[['spd',0.3,16],['mpregen',0.6,16]]),
+ S('サンダースピア',['さんだーすぴあ'],14,'pierce',{el:'風',power:1.3,speed:10,r:6,color:'#ffe14a'},[['pow',0.1,18]]),
+ S('サンダーボルト',['さんだーぼると'],14,'bolt',{el:'風',power:1.2,speed:10,r:7,color:'#ffe14a'},[['pow',0.12,20]]),
+ S('ウィンドブラスト',['うぃんどぶらすと'],14,'fan',{el:'風',power:0.85,radius:200,fan:0.85,color:'#7fe6cf'},[['crit',0.08,18]]),
+ S('ヘイスト',['へいすと'],14,'buff',{el:'風',color:'#9af0dd'},[['pow',0.10,18],['crit',0.08,18]]),
+ S('ウィンドエッジ',['うぃんどえっじ'],15,'multi',{el:'風',power:1.0,speed:7,r:34,tickDmg:0.2,rate:0.1,dur:1.2,color:'#9af0dd'},[['crit',0.08,16]]),
+ S('プラズマボール',['ぷらずまぼーる'],16,'impact',{el:'風',power:1.1,speed:6,r:9,splash:80,color:'#ffe14a'},[['pow',0.12,16]]),
+ S('サンダーファン',['さんだーふぁん'],16,'fan',{el:'風',power:1.0,radius:180,fan:0.7,color:'#ffe14a'},[['crit',0.08,16]]),
+ S('ゲイルブレス',['げいるぶれす'],16,'buff',{el:'風',color:'#aef0c0'},[['spd',0.25,16],['crit',0.1,16]]),
+ S('ライトニングロッド',['らいとにんぐろっど'],17,'zone',{el:'風',power:1.0,radius:100,offset:120,tickDmg:0.32,rate:0.35,dur:4.5,color:'#ffe14a'},[['crit',0.08,16]]),
+ S('トルネード',['とるねーど'],18,'self',{el:'風',power:1.1,radius:130,color:'#8fe8d6'},[['crit',0.10,16]]),
+ S('サイクロン',['さいくろん'],20,'self',{el:'風',power:1.3,radius:150,color:'#7fe6cf'},[['crit',0.1,16]]),
+ S('ストームオーラ',['すとーむおーら'],20,'aura',{el:'風',power:0.9,radius:120,tickDmg:0.24,rate:0.35,dur:6,color:'#9af0dd'},[['crit',0.1,18]]),
+ S('ゲイルファンネル',['げいるふぁんねる'],22,'funnel',{el:'風',power:0.9,count:4,boltDmg:0.45,speed:10,rate:0.4,dur:6,color:'#9af0dd'},[['crit',0.08,16]]),
+ // ===== 風：大魔法4 =====
+ S('サンダーランス',['さんだーらんす'],46,'pierce',{el:'風',power:2.4,speed:9,r:9,big:true,color:'#ffe14a'},[]),
+ S('ストーム',['すとーむ'],46,'meteo',{el:'風',power:1.6,radius:210,big:true,color:'#5fe0c8'},[]),
+ S('ライトニング',['らいとにんぐ'],48,'meteo',{el:'風',power:1.9,radius:178,big:true,color:'#ffe14a'},[]),
+ S('テンペスト',['てんぺすと'],50,'self',{el:'風',power:2.0,radius:204,big:true,color:'#5fe0c8'},[]),
+ // ===== 土：小魔法20 =====
+ S('ペブル',['ぺぶる'],8,'bolt',{el:'土',power:0.85,speed:6.5,r:8,color:'#caa46a'},[['def',0.05,28]]),
+ S('ストーンバレット',['すとーんばれっと'],9,'bolt',{el:'土',power:0.95,speed:6,r:9,color:'#caa46a'},[['def',0.06,26]]),
+ S('ロック',['ろっく'],10,'bolt',{el:'土',power:1.1,speed:5.5,r:11,color:'#caa46a'},[['def',0.06,26]]),
+ S('クラック',['くらっく'],11,'self',{el:'土',power:1.0,radius:84,color:'#c79a5a'},[['def',0.08,24]]),
+ S('マッドショット',['まっどしょっと'],11,'impact',{el:'土',power:0.9,speed:5,r:9,splash:60,slow:2,color:'#b08a5a'},[['def',0.08,24]]),
+ S('ロックランス',['ろっくらんす'],13,'pierce',{el:'土',power:1.1,speed:7,r:7,color:'#caa46a'},[['def',0.06,22]]),
+ S('アースニードル',['あーすにーどる'],14,'pierce',{el:'土',power:1.2,speed:7.5,r:6,color:'#b89a6a'},[['def',0.06,20]]),
+ S('ストーンスキン',['すとーんすきん'],14,'buff',{el:'土',color:'#b89a6a'},[['def',0.22,16]]),
+ S('サンドブラスト',['さんどぶらすと'],14,'fan',{el:'土',power:0.85,radius:180,fan:0.8,color:'#c79a5a'},[['def',0.1,18]]),
+ S('アースブレス',['あーすぶれす'],15,'buff',{el:'土',color:'#b89a6a'},[['pow',0.12,18],['def',0.15,18]]),
+ S('ロックバリケード',['ろっくばりけーど'],15,'front',{el:'土',power:0.65,radius:66,offset:58,color:'#c79a5a'},[['def',0.2,20]]),
+ S('バリア',['ばりあ'],16,'buff',{el:'土',color:'#a8c0d0'},[['def',0.18,16],['regen',0.03,16]]),
+ S('ストーンエッジ',['すとーんえっじ'],16,'multi',{el:'土',power:1.05,speed:5.5,r:36,tickDmg:0.22,rate:0.12,dur:1.2,color:'#c79a5a'},[['def',0.08,16]]),
+ S('ボルダー',['ぼるだー'],17,'impact',{el:'土',power:1.6,speed:4.5,r:12,splash:90,color:'#b08a5a'},[['def',0.1,16]]),
+ S('グランドスパイク',['ぐらんどすぱいく'],18,'zone',{el:'土',power:1.1,radius:120,offset:110,tickDmg:0.32,rate:0.45,dur:5,color:'#c79a5a'},[['def',0.1,16]]),
+ S('グラビティ',['ぐらびてぃ'],18,'self',{el:'土',power:1.2,radius:140,slow:3,color:'#b58a4a'},[['def',0.1,16]]),
+ S('アイアンウォール',['あいあんうぉーる'],18,'buff',{el:'土',color:'#a8c0d0'},[['def',0.35,18],['mpregen',0.5,18]]),
+ S('クエイク',['くえいく'],20,'self',{el:'土',power:1.3,radius:162,color:'#b58a4a'},[['def',0.10,14]]),
+ S('ストーンオーラ',['すとーんおーら'],20,'aura',{el:'土',power:0.95,radius:120,tickDmg:0.24,rate:0.4,dur:6,color:'#b89a6a'},[['def',0.16,18]]),
+ S('ロックファンネル',['ろっくふぁんねる'],22,'funnel',{el:'土',power:1.0,count:3,boltDmg:0.55,speed:7,rate:0.5,dur:6,color:'#caa46a'},[['def',0.08,16]]),
+ // ===== 土：大魔法4 =====
+ S('ジャベリン',['じゃべりん'],46,'pierce',{el:'土',power:2.4,speed:8,r:9,big:true,color:'#d0b070'},[]),
+ S('ガイア',['がいあ'],48,'self',{el:'土',power:2.0,radius:212,big:true,color:'#9a7a3a'},[]),
+ S('グランドインパクト',['ぐらんどいんぱくと'],50,'impact',{el:'土',power:2.3,speed:5.5,r:13,splash:180,big:true,color:'#b58a4a'},[]),
+ S('アースクエイク',['あーすくえいく'],50,'self',{el:'土',power:2.1,radius:222,slow:3,big:true,color:'#9a7a3a'},[]),
+ S('リコール',['りこーる'],14,'return',{el:'特殊',color:'#9fe8ff'},[]),
+];
+const SPELL_N={};SPELLS.forEach(s=>s.read.forEach(r=>SPELL_N[r]=s));
+const GROUPED={};SPELLS.forEach(s=>{(GROUPED[s.el]=GROUPED[s.el]||[]).push(s.read[0]);});
+const RUNES=[
+ // 威力
+ {name:'パワー',read:['ぱわー'],info:'威力1.5 / MP1.5',f:m=>{m.powMul*=1.5;m.mpMul*=1.5;}},
+ {name:'パワフル',read:['ぱわふる'],info:'威力1.5 / MP1.5',f:m=>{m.powMul*=1.5;m.mpMul*=1.5;}},
+ {name:'フルパワー',read:['ふるぱわー'],info:'威力1.5 / MP2',f:m=>{m.powMul*=1.5;m.mpMul*=2;}},
+ {name:'フォースフル',read:['ふぉーすふる'],info:'威力2 / MP2.5',f:m=>{m.powMul*=2;m.mpMul*=2.5;}},
+ {name:'アルティメット',read:['あるてぃめっと'],info:'威力2 / MP3',f:m=>{m.powMul*=2;m.mpMul*=3;}},
+ // 節約
+ {name:'エコ',read:['えこ'],info:'MP0.8（節約）',f:m=>{m.mpMul*=0.8;}},
+ {name:'セーブ',read:['せーぶ'],info:'MP0.8（節約）',f:m=>{m.mpMul*=0.8;}},
+ {name:'リユース',read:['りゆーす'],info:'MP0.8（節約）',f:m=>{m.mpMul*=0.8;}},
+ {name:'リデュース',read:['りでゅーす'],info:'MP0.8（節約）',f:m=>{m.mpMul*=0.8;}},
+ {name:'リサイクル',read:['りさいくる'],info:'MP0.8（節約）',f:m=>{m.mpMul*=0.8;}},
+ // 範囲
+ {name:'ワイド',read:['わいど'],info:'範囲1.5',f:m=>{m.radiusMul*=1.5;m.splashMul*=1.5;m.sizeMul*=1.3;}},
+ {name:'ヒュージ',read:['ひゅーじ'],info:'範囲1.5',f:m=>{m.radiusMul*=1.5;m.splashMul*=1.5;m.sizeMul*=1.3;}},
+ {name:'イノーマス',read:['いのーます'],info:'範囲1.5',f:m=>{m.radiusMul*=1.5;m.splashMul*=1.5;m.sizeMul*=1.3;}},
+ {name:'トレメンダス',read:['とれめんだす'],info:'範囲1.5',f:m=>{m.radiusMul*=1.5;m.splashMul*=1.5;m.sizeMul*=1.3;}},
+ {name:'ギガンティック',read:['ぎがんてぃっく'],info:'範囲1.5',f:m=>{m.radiusMul*=1.5;m.splashMul*=1.5;m.sizeMul*=1.3;}},
+ // 収束
+ {name:'レンズ',read:['れんず'],info:'威力1.3 / 範囲0.8 / MP1.2',f:m=>{m.mpMul*=1.2;m.radiusMul*=0.8;m.splashMul*=0.8;m.powMul*=1.3;}},
+ {name:'タイテン',read:['たいてん'],info:'威力1.3 / 範囲0.8 / MP1.2',f:m=>{m.mpMul*=1.2;m.radiusMul*=0.8;m.splashMul*=0.8;m.powMul*=1.3;}},
+ {name:'コンバージ',read:['こんばーじ'],info:'威力1.3 / 範囲0.8 / MP1.2',f:m=>{m.mpMul*=1.2;m.radiusMul*=0.8;m.splashMul*=0.8;m.powMul*=1.3;}},
+ {name:'ストゥレイテン',read:['すとぅれいてん'],info:'威力1.3 / 範囲0.8 / MP1.2',f:m=>{m.mpMul*=1.2;m.radiusMul*=0.8;m.splashMul*=0.8;m.powMul*=1.3;}},
+ {name:'コンセントレート',read:['こんせんとれーと'],info:'威力1.3 / 範囲0.8 / MP1.2',f:m=>{m.mpMul*=1.2;m.radiusMul*=0.8;m.splashMul*=0.8;m.powMul*=1.3;}},
+ // 飛距離
+ {name:'ロング',read:['ろんぐ'],info:'飛距離1.5 / MP1.2',f:m=>{m.distMul*=1.5;m.mpMul*=1.2;}},
+ {name:'スナイプ',read:['すないぷ'],info:'飛距離1.5 / MP1.2',f:m=>{m.distMul*=1.5;m.mpMul*=1.2;}},
+ {name:'ストレッチ',read:['すとれっち'],info:'飛距離1.5 / MP1.2',f:m=>{m.distMul*=1.5;m.mpMul*=1.2;}},
+ {name:'ディスタンス',read:['でぃすたんす'],info:'飛距離1.5 / MP1.2',f:m=>{m.distMul*=1.5;m.mpMul*=1.2;}},
+ {name:'エクステンディド',read:['えくすてんでぃど'],info:'飛距離1.5 / MP1.2',f:m=>{m.distMul*=1.5;m.mpMul*=1.2;}},
+ // 発動回数（0.1s間隔で連続発動）
+ {name:'ダブル',read:['だぶる'],info:'発動2回 / MP2',f:m=>{m.repeatMul*=2;m.mpMul*=2;}},
+ {name:'トリプル',read:['とりぷる'],info:'発動3回 / MP4',f:m=>{m.repeatMul*=3;m.mpMul*=4;}},
+ {name:'クアドラプル',read:['くあどらぷる'],info:'発動4回 / MP8',f:m=>{m.repeatMul*=4;m.mpMul*=8;}},
+ {name:'クインタプル',read:['くいんたぷる'],info:'発動5回 / MP16',f:m=>{m.repeatMul*=5;m.mpMul*=16;}},
+ // 遅延
+ {name:'レイト',read:['れいと'],info:'威力1.5 / 詠唱1.5 / MP1.65',f:m=>{m.powMul*=1.5;m.castMul*=1.5;m.mpMul*=1.65;}},
+ {name:'ディレイ',read:['でぃれい'],info:'威力1.5 / 詠唱1.5 / MP1.65',f:m=>{m.powMul*=1.5;m.castMul*=1.5;m.mpMul*=1.65;}},
+ {name:'ターディー',read:['たーでぃー'],info:'威力1.5 / 詠唱1.5 / MP1.65',f:m=>{m.powMul*=1.5;m.castMul*=1.5;m.mpMul*=1.65;}},
+ {name:'ポストポーン',read:['ぽすとぽーん'],info:'威力1.5 / 詠唱1.5 / MP1.65',f:m=>{m.powMul*=1.5;m.castMul*=1.5;m.mpMul*=1.65;}},
+ {name:'スローモーション',read:['すろーもーしょん'],info:'威力1.5 / 詠唱1.5 / MP1.65',f:m=>{m.powMul*=1.5;m.castMul*=1.5;m.mpMul*=1.65;}},
+ // 迅速
+ {name:'ジフィ',read:['じふぃ'],info:'詠唱0.5 / 威力0.8',f:m=>{m.castMul*=0.5;m.powMul*=0.8;}},
+ {name:'ラピッド',read:['らぴっど'],info:'詠唱0.5 / 威力0.8',f:m=>{m.castMul*=0.5;m.powMul*=0.8;}},
+ {name:'スウィフト',read:['すうぃふと'],info:'詠唱0.5 / 威力0.8',f:m=>{m.castMul*=0.5;m.powMul*=0.8;}},
+ {name:'スピーディー',read:['すぴーでぃー'],info:'詠唱0.5 / 威力0.8',f:m=>{m.castMul*=0.5;m.powMul*=0.8;}},
+ {name:'インスタントリー',read:['いんすたんとりー'],info:'詠唱0.5 / 威力0.8',f:m=>{m.castMul*=0.5;m.powMul*=0.8;}},
+ // バフ量
+ {name:'バフ',read:['ばふ'],info:'バフ効果量1.5 / MP1.5',f:m=>{m.buffAmtMul*=1.5;m.mpMul*=1.5;}},
+ {name:'マイティ',read:['まいてぃ'],info:'バフ効果量1.5 / MP1.5',f:m=>{m.buffAmtMul*=1.5;m.mpMul*=1.5;}},
+ {name:'アマウント',read:['あまうんと'],info:'バフ効果量1.5 / MP1.5',f:m=>{m.buffAmtMul*=1.5;m.mpMul*=1.5;}},
+ {name:'ブレッシング',read:['ぶれっしんぐ'],info:'バフ効果量1.5 / MP1.5',f:m=>{m.buffAmtMul*=1.5;m.mpMul*=1.5;}},
+ {name:'エフェクティブ',read:['えふぇくてぃぶ'],info:'バフ効果量1.5 / MP1.5',f:m=>{m.buffAmtMul*=1.5;m.mpMul*=1.5;}},
+ // バフ時間
+ {name:'タイム',read:['たいむ'],info:'バフ継続1.5 / MP1.5',f:m=>{m.buffDurMul*=1.5;m.mpMul*=1.5;}},
+ {name:'クロック',read:['くろっく'],info:'バフ継続1.5 / MP1.5',f:m=>{m.buffDurMul*=1.5;m.mpMul*=1.5;}},
+ {name:'エターナル',read:['えたーなる'],info:'バフ継続1.5 / MP1.5',f:m=>{m.buffDurMul*=1.5;m.mpMul*=1.5;}},
+ {name:'フォーエバー',read:['ふぉーえばー'],info:'バフ継続1.5 / MP1.5',f:m=>{m.buffDurMul*=1.5;m.mpMul*=1.5;}},
+ {name:'インフィニティ',read:['いんふぃにてぃ'],info:'バフ継続1.5 / MP1.5',f:m=>{m.buffDurMul*=1.5;m.mpMul*=1.5;}},
+ // 全体バフ
+ {name:'オール',read:['おーる'],info:'威力/範囲/バフ量/バフ継続1.4 / MP2',f:m=>{m.powMul*=1.4;m.radiusMul*=1.4;m.splashMul*=1.4;m.buffAmtMul*=1.4;m.buffDurMul*=1.4;m.mpMul*=2;}},
+ {name:'マスター',read:['ますたー'],info:'威力/範囲/バフ量/バフ継続1.4 / MP2',f:m=>{m.powMul*=1.4;m.radiusMul*=1.4;m.splashMul*=1.4;m.buffAmtMul*=1.4;m.buffDurMul*=1.4;m.mpMul*=2;}},
+ {name:'ゴッドリー',read:['ごっどりー'],info:'威力/範囲/バフ量/バフ継続1.4 / MP2',f:m=>{m.powMul*=1.4;m.radiusMul*=1.4;m.splashMul*=1.4;m.buffAmtMul*=1.4;m.buffDurMul*=1.4;m.mpMul*=2;}},
+ {name:'ファイナリー',read:['ふぁいなりー'],info:'威力/範囲/バフ量/バフ継続1.4 / MP2',f:m=>{m.powMul*=1.4;m.radiusMul*=1.4;m.splashMul*=1.4;m.buffAmtMul*=1.4;m.buffDurMul*=1.4;m.mpMul*=2;}},
+ {name:'エクストリーム',read:['えくすとりーむ'],info:'威力/範囲/バフ量/バフ継続1.4 / MP2',f:m=>{m.powMul*=1.4;m.radiusMul*=1.4;m.splashMul*=1.4;m.buffAmtMul*=1.4;m.buffDurMul*=1.4;m.mpMul*=2;}},
+ // 分裂
+ {name:'セーバー',read:['せーばー'],info:'2方向に分裂（各1/2）',f:m=>{m.split=2;}},
+ {name:'スプリット',read:['すぷりっと'],info:'3方向に分裂（各1/3）',f:m=>{m.split=3;}},
+ {name:'ショットガン',read:['しょっとがん'],info:'5方向に分裂（各1/5）',f:m=>{m.split=5;}},
+ // 変質
+ {name:'マイン',read:['まいん'],info:'弾速0 / 継続3倍（設置）',f:m=>{m.speedMul*=0;m.distMul*=3;}},
+ {name:'ピアース',read:['ぴあーす'],info:'貫通',f:m=>{m.pierce=true;}},
+ {name:'ホーミング',read:['ほーみんぐ'],info:'追尾',f:m=>{m.homing=true;}},
+ {name:'アフリクト',read:['あふりくと'],info:'状態異常蓄積1.8',f:m=>{m.burnMul*=1.8;}},
+ // 確率
+ {name:'ロト',read:['ろと'],info:'MP0.1〜5 / 威力範囲詠唱0.5〜2.5',f:m=>{m.mpMul*=0.1+Math.random()*4.9;m.powMul*=0.5+Math.random()*2;m.radiusMul*=0.5+Math.random()*2;m.castMul*=0.5+Math.random()*2;}},
+ {name:'ダイス',read:['だいす'],info:'MP0.1〜5 / 威力範囲詠唱0.5〜2.5',f:m=>{m.mpMul*=0.1+Math.random()*4.9;m.powMul*=0.5+Math.random()*2;m.radiusMul*=0.5+Math.random()*2;m.castMul*=0.5+Math.random()*2;}},
+ {name:'チャンス',read:['ちゃんす'],info:'MP0.1〜5 / 威力範囲詠唱0.5〜2.5',f:m=>{m.mpMul*=0.1+Math.random()*4.9;m.powMul*=0.5+Math.random()*2;m.radiusMul*=0.5+Math.random()*2;m.castMul*=0.5+Math.random()*2;}},
+ {name:'ギャンブル',read:['ぎゃんぶる'],info:'MP0.1〜5 / 威力範囲詠唱0.5〜2.5',f:m=>{m.mpMul*=0.1+Math.random()*4.9;m.powMul*=0.5+Math.random()*2;m.radiusMul*=0.5+Math.random()*2;m.castMul*=0.5+Math.random()*2;}},
+];
+const RUNE_N=[];RUNES.forEach(r=>r.read.forEach(rd=>RUNE_N.push([rd,r])));RUNE_N.sort((a,b)=>b[0].length-a[0].length);
+function segment(nk){let i=0,runes=[],seen=new Set();while(i<nk.length){let best=null,bl=0;
+ for(const[rd,obj]of RUNE_N)if(rd.length>bl&&nk.startsWith(rd,i)&&P.runes.has(obj.name)){best=obj;bl=rd.length;}
+ if(best&&i+bl<nk.length){if(!seen.has(best.name)){runes.push(best);seen.add(best.name);}i+=bl;continue;}break;}
+ const rest=nk.slice(i);return{runes,spell:SPELL_N[rest]||null,rest};}
+function buildMod(runes){const m={powMul:1,mpMul:1,radiusMul:1,splashMul:1,sizeMul:1,distMul:1,castMul:1,buffDurMul:1,buffAmtMul:1,speedMul:1,durMul:1,burnMul:1,repeatMul:1,split:1,pierce:false,homing:false};for(const r of runes)r.f(m);return m;}
+function incCost(s,runes){const m=runes.mpMul!==undefined?runes:buildMod(runes);return Math.max(1,Math.round(s.cost*m.mpMul));}
+
+const CYCLE=['火','風','土','水'];
+function typeMult(a,d){if(d==='無'||!d)return 1.0;const ai=CYCLE.indexOf(a),di=CYCLE.indexOf(d);if(ai<0||di<0)return 1.0;
+ if(CYCLE[(ai+1)%4]===d)return 1.5;if(CYCLE[(di+1)%4]===a)return 0.7;return 1.0;}
+const ET={
+ // 草原
+ slime: {jp:'マナスライム',el:'水',at:'melee', hp:60, def:5, atk:9, spd:0.50,r:15,col:'#3aa0ff',exp:16,windup:2.2,recover:1.3},
+ sprite:{jp:'マナスプライト',el:'風',at:'melee',hp:40,def:5,atk:8,spd:1.05,r:11,col:'#bdf06a',exp:18,windup:1.3,recover:1.0},
+ // 深緑の森
+ boar:  {jp:'マナボア',  el:'土',at:'charge',hp:120,def:9, atk:20,spd:0.70,r:17,col:'#b07a4a',exp:42,windup:1.1,recover:1.3,dash:12},
+ hornet:{jp:'マナホーネット',el:'風',at:'ranged',hp:70,def:7,atk:14,spd:0.85,r:12,col:'#e6b531',exp:38,windup:1.3,recover:1.1,range:320,shotSpd:5.2,burst:3},
+ fungus:{jp:'マナファンガス',el:'土',at:'ranged',hp:90,def:9,atk:13,spd:0.45,r:15,col:'#8a9a5a',exp:40,windup:1.6,recover:1.3,range:280,shotSpd:3.6},
+ // 紅蓮の火山
+ wisp:  {jp:'マナウィスプ',el:'火',at:'ranged',hp:80,def:8,atk:16,spd:0.70,r:13,col:'#ff8a4a',exp:48,windup:1.2,recover:1.1,range:320,shotSpd:4.6},
+ salaman:{jp:'マナサラマンダー',el:'火',at:'melee',hp:150,def:11,atk:22,spd:0.80,r:16,col:'#ff5a2a',exp:56,windup:1.5,recover:1.2},
+ magma: {jp:'マナマグマ',el:'火',at:'charge',hp:170,def:13,atk:26,spd:0.72,r:18,col:'#ff3a1a',exp:60,windup:1.1,recover:1.4,dash:12},
+ // 蒼氷の洞窟
+ frost: {jp:'マナフロスト',el:'水',at:'charge',hp:200,def:14,atk:28,spd:0.74,r:18,col:'#7fe0ff',exp:74,windup:1.2,recover:1.4,dash:11},
+ icewisp:{jp:'マナアイス',el:'水',at:'ranged',hp:130,def:12,atk:24,spd:0.72,r:13,col:'#bfefff',exp:70,windup:1.3,recover:1.1,range:340,shotSpd:5.0,burst:3},
+ yeti:  {jp:'マナイエティ',el:'水',at:'melee',hp:260,def:16,atk:30,spd:0.62,r:20,col:'#cfe8f0',exp:80,windup:1.7,recover:1.3},
+ // 忘却の遺跡
+ wraith:{jp:'マナレイス',el:'無',at:'ranged',hp:170,def:16,atk:30,spd:0.82,r:14,col:'#9a7adf',exp:96,windup:1.4,recover:1.0,range:360,shotSpd:5.6,burst:3},
+ sentry:{jp:'マナセントリー',el:'無',at:'melee',hp:330,def:20,atk:34,spd:0.60,r:20,col:'#8a8f9a',exp:104,windup:1.8,recover:1.4},
+ phantom:{jp:'マナファントム',el:'無',at:'charge',hp:240,def:17,atk:36,spd:0.92,r:16,col:'#b0a0d0',exp:100,windup:1.0,recover:1.3,dash:14},
+ // 灼熱の砂漠
+ scarab:{jp:'マナスカラベ',el:'土',at:'charge',hp:300,def:20,atk:40,spd:0.78,r:17,col:'#c8a060',exp:120,windup:1.1,recover:1.3,dash:13},
+ mirage:{jp:'マナミラージュ',el:'火',at:'ranged',hp:220,def:18,atk:38,spd:0.80,r:13,col:'#ffb060',exp:118,windup:1.3,recover:1.0,range:360,shotSpd:5.4,burst:3},
+ sandw: {jp:'マナサンドワーム',el:'土',at:'melee',hp:420,def:24,atk:44,spd:0.60,r:22,col:'#b89050',exp:140,windup:1.7,recover:1.3},
+ // 雷鳴の天空
+ griffon:{jp:'マナグリフォン',el:'風',at:'charge',hp:360,def:22,atk:48,spd:1.00,r:18,col:'#dfe8a0',exp:150,windup:0.9,recover:1.2,dash:16},
+ thunder:{jp:'マナサンダーバード',el:'風',at:'ranged',hp:300,def:20,atk:46,spd:0.85,r:14,col:'#ffe14a',exp:148,windup:1.2,recover:1.0,range:380,shotSpd:6.2,burst:3},
+ cloud: {jp:'マナクラウド',el:'水',at:'melee',hp:480,def:26,atk:50,spd:0.62,r:20,col:'#cfe0f0',exp:160,windup:1.6,recover:1.3},
+ // 虚無の深淵
+ shade: {jp:'マナシェイド',el:'無',at:'melee',hp:560,def:30,atk:58,spd:0.70,r:18,col:'#7a708a',exp:200,windup:1.5,recover:1.2},
+ abyssal:{jp:'マナアビサル',el:'無',at:'ranged',hp:440,def:28,atk:56,spd:0.80,r:14,col:'#9a6aa0',exp:196,windup:1.3,recover:1.0,range:400,shotSpd:6.6,burst:4},
+ devour:{jp:'マナデバウアー',el:'無',at:'charge',hp:520,def:30,atk:64,spd:0.95,r:18,col:'#a04a6a',exp:210,windup:1.0,recover:1.3,dash:17},
+ // 終焉の玉座
+ revenant:{jp:'マナレヴナント',el:'無',at:'melee',hp:900,def:38,atk:88,spd:0.78,r:20,col:'#6a5a7a',exp:320,windup:1.4,recover:1.2},
+ doomeye:{jp:'マナドゥームアイ',el:'無',at:'ranged',hp:760,def:36,atk:84,spd:0.78,r:15,col:'#b04a9a',exp:316,windup:1.2,recover:0.9,range:420,shotSpd:7.0,burst:5},
+ // 風の谷（森・北分岐）
+ mantis:{jp:'マナマンティス',el:'風',at:'melee',hp:90,def:8,atk:18,spd:1.15,r:13,col:'#9ee06a',exp:46,windup:0.9,recover:0.9,mv:'weave'},
+ pixie: {jp:'マナピクシー',el:'風',at:'ranged',hp:60,def:7,atk:15,spd:1.05,r:11,col:'#c0ffd0',exp:44,windup:1.0,recover:1.0,range:300,shotSpd:5.0,burst:2,mv:'circle'},
+ // 水晶谷（洞窟・北分岐）
+ crystalan:{jp:'マナクリスタラン',el:'水',at:'charge',hp:240,def:16,atk:30,spd:0.85,r:17,col:'#aef0ff',exp:82,windup:1.0,recover:1.3,dash:13,mv:'burst'},
+ prism: {jp:'マナプリズム',el:'水',at:'ranged',hp:160,def:14,atk:26,spd:0.7,r:13,col:'#dffaff',exp:80,windup:1.2,recover:1.0,range:360,shotSpd:5.6,burst:4,mv:'circle'},
+};
+const ETK=Object.keys(ET);
+// ===== ステータス・装備・インベントリ =====
+const STN=['DEX','AGI','INT','PIE','VIT','LUK'];
+const EQKEYS=['武器','頭','胴','脚','装飾1','装飾2'];
+const SLOTBASE={'武器':['ロッド','ワンド','スタッフ'],'頭':['サークレット','帽子','兜'],'胴':['ローブ','チュニック','鎧'],'脚':['ブーツ','グリーヴ'],'装飾':['指輪','護符','ペンダント']};
+const RAR=[{k:'C',n:'コモン',col:'#b8c0c8',m:1,ns:1,w:46},{k:'U',n:'アンコモン',col:'#6fe07a',m:1.6,ns:1,w:28},{k:'R',n:'レア',col:'#5ab0ff',m:2.3,ns:2,w:16},{k:'E',n:'エピック',col:'#c08aff',m:3.2,ns:2,w:8},{k:'L',n:'レジェンダリ',col:'#ffcf5a',m:4.5,ns:3,w:2},{k:'M',n:'ミシカル',col:'#ff4d8d',m:6.5,ns:4,w:0.5},
+ {k:'B',n:'ビヨンド',col:'#ff2d6d',m:9,ns:5,w:0.05},{k:'B1',n:'ビヨンド+1',col:'#ff5da0',m:12,ns:5,w:0.005},{k:'B2',n:'ビヨンド+2',col:'#c06dff',m:16,ns:6,w:0.0005},{k:'B3',n:'ビヨンド+3',col:'#6d9dff',m:21,ns:6,w:0.00005},{k:'B4',n:'ビヨンド+4',col:'#3de0d0',m:27,ns:6,w:0.000005},{k:'B5',n:'ビヨンド+5',col:'#fff2a0',m:34,ns:6,w:0.0000005}];
+function pickRar(boss){const usable=boss?RAR.filter(r=>r.k!=='C'):RAR;let tot=usable.reduce((a,r)=>a+r.w,0),x=Math.random()*tot;for(const r of usable){if((x-=r.w)<=0)return r;}return usable[0];}
+const AFFIXES=[
+ {k:'allstat%',n:'全ステ',unit:'%',base:3},
+ {k:'INT%',n:'INT',unit:'%',base:5},{k:'VIT%',n:'VIT',unit:'%',base:5},{k:'DEX%',n:'DEX',unit:'%',base:5},{k:'AGI%',n:'AGI',unit:'%',base:5},{k:'PIE%',n:'PIE',unit:'%',base:5},{k:'LUK%',n:'LUK',unit:'%',base:5},
+ {k:'火%',n:'火ダメ',unit:'%',base:6},{k:'水%',n:'水ダメ',unit:'%',base:6},{k:'風%',n:'風ダメ',unit:'%',base:6},{k:'土%',n:'土ダメ',unit:'%',base:6},
+ {k:'gem%',n:'gem獲得',unit:'%',base:8},{k:'exp%',n:'EXP獲得',unit:'%',base:8},
+];
+const AFFIXMAP={};AFFIXES.forEach(a=>AFFIXMAP[a.k]=a);
+const BANDS=[{max:8,w:'木の杖',a:'布',ac:'銅の護符'},{max:16,w:'鉄の杖',a:'鉄',ac:'銀の護符'},{max:24,w:'焔の杖',a:'鋼',ac:'紅玉の護符'},{max:32,w:'氷晶の杖',a:'氷鋼',ac:'蒼玉の護符'},{max:40,w:'古代の杖',a:'遺物',ac:'古代印章'},{max:48,w:'陽炎の杖',a:'砂鉄',ac:'黄玉の護符'},{max:56,w:'雷光の杖',a:'天鋼',ac:'雷玉の護符'},{max:9999,w:'神話の杖',a:'神話',ac:'終焉の印'}];
+const SLOTNOUN={'頭':'兜','胴':'鎧','脚':'具足'};
+function bandBase(lv,slot){const b=BANDS.find(x=>lv<=x.max)||BANDS[BANDS.length-1];if(slot==='武器')return b.w;if(slot==='装飾')return b.ac;return b.a+'の'+(SLOTNOUN[slot]||'装備');}
+function genItem(lv,boss,rarKey){const slots=Object.keys(SLOTBASE),slot=slots[Math.floor(Math.random()*slots.length)],rar=rarKey?RAR.find(r=>r.k===rarKey):pickRar(boss),base=bandBase(lv,slot);
+ const stats={},pool=[...STN];for(let i=0;i<rar.ns;i++){const s=pool.splice(Math.floor(Math.random()*pool.length),1)[0];stats[s]=(stats[s]||0)+Math.max(1,Math.round((1+lv*0.18)*rar.m*(0.5+Math.random()*0.6)*0.2));}
+ const ri=RAR.indexOf(rar),naf=ri<6?[0,0,1,1,2,3][ri]:Math.min(6,4+(ri-6)),affixes={},apool=[...AFFIXES];
+ for(let i=0;i<naf&&apool.length;i++){const a=apool.splice(Math.floor(Math.random()*apool.length),1)[0];affixes[a.k]=(affixes[a.k]||0)+Math.max(1,Math.round(a.base*rar.m*(0.7+Math.random()*0.6)));}
+ return{name:rar.n+'の'+base,slot,rar,stats,affixes,col:rar.col,lv:Math.max(1,Math.round(lv)),plus:0,sockets:1+Math.floor(Math.random()*5),socketed:0};}
+function affixStr(it){const e=Object.entries(it.affixes||{});if(!e.length)return '';return ' {'+e.map(([k,v])=>(AFFIXMAP[k]?AFFIXMAP[k].n:k)+'+'+Math.round(v*(1+0.1*(it.plus||0)))+'%').join(' ')+'}';}
+function statStr(it){return '('+Object.entries(it.stats).map(([k,v])=>k+'+'+Math.round(v*(1+0.1*(it.plus||0)))).join(' ')+')'+affixStr(it);}
+function itemLabel(it){return it.name+((it.plus||0)>0?' +'+it.plus:'')+' '+statStr(it);}
+function itemValue(it){const af=Object.values(it.affixes||{}).reduce((a,v)=>a+v,0);return Math.round((it.rar.m*10+af*0.6)*(1+(it.lv||1)*0.15)*(1+0.12*(it.plus||0)));}
+function playerAffix(key){let s=0;for(const k of EQKEYS){const it=P.equip[k];if(it&&it.affixes&&it.affixes[key])s+=it.affixes[key]*(1+0.1*(it.plus||0));}return s;}
+function effStat(n){let v=P.base[n];for(const k of EQKEYS){const it=P.equip[k];if(it&&it.stats[n])v+=Math.round(it.stats[n]*(1+0.1*(it.plus||0)));}
+ const pct=playerAffix(n+'%')+playerAffix('allstat%');return Math.round(v*(1+pct/100));}
+function magicAtk(){return effStat('INT')*1.2+effStat('PIE')*0.8;}
+function critBase(){return 0.05+effStat('LUK')*0.005;}
+function moveSpeed(){return (2.3+effStat('AGI')*0.03)*1.2*(1+getBuffs().spd);}
+function castMult(){return 1/(1+effStat('DEX')*0.025);}
+function recompute(){const hpR=P.maxhp?P.hp/P.maxhp:1,mpR=P.maxmp?P.mp/P.maxmp:1;
+ P.maxhp=Math.round(90+effStat('VIT')*7+(P.lv-1)*8);P.maxmp=Math.round(20+effStat('PIE')*3+(P.lv-1)*8);
+ P.hp=Math.min(P.maxhp,Math.round(P.maxhp*hpR));P.mp=Math.min(P.maxmp,Math.round(P.maxmp*mpR));}
+function equipItem(it){const idx=P.inv.indexOf(it);if(idx<0)return;let key=it.slot;
+ if(it.slot==='装飾')key=P.equip['装飾1']?(P.equip['装飾2']?'装飾1':'装飾2'):'装飾1';
+ const prev=P.equip[key];P.equip[key]=it;P.inv.splice(idx,1);if(prev)P.inv.push(prev);recompute();}
+function unequip(key){const it=P.equip[key];if(!it)return;P.equip[key]=null;P.inv.push(it);recompute();}
+function discardItem(it){const i=P.inv.indexOf(it);if(i>=0)P.inv.splice(i,1);}
+function sellItem(it){const i=P.inv.indexOf(it);if(i<0)return;const g=itemValue(it);P.gem+=g;P.inv.splice(i,1);flash('売却 +'+g+' gem');}
+function mapLv(){return P.lv+(MAP.mlv||0);}
+let actx=null;
+function audio(){if(typeof window==='undefined')return null;if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}}if(actx.state==='suspended')actx.resume();return actx;}
+function tone(freq,t0,dur,type,gain){const a=actx;if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type||'sine';o.frequency.value=freq;o.connect(g);g.connect(a.destination);const now=a.currentTime+t0;g.gain.setValueAtTime(0.0001,now);g.gain.linearRampToValueAtTime(gain||0.12,now+0.015);g.gain.exponentialRampToValueAtTime(0.0001,now+dur);o.start(now);o.stop(now+dur+0.05);}
+function dropSE(rar){const a=audio();if(!a||!rar)return;const ri=RAR.indexOf(rar),ei=RAR.findIndex(r=>r.k==='E');if(ri<0||ri<ei)return;const tier=ri-ei;
+ const scales=[[523,659,784],[523,659,784,1047],[523,659,784,1047,1319],[659,784,988,1175,1568,1976]],notes=scales[Math.min(scales.length-1,tier)];
+ for(let i=0;i<notes.length;i++)tone(notes[i],i*0.08,0.55+tier*0.12,tier>=2?'triangle':'sine',0.12);
+ if(tier>=1)for(let i=0;i<notes.length;i++)tone(notes[i]*2,i*0.08+0.02,0.4,'sine',0.05);
+ if(tier>=3){tone(1568,0,1.0,'triangle',0.12);tone(2093,0.12,1.0,'sine',0.08);tone(3136,0.24,0.8,'sine',0.05);}}
+let seThr={};
+function se(type){const a=audio();if(!a)return;const now=a.currentTime;
+ if((type==='hit'||type==='cast')&&seThr[type]&&now-seThr[type]<0.045)return;seThr[type]=now;
+ switch(type){
+  case 'cast':tone(430+Math.random()*90,0,0.16,'triangle',0.07);tone(660,0.03,0.14,'sine',0.04);break;
+  case 'castStart':tone(330,0,0.1,'sine',0.05);break;
+  case 'big':tone(196,0,0.6,'sawtooth',0.11);tone(294,0.06,0.5,'triangle',0.08);tone(392,0.12,0.5,'sine',0.06);break;
+  case 'hit':tone(820+Math.random()*220,0,0.05,'square',0.035);break;
+  case 'hurt':tone(160,0,0.22,'sawtooth',0.11);tone(110,0.04,0.28,'square',0.07);break;
+  case 'kill':tone(520,0,0.09,'square',0.05);tone(330,0.06,0.11,'sine',0.04);break;
+  case 'levelup':[523,659,784,1047].forEach((f,i)=>tone(f,i*0.09,0.5,'triangle',0.11));break;
+  case 'ui':tone(680,0,0.06,'square',0.045);break;
+  case 'buy':tone(880,0,0.07,'square',0.055);tone(1320,0.05,0.1,'square',0.045);break;
+  case 'teleport':tone(700,0,0.18,'sine',0.07);tone(1400,0.05,0.24,'sine',0.045);break;
+  case 'parry':tone(1200,0,0.24,'triangle',0.09);tone(1820,0.02,0.2,'sine',0.05);break;
+  case 'potion':tone(520,0,0.16,'sine',0.07);tone(780,0.08,0.2,'sine',0.05);break;
+  case 'error':tone(200,0,0.16,'sawtooth',0.07);tone(150,0.05,0.2,'square',0.05);break;
+  case 'quest':[659,784,988].forEach((f,i)=>tone(f,i*0.08,0.4,'triangle',0.09));break;
+  case 'elite':tone(110,0,0.7,'sawtooth',0.11);tone(146,0.1,0.6,'square',0.07);break;
+  case 'rune':[784,1047,1319].forEach((f,i)=>tone(f,i*0.06,0.45,'sine',0.08));break;}}
+function tryDrop(x,y,boss){const rate=(boss?1.0:0.16)*wmul(x,y,'dropMul');if(Math.random()<rate){const it=genItem(mapLv(),boss);if(P.inv.length<24){P.inv.push(it);dropSE(it.rar);floats.push({x,y:y-22,txt:it.name+' 入手',col:it.col,life:1.6});}}}
+function gainGem(g,x,y){g=Math.round(g*(1+playerAffix('gem%')/100)*(x!==undefined?wmul(x,y,'gemMul'):1));P.gem+=g;if(x!==undefined)floats.push({x,y:y-8,txt:'+'+fmt(g)+'g',col:'#9fe8ff',life:1.0});}
+function gainExp(e){P.exp+=Math.round(e*(1+playerAffix('exp%')/100));while(P.exp>=P.need)levelUp();}
+function fmt(n){n=Math.round(n);const s=n<0?'-':'';n=Math.abs(n);if(n>=1e6){const v=n/1e6;return s+(Number.isInteger(v)?v:parseFloat(v.toFixed(2)))+'m';}if(n>=1e3){const v=n/1e3;return s+(Number.isInteger(v)?v:parseFloat(v.toFixed(2)))+'k';}return s+n;}
+function expMul(enLv){const d=(enLv||P.lv)-P.lv;return d<0?Math.max(0,1+d*0.05):Math.min(2,1+d*0.03);}
+function itemValueSell(it){return itemValue(it);}
+function buyCost(it){const i=RAR.indexOf(it.rar),f=i<6?[2,4,10,30,100,500][i]:Math.round(500*Math.pow(5,i-5));return Math.round(itemValue(it)*f);}
+function rerollCost(){return Math.round((15+P.lv*2)*(P.rerollMul||1));}
+function smithCost(it){return 12+(it.plus||0)*8+mapLv();}
+function genShopStock(){P.shopStock=[];for(let i=0;i<6;i++)P.shopStock.push(genItem(P.lv,false));}
+function openShop(type){P.shop=type;if(type==='equip'&&P.shopStock.length===0)genShopStock();if(type==='guild'&&!P.questBoard){genQuestBoard();P.questBoardAt=performance.now();}P.smithSel=null;P.jewelSel=null;P.socketSel=null;}
+function buyItem(it){const c=buyCost(it);if(P.gem<c){flash('gem不足（必要'+c+'）');return;}if(P.inv.length>=24){flash('所持枠が一杯');return;}P.gem-=c;const i=P.shopStock.indexOf(it);if(i>=0)P.shopStock.splice(i,1);P.inv.push(it);flash('購入 -'+c+' gem');}
+function reroll(){const c=rerollCost();if(P.gem<c){flash('gem不足（必要'+c+'）');return;}P.gem-=c;genShopStock();P.rerollMul=(P.rerollMul||1)*2;flash('品揃え更新 -'+c+' gem（次回は倍額）');}
+function enhance(it){const c=smithCost(it);if(P.gem<c){flash('gem不足（必要'+c+'）');return;}P.gem-=c;const plus=it.plus||0,succ=Math.max(0.12,0.92-plus*0.09);
+ if(Math.random()<succ){const r=Math.random();let inc=r<0.80?1:(r<0.95?2:3);it.plus=plus+inc;flash('強化成功！ +'+it.plus+(inc>1?'（'+(inc===2?'大成功':'超成功')+'）':''));recompute();}
+ else{const r=Math.random();
+  if(r<0.30)flash('強化失敗（変化なし）');
+  else if(r<0.80){it.plus=Math.max(0,plus-1);flash('失敗… 段階ダウン +'+it.plus);recompute();}
+  else if(r<0.95){it.plus=0;flash('失敗… 強化リセット');recompute();}
+  else{const i=P.inv.indexOf(it);if(i>=0)P.inv.splice(i,1);else{for(const k of EQKEYS)if(P.equip[k]===it)P.equip[k]=null;}if(P.smithSel===it)P.smithSel=null;flash('失敗… 装備が消失した！');recompute();}}}
+
+const EXP_DUR=18;
+[SPELLS,RUNES,ET,RAR,AFFIXES].forEach(o=>{try{Object.freeze(o);o.forEach&&o.forEach(x=>x&&typeof x==='object'&&Object.freeze(x));}catch(e){}});
+const P={x:WORLD_W/2,y:WORLD_H/2,r:14,face:{x:0,y:1},hp:1,maxhp:1,mp:1,maxmp:1,expMP:0,expT:0,lv:1,exp:0,need:40,
+ base:{DEX:6,AGI:6,INT:12,PIE:8,VIT:10,LUK:5},sp:0,gem:80,equip:{武器:null,頭:null,胴:null,脚:null,装飾1:null,装飾2:null},inv:[],
+ shop:null,shopStock:[],smithSel:null,facLock:false,rerollMul:1,parryT:0,tpCD:0,
+ hpPot:1,mpPot:1,jewels:[],quests:[],questBoard:null,questBoardAt:0,jewelSel:null,socketSel:null,talkNpc:null,mlist:null,
+ runes:new Set(),boxes:[],spellsSeen:new Set(),lastTown:'town',fame:0,fameLv:1,invTab:'equip',invScroll:0,
+ casting:false,menu:false,channels:[],kana:'',pend:'',invuln:0};
+recompute();P.hp=P.maxhp;P.mp=P.maxmp;P.inv.push(genItem(1,false,'R'),genItem(1,false,'R'));
+let enemies=[],shots=[],eshots=[],floats=[],fx=[],parts=[],zones=[],funnels=[],pending=[],dummy=null,msg='',msgT=0,shake=0,boss=null,bossCD=3,bigCD=0,clickAreas=[],tipAreas=[],mouseX=0,mouseY=0,shopResetAt=performance.now()+600000;const held={},buffs=new Map();
+function genDecos(seed,count){const d=[];let s=seed;const rnd=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};
+ for(let i=0;i<count;i++){const x=rnd()*WORLD_W,y=rnd()*WORLD_H;if(Math.hypot(x-WORLD_W/2,y-WORLD_H/2)<150)continue;d.push({x,y,t:rnd()});}return d;}
+const MAPS={
+ town:{name:'交易の町ルーン',mlv:0,town:true,ground:'#6f675b',gpond:'#5a7a9a',deco:'tree',ponds:[],
+  decos:genDecos(11111,40),enemies:[],boss:false,
+  facilities:[{x:WORLD_W/2-420,y:WORLD_H/2-110,r:44,type:'equip',label:'装備屋'},
+   {x:WORLD_W/2-150,y:WORLD_H/2-190,r:44,type:'smith',label:'鍛冶屋'},
+   {x:WORLD_W/2+150,y:WORLD_H/2-190,r:44,type:'tool',label:'道具屋'},
+   {x:WORLD_W/2+420,y:WORLD_H/2-110,r:44,type:'jewel',label:'宝飾店'},
+   {x:WORLD_W/2,y:WORLD_H/2+210,r:50,type:'guild',label:'冒険者ギルド'}],
+  portals:[{x:WORLD_W/2,y:WORLD_H-70,r:34,to:'field',tx:330,ty:WORLD_H/2,color:'#7CFFA0',label:'草原へ ↓'}]},
+ field:{name:'草原',mlv:0,ground:'#3f7d3a',gpond:'#2f6fb0',deco:'tree',ponds:[{x:1500,y:700,rx:220,ry:120},{x:1900,y:1500,rx:260,ry:150}],
+  decos:genDecos(98765,240),enemies:['slime','sprite'],boss:true,bx:WORLD_W*0.62,by:WORLD_H*0.30,bossDef:{jp:'エンシェントゴーレム',el:'土',col:'#8a7a55',hp:900,atk:34},
+  portals:[{x:280,y:WORLD_H/2,r:32,to:'town',tx:WORLD_W/2,ty:WORLD_H-130,color:'#ffd27a',label:'← 町ルーン'},
+           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'forest',tx:130,ty:WORLD_H/2,color:'#7CFFA0',label:'深緑の森へ →'}]},
+ forest:{name:'深緑の森',mlv:8,ground:'#2c5e2b',gpond:'#2a5a86',deco:'tree',ponds:[{x:1000,y:1200,rx:280,ry:150},{x:2000,y:900,rx:220,ry:130}],
+  decos:genDecos(13579,330),enemies:['boar','hornet','fungus'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'ストームウィルム',el:'風',col:'#6fe0c8',hp:1500,atk:40},
+  portals:[{x:58,y:WORLD_H/2,r:30,to:'field',tx:WORLD_W-130,ty:WORLD_H/2,color:'#7CFFA0',label:'← 草原へ'},
+           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'volcano',tx:130,ty:WORLD_H/2,color:'#ff8a4a',label:'紅蓮の火山へ →'},
+           {x:WORLD_W/2,y:58,r:30,to:'grove',tx:WORLD_W/2,ty:WORLD_H-130,color:'#bdf06a',label:'風の谷へ ↑'}]},
+ volcano:{name:'紅蓮の火山',mlv:16,ground:'#5a3328',gpond:'#c2461f',deco:'rock',ponds:[{x:800,y:600,rx:240,ry:140},{x:1800,y:1400,rx:260,ry:150}],
+  decos:genDecos(24680,210),enemies:['wisp','salaman','magma'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'イグニスロード',el:'火',col:'#ff5230',hp:2400,atk:48},
+  portals:[{x:58,y:WORLD_H/2,r:30,to:'forest',tx:WORLD_W-130,ty:WORLD_H/2,color:'#ff8a4a',label:'← 深緑の森へ'},
+           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'cavern',tx:130,ty:WORLD_H/2,color:'#9fe8ff',label:'蒼氷の洞窟へ →'}]},
+ cavern:{name:'蒼氷の洞窟',mlv:24,ground:'#243b4a',gpond:'#6fc8e0',deco:'rock',ponds:[{x:1100,y:800,rx:260,ry:150},{x:1900,y:1300,rx:240,ry:140}],
+  decos:genDecos(33221,210),enemies:['frost','icewisp','yeti'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'グレイシャルタイタン',el:'水',col:'#bfefff',hp:3600,atk:56},
+  portals:[{x:58,y:WORLD_H/2,r:30,to:'volcano',tx:WORLD_W-130,ty:WORLD_H/2,color:'#9fe8ff',label:'← 紅蓮の火山へ'},
+           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'ruins',tx:130,ty:WORLD_H/2,color:'#c0a8e0',label:'忘却の遺跡へ →'},
+           {x:WORLD_W/2,y:58,r:30,to:'crystal',tx:WORLD_W/2,ty:WORLD_H-130,color:'#aef0ff',label:'水晶谷へ ↑'}]},
+ ruins:{name:'忘却の遺跡',mlv:32,ground:'#2a2630',gpond:'#5a5070',deco:'rock',ponds:[{x:1300,y:1000,rx:240,ry:150}],
+  decos:genDecos(44556,180),enemies:['wraith','sentry','phantom'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'ヴォイドセンチネル',el:'無',col:'#9a8fb0',hp:5200,atk:66},
+  portals:[{x:58,y:WORLD_H/2,r:30,to:'cavern',tx:WORLD_W-130,ty:WORLD_H/2,color:'#c0a8e0',label:'← 蒼氷の洞窟へ'},
+           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'desert',tx:130,ty:WORLD_H/2,color:'#ffd27a',label:'灼熱の砂漠へ →'}]},
+ desert:{name:'灼熱の砂漠',mlv:40,ground:'#b8924a',gpond:'#5aa0c0',deco:'rock',ponds:[{x:1500,y:1100,rx:220,ry:130}],
+  decos:genDecos(55667,150),enemies:['scarab','mirage','sandw'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'デューンファラオ',el:'土',col:'#e0c060',hp:7200,atk:78},
+  portals:[{x:58,y:WORLD_H/2,r:30,to:'ruins',tx:WORLD_W-130,ty:WORLD_H/2,color:'#ffd27a',label:'← 忘却の遺跡へ'},
+           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'sky',tx:130,ty:WORLD_H/2,color:'#bfe8ff',label:'雷鳴の天空へ →'}]},
+ sky:{name:'雷鳴の天空',mlv:48,ground:'#4a6a8a',gpond:'#8fc8e8',deco:'tree',ponds:[{x:1000,y:700,rx:240,ry:150},{x:1900,y:1400,rx:240,ry:140}],
+  decos:genDecos(66778,170),enemies:['griffon','thunder','cloud'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'テンペストロード',el:'風',col:'#9fe8d0',hp:9600,atk:92},
+  portals:[{x:58,y:WORLD_H/2,r:30,to:'desert',tx:WORLD_W-130,ty:WORLD_H/2,color:'#bfe8ff',label:'← 灼熱の砂漠へ'},
+           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'abyss',tx:130,ty:WORLD_H/2,color:'#b07ad0',label:'虚無の深淵へ →'}]},
+ abyss:{name:'虚無の深淵',mlv:56,ground:'#1a1622',gpond:'#3a2e50',deco:'rock',ponds:[{x:1300,y:1000,rx:260,ry:150}],
+  decos:genDecos(77889,160),enemies:['shade','abyssal','devour'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'アビスデバウアラー',el:'無',col:'#a04a8a',hp:13000,atk:110},
+  portals:[{x:58,y:WORLD_H/2,r:30,to:'sky',tx:WORLD_W-130,ty:WORLD_H/2,color:'#b07ad0',label:'← 雷鳴の天空へ'},
+           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'throne',tx:130,ty:WORLD_H/2,color:'#ff3060',label:'終焉の玉座へ →'}]},
+ throne:{name:'終焉の玉座',mlv:72,ground:'#1a0e16',gpond:'#5a1030',deco:'rock',ponds:[{x:1300,y:1000,rx:240,ry:140}],
+  decos:genDecos(99001,140),enemies:['revenant','doomeye'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,
+  bossDef:{jp:'終焉竜エスカトン',el:'無',col:'#ff2d6d',hp:160000,atk:200,mega:true,fixedDrop:true},
+  portals:[{x:58,y:WORLD_H/2,r:30,to:'abyss',tx:WORLD_W-130,ty:WORLD_H/2,color:'#ff3060',label:'← 虚無の深淵へ'}]},
+ grove:{name:'風の谷',mlv:12,ground:'#357a4a',gpond:'#2f7fa0',deco:'tree',ponds:[{x:1200,y:900,rx:240,ry:140}],
+  decos:genDecos(22334,300),enemies:['mantis','pixie'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'ゲイルファルコン',el:'風',col:'#bdf06a',hp:1900,atk:44},
+  portals:[{x:WORLD_W/2,y:WORLD_H-58,r:30,to:'forest',tx:WORLD_W/2,ty:130,color:'#bdf06a',label:'深緑の森へ ↓'},
+           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'volcano',tx:130,ty:WORLD_H/2,color:'#ff8a4a',label:'紅蓮の火山へ →'}]},
+ crystal:{name:'水晶谷',mlv:28,ground:'#2a4358',gpond:'#7fd0e8',deco:'rock',ponds:[{x:1000,y:1000,rx:260,ry:150},{x:1900,y:800,rx:220,ry:130}],
+  decos:genDecos(55779,200),enemies:['crystalan','prism'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'クリスタルゴーレム',el:'水',col:'#aef0ff',hp:4200,atk:60},
+  portals:[{x:WORLD_W/2,y:WORLD_H-58,r:30,to:'cavern',tx:WORLD_W/2,ty:130,color:'#aef0ff',label:'蒼氷の洞窟へ ↓'}]},
+};
+let MAP=MAPS.town,MAPID='town';
+// ===== NPC =====
+const NPC_DEFS=[
+ {name:'行商人ミラ',col:'#ffcf6a',home:'town',roam:true,dl:[
+  ['いらっしゃい、見ない顔だね。','うちの品、見ていくかい？'],['お、また来たね！','旅の話、ちょっと聞かせてよ。'],
+  ['あんたとは気が合いそうだ。','とっておきを回してあげる。'],['あんたなら掛け売りでもいいよ。','商売仲間みたいなもんさ！'],
+  ['よっ、相棒！顔見せに来たか。','あんたの無事が一番の儲けさ。']]},
+ {name:'衛兵ガロ',col:'#9fb0c0',home:'town',dl:[
+  ['……止まれ。何者だ。','町の平和は俺が守る。'],['お前か。通っていい。','無茶はするなよ、新人。'],
+  ['お前の働き、見ているぞ。','頼れる奴だと思っている。'],['お前になら背中を預けられる。','東の門、任せてもいいくらいだ。'],
+  ['戦友、と呼ばせてもらおう。','お前が居れば町は安泰だ。']]},
+ {name:'少女ティナ',col:'#ff9ec0',home:'town',roam:true,dl:[
+  ['わっ、魔法つかえるの！？','すごい、かっこいい……！'],['また会えた！ねえ魔法見せて！','わたしも使えるかな？'],
+  ['おにいちゃんみたいになりたいな。','こっそり練習してるんだ、えへへ。'],['約束だよ、空を飛ぶ魔法を一緒に！','おにいちゃんは わたしの先生だね！'],
+  ['だいすき！ずっと友だちだよ！','りゅうせいの魔法、見せてね！']]},
+ {name:'学者フェン',col:'#a0d0ff',home:'town',dl:[
+  ['詠唱とは世界への問い合わせさ。','……君、素人ではないな？'],['ルーンの重ね掛け、悪くない。','少しは見どころがある。'],
+  ['君の戦い方、研究に値するよ。','共同研究でもしたい気分だ。'],['君となら難題も解けそうだ。','礼は言わんが、感謝してる。'],
+  ['友よ、と言ったら笑うかい？','君の発想にはいつも驚かされる。']]},
+ {name:'鍛冶見習いコウ',col:'#ff8a5a',home:'town',dl:[
+  ['おう、強化なら任せろ！','親方を超えるのが俺の夢だ！'],['また来たな、燃えてきたぜ！','その装備、鍛え甲斐がある！'],
+  ['お前の装備、一番強くする！','相棒の道具は手を抜かねえ！'],['お前のためなら徹夜も辞さねえ！','二人で最強装備を目指そう！'],
+  ['ブラザー！今日も打つぞ！','お前の冒険、俺の鎚が支える！']]},
+ {name:'吟遊詩人リル',col:'#c0a0ff',home:'field',roam:true,dl:[
+  ['♪ 見知らぬ旅人 ひとり〜','やあ、いい風が吹いてる。'],['また会ったね、旅の人。','君の話、詩にしたくなる。'],
+  ['君の戦い、一篇の叙事詩だ。','次の街で歌わせてもらうよ。'],['君は私のミューズだね。','どこへでも、歌って追うよ。'],
+  ['親友に捧ぐ歌を作ったんだ。','君の旅路に祝福を込めて♪']]},
+ {name:'老魔道士オルト',col:'#bfe8c0',home:'field',dl:[
+  ['ふぉっふぉ、若い力よ。','マナの巡りを感じるかね？'],['また来たか。精進しておるな。','撃ちすぎは器を広げるが隙も生む。'],
+  ['お主、見込みがあるのう。','秘伝を少し授けてもよかろう。'],['お主は儂の弟子も同然じゃ。','バフを重ねて放つのじゃ。'],
+  ['好い後継ができたものよ。','この老骨、未来を託すぞ。']]},
+];
+let npcs=NPC_DEFS.map((d,idx)=>({...d,idx,map:d.home,x:WORLD_W/2+(Math.random()*600-300),y:WORLD_H/2+(Math.random()*400-200),wAng:Math.random()*7,st:0,li:0,talk:false,tt:0,moveT:8+Math.random()*20,aff:0,done:0,q:null,offer:null}));
+// NPCごとの解放ルーン（高度ルーン）と固有レアレリック
+const NPC_RUNE=['アルティメット','クインタプル','エクストリーム','インフィニティ','ギガンティック','ショットガン','インスタントリー'];
+const BASIC_RUNES=['パワー','エコ','ワイド','レンズ','ロング','ダブル','レイト','ジフィ','バフ','タイム','オール','セーバー','ピアース','ホーミング','アフリクト','ロト'];
+BASIC_RUNES.forEach(n=>P.runes.add(n));
+['火','水','風','土'].forEach(el=>{const s=SPELLS.find(x=>x.el===el&&!x.big);if(s)P.spellsSeen.add(s.name);});P.spellsSeen.add('リコール');
+const NPC_CALL=['みら','がろ','てぃな','ふぇん','こう','りる','おると'];
+const NPC_REACT=['ナイス！','やるねぇ！','うわ、すごい！','お見事！','いいぞ！','カッコいい！','ふぉっふぉ、見事じゃ'];
+function lockedRunes(){return RUNES.filter(r=>!BASIC_RUNES.includes(r.name)).map(r=>r.name);}
+function enemyRune(key){const pool=lockedRunes();let h=0;for(const c of key)h=(h*31+c.charCodeAt(0))%100000;return pool[h%pool.length];}
+function grantRandomRune(p){const pool=lockedRunes().filter(n=>!P.runes.has(n));if(pool.length&&Math.random()<(p||1)){const n=pool[(Math.random()*pool.length)|0];P.runes.add(n);flash('未知のルーン「'+n+'」を解放！');return n;}return null;}
+function questLoc(key){const ms=[];for(const id in MAPS){const m=MAPS[id];if(m.enemies&&m.enemies.includes(key))ms.push(m.name);}return ms.length?ms.join('・'):'各地';}
+const RELICS=[
+ {name:'★ミラの天秤',slot:'装飾1',stats:{LUK:40,AGI:30},affixes:{'gem%':60,'exp%':60},col:'#ffcf6a'},
+ {name:'★ガロの胸甲',slot:'胴',stats:{VIT:80,DEX:30},affixes:{'allstat%':25},col:'#9fb0c0'},
+ {name:'★ティナのリボン',slot:'頭',stats:{LUK:50,INT:40,AGI:40},affixes:{'allstat%':30,'exp%':40},col:'#ff9ec0'},
+ {name:'★フェンの賢書',slot:'装飾2',stats:{INT:90,PIE:50},affixes:{'火%':40,'水%':40,'風%':40,'土%':40},col:'#a0d0ff'},
+ {name:'★コウの大鎚',slot:'武器',stats:{INT:80,DEX:50,VIT:40},affixes:{'allstat%':25},col:'#ff8a5a'},
+ {name:'★リルの竪琴',slot:'装飾1',stats:{AGI:60,LUK:60},affixes:{'allstat%':20,'gem%':40},col:'#c0a0ff'},
+ {name:'★オルトの賢杖',slot:'武器',stats:{INT:110,PIE:70},affixes:{'allstat%':30},col:'#bfe8c0'},
+];
+function genRelic(i){const r=RELICS[i],rar=RAR.find(x=>x.k==='M');return{name:r.name,slot:r.slot,rar,stats:{...r.stats},affixes:{...r.affixes},col:r.col,lv:Math.max(20,P.lv),plus:0,sockets:3,socketed:0};}
+function openBox(b){const bi=P.boxes.indexOf(b);if(bi<0)return;P.boxes.splice(bi,1);
+ if(b.eliteBox){const rk=['R','E','L'][(Math.random()*3)|0],it=genItem(P.lv,false,rk);let msg=it.name;if(P.inv.length<24)P.inv.push(it);dropSE(it.rar);
+  if(Math.random()<0.1){const u=eliteUnique(b.key);if(P.inv.length<24)P.inv.push(u);dropSE(u.rar);msg+=' ＋'+u.name+'（固有ドロップ！）';}
+  flash(b.name+' 開封：レア以上確定 → '+msg);return;}
+ const idx=b.npc,rune=NPC_RUNE[idx];
+ const g=Math.round((25+P.lv*4)*(0.7+Math.random()*0.8));gainGem(g);let msg='◆'+fmt(g);const r=Math.random();
+ if(r<0.01){const it=genRelic(idx);if(P.inv.length<24){P.inv.push(it);}dropSE(it.rar);msg+=' ＋'+it.name+'（固有レア！）';}
+ else if(r<0.30&&!P.runes.has(rune)){P.runes.add(rune);msg+=' ＋ルーン「'+rune+'」解放！';}
+ else if(r<0.58){const j=genJewel(jewelTier());P.jewels.push(j);msg+=' ＋'+j.name;}
+ else{const it=genItem(P.lv,false,Math.random()<0.35?'R':null);if(P.inv.length<24){P.inv.push(it);dropSE(it.rar);msg+=' ＋'+it.name;}else msg+='（所持枠一杯）';}
+ flash(b.name+' 開封：'+msg);}
+function affLv(n){return Math.min(5,1+(n.done||0));}
+function npcLines(n){return n.dl[affLv(n)-1];}
+// ===== 通行人NPC（名もなき行商人・農夫など・全マップにランダム出現/通行） =====
+const PASS_A=['名もなき','通りすがりの','旅の','流れの','どこかの'];
+const PASS_B=['行商人','農夫','巡礼者','吟遊楽士','薬売り'];
+const PASS_GREET=['よう、旅の人。','こんにちは。','やあ、ご機嫌よう。','おや、見ない顔だね。','どうも、通りすがりさ。'];
+const PASS_SPELL=['「{S}」って魔法、知ってるか？','昔、「{S}」ってスペルを見たことがある。','「{S}」を操る魔法使いに会ったよ。','「{S}」…噂に聞く魔法さ。','「{S}」が使えりゃ一人前だね。'];
+const PASS_MONO=['今日もいい天気だ……。','次の町はまだ遠いな。','足が棒のようだよ。','早く帰って一杯やりたい。','荷が重いったらありゃしない。'];
+const PASS_TIPS=['属性の相性を突くと強いぞ。','大魔法は隙が大きい、気をつけな。','ルーンを重ねると消費も増える。','パリィは受け際が肝心だってさ。','宝飾店にゃ掘り出し物があるよ。'];
+let passers=[],passerCD=30;
+function spawnPasser(){if(passers.length>=2)return;const R=a=>a[(Math.random()*a.length)|0];
+ const sp=R(SPELLS).name,lines=[R(PASS_GREET),R(PASS_SPELL).replace('{S}',sp),Math.random()<0.5?R(PASS_MONO):R(PASS_TIPS)];
+ const edge=(Math.random()*4)|0,spd=1.2+Math.random()*0.5;let x,y,vx,vy;
+ if(edge===0){x=-30;y=140+Math.random()*(WORLD_H-280);vx=spd;vy=(Math.random()-0.5)*0.5;}
+ else if(edge===1){x=WORLD_W+30;y=140+Math.random()*(WORLD_H-280);vx=-spd;vy=(Math.random()-0.5)*0.5;}
+ else if(edge===2){y=-30;x=140+Math.random()*(WORLD_W-280);vy=spd;vx=(Math.random()-0.5)*0.5;}
+ else{y=WORLD_H+30;x=140+Math.random()*(WORLD_W-280);vy=-spd;vx=(Math.random()-0.5)*0.5;}
+ passers.push({name:R(PASS_A)+R(PASS_B),lines,li:0,x,y,vx,vy,say:1+Math.random()*3,col:'#cbb98c'});}
+function updatePassers(dt){passerCD-=dt;if(passerCD<=0){spawnPasser();passerCD=120+Math.random()*120;}
+ for(const p of passers){p.x+=p.vx*dt*60;p.y+=p.vy*dt*60;p.say-=dt;if(p.say<=0){p.li=(p.li+1)%p.lines.length;p.say=4+Math.random()*3;}}
+ passers=passers.filter(p=>p.x>-80&&p.x<WORLD_W+80&&p.y>-80&&p.y<WORLD_H+80);}
+function drawPassers(){for(const p of passers){ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,11,0,7);ctx.fill();ctx.fillStyle='#2a2218';ctx.beginPath();ctx.arc(p.x,p.y-2,4,0,7);ctx.fill();
+  ctx.fillStyle='#cfc8b0';ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText(p.name,p.x,p.y-16);
+  const t=p.lines[p.li],w=Math.min(420,t.length*12+20),bx=p.x-w/2,by=p.y-50;ctx.fillStyle='rgba(18,16,12,.88)';ctx.strokeStyle=p.col;ctx.lineWidth=1.5;ctx.fillRect(bx,by,w,26);ctx.strokeRect(bx,by,w,26);ctx.fillStyle='#e8e0c8';ctx.font='11px system-ui';ctx.fillText(t,p.x,by+17);ctx.textAlign='left';}}
+function updateNpcs(dt){for(const n of npcs){if(n.reactT>0)n.reactT-=dt;if(n.map!==MAPID){if(n.roam){n.moveT-=dt;if(n.moveT<=0){n.map=(n.map==='town')?'field':'town';n.moveT=20+Math.random()*30;n.x=WORLD_W/2+(Math.random()*400-200);n.y=WORLD_H/2+(Math.random()*300-150);}}continue;}
+  const d=Math.hypot(P.x-n.x,P.y-n.y);
+  if(d<100){n.talk=true;n.tt-=dt;if(n.tt<=0){const L=npcLines(n);n.li=(n.li+1)%L.length;n.tt=3.5;}}
+  else{if(n.talk){n.talk=false;n.li=0;}n.st-=dt;if(n.st<=0){n.wAng=Math.random()*7;n.st=1.5+Math.random()*2.5;}n.x+=Math.cos(n.wAng)*0.7*dt*60;n.y+=Math.sin(n.wAng)*0.7*dt*60;n.x=Math.max(40,Math.min(WORLD_W-40,n.x));n.y=Math.max(40,Math.min(WORLD_H-40,n.y));}}}
+function nearNpc(){let b=1e9,t=null;for(const n of npcs){if(n.map!==MAPID)continue;const d=Math.hypot(P.x-n.x,P.y-n.y);if(d<100&&d<b){b=d;t=n;}}return t;}
+function genNpcOffer(n){const key=QPOOL[Math.floor(Math.random()*QPOOL.length)],t=ET[key],need=6+Math.floor(Math.random()*7);return{key,jp:t.jp,need,count:0,gem:Math.round(need*t.exp*5),exp:Math.round(need*t.exp*8)};}
+function npcAccept(n){if(n.q)return;if(!n.offer)n.offer=genNpcOffer(n);n.q=n.offer;n.offer=null;flash(n.name+'の依頼を受注：'+n.q.jp+'×'+n.q.need);}
+function npcClaim(n){if(!n.q||n.q.count<n.q.need)return;const x=n.q.exp;gainExp(x);n.done=(n.done||0)+1;n.q=null;n.offer=null;P.boxes.push({box:true,npc:n.idx,name:n.name+'の贈り物'});flash(n.name+'と親しくなった！ 好感度'+affLv(n)+'／5 ＋「'+n.name+'の贈り物」入手（Iで開封）');}
+function drawNpcs(){for(const n of npcs){if(n.map!==MAPID)continue;
+  ctx.fillStyle=n.col;ctx.beginPath();ctx.arc(n.x,n.y,12,0,7);ctx.fill();ctx.fillStyle='#1a160f';ctx.beginPath();ctx.arc(n.x,n.y-2,5,0,7);ctx.fill();
+  ctx.fillStyle='#fff';ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText(n.name,n.x,n.y-18);
+  ctx.fillStyle='#ffd24a';ctx.font='9px system-ui';ctx.fillText('★'.repeat(affLv(n))+(n.q&&n.q.count>=n.q.need?' ✓報酬':n.q?' 依頼中':''),n.x,n.y-30);
+  if(n.reactT>0){const t=n.react||'！',w=Math.min(280,t.length*13+20),bx=n.x-w/2,by=n.y-62;ctx.fillStyle='rgba(40,20,16,.95)';ctx.strokeStyle='#ffd24a';ctx.lineWidth=2;ctx.fillRect(bx,by,w,28);ctx.strokeRect(bx,by,w,28);ctx.fillStyle='#ffe7b0';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillText(t,n.x,by+18);}
+  else if(n.talk){const L=npcLines(n),t=L[n.li%L.length],w=Math.min(380,t.length*13+24),bx=n.x-w/2,by=n.y-62;ctx.fillStyle='rgba(20,18,14,.92)';ctx.strokeStyle=n.col;ctx.lineWidth=2;ctx.fillRect(bx,by,w,30);ctx.strokeRect(bx,by,w,30);ctx.beginPath();ctx.moveTo(n.x-6,by+30);ctx.lineTo(n.x+6,by+30);ctx.lineTo(n.x,by+40);ctx.closePath();ctx.fill();ctx.fillStyle='#f0ead8';ctx.font='12px system-ui';ctx.fillText(t,n.x,by+19);ctx.fillStyle='#9fd0ff';ctx.font='10px system-ui';ctx.fillText('[F] 話す・依頼',n.x,n.y+30);}}}
+function drawTalk(){const n=P.talkNpc;clickAreas=[];ctx.fillStyle='rgba(6,10,8,.93)';ctx.fillRect(0,0,W,H);
+ const x0=150,y0=90,w=600,h=380;ctx.fillStyle='rgba(20,18,14,.98)';ctx.strokeStyle=n.col;ctx.lineWidth=2;ctx.fillRect(x0,y0,w,h);ctx.strokeRect(x0,y0,w,h);
+ ctx.textAlign='left';ctx.fillStyle=n.col;ctx.font='bold 18px system-ui';ctx.fillText(n.name,x0+24,y0+34);
+ ctx.fillStyle='#ffd24a';ctx.font='16px system-ui';ctx.fillText('好感度 '+'★'.repeat(affLv(n))+'☆'.repeat(5-affLv(n))+'  (Lv'+affLv(n)+'/5)',x0+24,y0+62);
+ ctx.fillStyle='#8a9690';ctx.font='12px system-ui';ctx.fillText('Esc / F で閉じる',x0+w-130,y0+34);
+ const L=npcLines(n);ctx.fillStyle='#f0ead8';ctx.font='14px system-ui';ctx.fillText('「'+L[0]+'」',x0+24,y0+100);ctx.fillText('「'+L[1]+'」',x0+24,y0+124);
+ ctx.fillStyle='#caa64b';ctx.font='bold 14px system-ui';ctx.fillText('── 個人依頼（ギルドとは別枠・いくらでも受注可）',x0+24,y0+170);
+ let yy=y0+200;ctx.font='13px system-ui';
+ if(!n.q){if(!n.offer)n.offer=genNpcOffer(n);const o=n.offer;ctx.fillStyle='#e8dcb0';ctx.fillText('依頼：'+o.jp+' を '+o.need+'体 討伐（＠'+questLoc(o.key)+'）',x0+24,yy);ctx.fillStyle='#9fe07a';ctx.fillText('報酬：'+n.name+'の贈り物 ＋'+fmt(o.exp)+'EXP ＋好感度UP',x0+24,yy+22);
+  ctx.fillStyle='#2a6e3a';ctx.fillRect(x0+24,yy+38,180,30);ctx.strokeStyle='#6fe07a';ctx.lineWidth=2;ctx.strokeRect(x0+24,yy+38,180,30);ctx.fillStyle='#dfffe0';ctx.font='bold 14px system-ui';ctx.fillText('依頼を受ける',x0+50,yy+58);clickAreas.push({x:x0+24,y:yy+38,w:180,h:30,fn:()=>npcAccept(n)});}
+ else{const q=n.q,done=q.count>=q.need;ctx.fillStyle=done?'#9fe07a':'#cfd6e0';ctx.fillText((done?'【達成】':'進行中：')+q.jp+'  '+Math.min(q.count,q.need)+'/'+q.need+'  ＠'+questLoc(q.key),x0+24,yy);ctx.fillStyle='#9fe07a';ctx.fillText('報酬：'+n.name+'の贈り物 ＋'+fmt(q.exp)+'EXP ＋好感度UP',x0+24,yy+22);
+  if(done){ctx.fillStyle='#2a6e3a';ctx.fillRect(x0+24,yy+38,180,30);ctx.strokeStyle='#6fe07a';ctx.lineWidth=2;ctx.strokeRect(x0+24,yy+38,180,30);ctx.fillStyle='#dfffe0';ctx.font='bold 14px system-ui';ctx.fillText('報酬を受け取る',x0+44,yy+58);clickAreas.push({x:x0+24,y:yy+38,w:180,h:30,fn:()=>npcClaim(n)});}
+  else{ctx.fillStyle='#778';ctx.font='12px system-ui';ctx.fillText('対象の敵を倒すと進行します。',x0+24,yy+48);}}
+ if(msgT>0){ctx.textAlign='center';ctx.globalAlpha=Math.min(1,msgT);ctx.fillStyle='#ffe08a';ctx.font='bold 15px system-ui';ctx.fillText(msg,W/2,y0+h-16);ctx.globalAlpha=1;ctx.textAlign='left';}}
+// ===== ポーション =====
+function potCost(k){return Math.round((k==='hp'?18:16)*(1+P.lv*0.25));}
+function buyPot(k){const c=potCost(k);if(P.gem<c){flash('gem不足（必要'+fmt(c)+'）');return;}P.gem-=c;if(k==='hp')P.hpPot++;else P.mpPot++;flash((k==='hp'?'HP':'MP')+'ポーション購入');}
+function usePot(k){if(k==='hp'){if(P.hpPot<=0){flash('HPポーションがない');return;}P.hpPot--;const a=Math.round(P.maxhp*0.4);P.hp=Math.min(P.maxhp,P.hp+a);floats.push({x:P.x,y:P.y-20,txt:'+'+fmt(a),col:'#7CFFA0',life:1});burst(P.x,P.y,'#7CFFA0',12,3);}
+  else{if(P.mpPot<=0){flash('MPポーションがない');return;}P.mpPot--;const a=Math.round(P.maxmp*0.5);P.mp=Math.min(P.maxmp+P.expMP,P.mp+a);floats.push({x:P.x,y:P.y-20,txt:'+'+fmt(a),col:'#6fd0ff',life:1});burst(P.x,P.y,'#6fd0ff',12,3);}}
+// ===== ジュエル =====
+const JRAR=['スモール','レッサー','','グレーター','グランド','パーフェクト'];
+const JTYPES=[
+ {n:'エメラルド',col:'#46e0a0',affs:['allstat%','exp%']},
+ {n:'サファイア',col:'#4aa8ff',affs:['水%','INT%']},
+ {n:'ルビー',col:'#ff5a6a',affs:['火%','VIT%']},
+ {n:'トパーズ',col:'#ffd24a',affs:['風%','LUK%']},
+ {n:'アメジスト',col:'#c08aff',affs:['土%','PIE%']},
+ {n:'ダイヤモンド',col:'#dff0ff',affs:['DEX%','AGI%','gem%']},
+];
+function genJewel(tier,typeIdx){tier=Math.max(0,Math.min(5,tier));if(typeIdx===undefined)typeIdx=Math.floor(Math.random()*JTYPES.length);const tp=JTYPES[typeIdx];return{jewel:true,tier,type:typeIdx,name:JRAR[tier]+tp.n,col:tp.col};}
+function jewelRange(it,k){const a=AFFIXMAP[k];return[Math.max(1,Math.round(a.base*(it.tier+1)*0.8)),Math.round(a.base*(it.tier+1)*1.2)];}
+function jewelTier(){let t=0;while(t<5&&Math.random()<0.1)t++;return t;}
+function socketJewel(){const j=P.jewelSel,it=P.socketSel;if(!j||!it){flash('ジュエルと装備を選んでください');return;}
+ if((it.socketed||0)>=(it.sockets||0)){flash('ソケットが一杯です（'+(it.sockets||0)+'個）');return;}
+ const pool=JTYPES[j.type].affs,key=pool[Math.floor(Math.random()*pool.length)],a=AFFIXMAP[key],val=Math.max(1,Math.round(a.base*(j.tier+1)*(0.8+Math.random()*0.4)));
+ it.affixes=it.affixes||{};it.affixes[key]=(it.affixes[key]||0)+val;it.socketed=(it.socketed||0)+1;const i=P.jewels.indexOf(j);if(i>=0)P.jewels.splice(i,1);P.jewelSel=null;recompute();flash('装着で確定 → '+a.n+'+'+val+'%（残ソケット'+((it.sockets||0)-it.socketed)+'）');}
+function convertJewels(){const j=P.jewelSel;if(!j){flash('合成するジュエルを選択してください');return;}if(j.tier>=5){flash('これ以上は合成できません');return;}
+ const same=P.jewels.filter(x=>x.tier===j.tier&&x.type===j.type);if(same.length<5){flash('同じ種類・レアリティが5個必要（現在'+same.length+'/5）');return;}
+ for(let k=0;k<5;k++){const idx=P.jewels.indexOf(same[k]);P.jewels.splice(idx,1);}const nj=genJewel(j.tier+1,j.type);P.jewels.push(nj);P.jewelSel=null;flash('合成成功 → '+nj.name);}
+// ===== クエスト =====
+const QPOOL=['slime','sprite','boar','hornet','fungus','wisp','salaman','magma','mantis','pixie','frost','icewisp','crystalan','prism','wraith','sentry','scarab','griffon'];
+function genQuestBoard(){const pool=[...QPOOL];P.questBoard=[];for(let i=0;i<4&&pool.length;i++){const key=pool.splice(Math.floor(Math.random()*pool.length),1)[0],t=ET[key],need=8+Math.floor(Math.random()*8);P.questBoard.push({key,jp:t.jp,need,count:0,gem:Math.round(need*t.exp*4),exp:Math.round(need*t.exp*7),accepted:false,claimed:false});}}
+function acceptQuest(q){if(P.quests.length>=5){flash('受注は5件まで');return;}q.accepted=true;P.quests.push(q);const bi=P.questBoard.indexOf(q);if(bi>=0)P.questBoard.splice(bi,1);flash('クエスト受注：'+q.jp+'×'+q.need);}
+function questProgress(key){for(const q of P.quests)if(q.key===key&&q.count<q.need){q.count++;if(q.count>=q.need)flash('クエスト達成！ギルドで報酬を受け取ろう');}
+ for(const n of npcs)if(n.q&&n.q.key===key&&n.q.count<n.q.need){n.q.count++;if(n.q.count>=n.q.need)flash(n.name+'の依頼を達成！ 話しかけて報酬を受け取ろう');}}
+function fameNeed(lv){return Math.round(60*Math.pow(1.45,lv-1));}
+function fameReward(lv){gainGem(200*lv);
+ if(lv%5===0){const u=genRelic((Math.floor(lv/5)-1)%RELICS.length);if(P.inv.length<24)P.inv.push(u);dropSE(u.rar);flash('★名声Lv'+lv+'！ 固有報酬「'+u.name+'」を獲得');}
+ else if(lv%2===0){const it=genItem(P.lv,false,['R','E','L'][(Math.random()*3)|0]);if(P.inv.length<24)P.inv.push(it);dropSE(it.rar);flash('名声Lv'+lv+' 到達！ 報酬装備：'+it.name);}
+ else{const r=grantRandomRune(1);if(!r){const it=genItem(P.lv,false,'R');if(P.inv.length<24)P.inv.push(it);flash('名声Lv'+lv+' 到達！ 報酬装備：'+it.name);}else flash('名声Lv'+lv+' 到達！ ＋'+(200*lv)+'gem');}}
+function addFame(n){P.fame+=n;let lv=P.fameLv||1;while(P.fame>=fameNeed(lv)){P.fame-=fameNeed(lv);lv++;fameReward(lv);}P.fameLv=lv;}
+function claimQuest(q){if(q.count<q.need)return;gainGem(q.gem);gainExp(q.exp);grantRandomRune(0.5);addFame(q.need*3+10);const i=P.quests.indexOf(q);if(i>=0)P.quests.splice(i,1);flash('報酬獲得：◆'+fmt(q.gem)+' / '+fmt(q.exp)+'EXP ＋名声'+(q.need*3+10));}
+function cancelQuest(q){const i=P.quests.indexOf(q);if(i>=0)P.quests.splice(i,1);flash('クエストをキャンセルしました');}
+function refreshBoard(){const left=180000-(performance.now()-P.questBoardAt);if(left>0){flash('ボード更新まで '+Math.ceil(left/1000)+'秒');return;}genQuestBoard();P.questBoardAt=performance.now();flash('依頼ボードを更新');}
+// ===== 天候 =====
+const WTYPES={'マナ豊穣':{col:'#ffe08a',expMul:2.2,gemMul:2.2,dropMul:1,spawnAdd:0,note:'EXP・gem 大幅増'},
+ 'マナ嵐':{col:'#9a6ad0',expMul:1.4,gemMul:1.4,dropMul:1.8,spawnAdd:4,note:'敵増・ドロップ増（高リスク高報酬）'},
+ '宝物雨':{col:'#7fd0ff',expMul:1,gemMul:1.6,dropMul:2.6,spawnAdd:0,note:'装備ドロップ大幅増'},
+ '豊潤の霧':{col:'#7fe0a0',expMul:1.4,gemMul:1.4,dropMul:1.4,spawnAdd:1,note:'全体的に小幅増'}};
+const WKEYS=Object.keys(WTYPES),WMAPS=['field','forest','volcano','cavern','ruins','desert','sky','abyss','grove','crystal'];
+let weathers=[],weatherCD=6;
+function spawnWeather(){if(weathers.length>=2)return;const type=WKEYS[Math.floor(Math.random()*WKEYS.length)],map=WMAPS[Math.floor(Math.random()*WMAPS.length)],dur=180+Math.random()*240;
+ weathers.push({map,type,x:360+Math.random()*(WORLD_W-720),y:360+Math.random()*(WORLD_H-720),r:340+Math.random()*150,t:dur,dur});}
+function updateWeather(dt){weatherCD-=dt;if(weatherCD<=0&&weathers.length<2){spawnWeather();weatherCD=25+Math.random()*45;}for(const w of weathers)w.t-=dt;weathers=weathers.filter(w=>w.t>0);}
+function weatherAt(x,y){for(const w of weathers)if(w.map===MAPID&&Math.hypot(x-w.x,y-w.y)<w.r)return w;return null;}
+function wmul(x,y,k){const w=weatherAt(x,y);return w?WTYPES[w.type][k]:1;}
+// ===== エリートモンスター =====
+let elites=[],eliteCD=45;
+const ESUF=['の核','の牙','の翼','の鱗','の王冠','の遺宝','の瞳'];
+function eliteUnique(key){const e=ET[key],rar=RAR.find(x=>x.k==='L');let h=0;for(const c of key)h=(h*31+c.charCodeAt(0))%9973;
+ const slot=['武器','頭','胴','手','足','装飾1','装飾2'][h%7],suf=ESUF[h%ESUF.length],sp=[['INT',46],['VIT',40],['DEX',34],['AGI',34],['PIE',36],['LUK',30]],stats={};
+ for(let i=0;i<3;i++){const[k,v]=sp[(h+i)%6];stats[k]=v;}const aff={'allstat%':18};if(e.el!=='無')aff[e.el+'%']=55;
+ return{name:'★'+e.jp+suf,slot,rar,stats,affixes:aff,col:rar.col,lv:Math.max(10,P.lv),plus:0,sockets:3,socketed:0};}
+function spawnEliteEnemy(rec){const t=ET[rec.key],lv=mapLv(),hpSc=1+0.2*(lv-1)+0.012*(lv-1)*(lv-1),baseHp=Math.round(t.hp*hpSc)*50;
+ const a=Math.random()*7,rr=420+Math.random()*120,x=Math.max(40,Math.min(WORLD_W-40,P.x+Math.cos(a)*rr)),y=Math.max(40,Math.min(WORLD_H-40,P.y+Math.sin(a)*rr));
+ enemies.push({...t,x,y,enLv:lv,key:rec.key,isElite:true,eliteRec:rec,mv:'burst',ph:0,r:t.r*3,hp:rec.hp!=null?rec.hp:baseHp,maxhp:baseHp,def:t.def+Math.floor((lv-1)/2),atk:Math.round(t.atk*(1+0.07*(lv-1)))*3,exp:Math.round(t.exp*(1+0.10*(lv-1)))*100,state:'approach',st:0,wAng:0,burn:null,bt:0,slow:0,stun:0,combo:0,maxCombo:3});}
+function eliteHere(){return elites.find(e=>e.map===MAPID);}
+function updateElite(dt){eliteCD-=dt;
+ if(eliteCD<=0&&elites.length<2){const av=WMAPS.filter(m=>MAPS[m]&&MAPS[m].enemies&&MAPS[m].enemies.length&&!elites.some(e=>e.map===m));
+  if(av.length){const map=av[(Math.random()*av.length)|0],ek=MAPS[map].enemies,key=ek[(Math.random()*ek.length)|0],rec={map,key,jp:ET[key].jp,t:300,hp:null};elites.push(rec);if(map===MAPID)spawnEliteEnemy(rec);else flash('どこかでエリート '+ET[key].jp+' が出現…');}
+  eliteCD=90+Math.random()*90;}
+ for(const e of elites.slice()){e.t-=dt;if(e.t<=0){if(e.map===MAPID){const ix=enemies.findIndex(en=>en.eliteRec===e);if(ix>=0)enemies.splice(ix,1);flash('エリート '+e.jp+' は逃走した…');}elites.splice(elites.indexOf(e),1);}}
+ for(const e of elites)if(e.map===MAPID&&!enemies.some(en=>en.eliteRec===e))spawnEliteEnemy(e);}
+function switchMap(id,x,y){for(const en of enemies)if(en.eliteRec)en.eliteRec.hp=en.hp;MAP=MAPS[id];MAPID=id;dummy=(id==='town')?makeDummy():null;
+ if(MAP.town){P.lastTown=id;for(const n of npcs){n.map=id;n.x=WORLD_W/2+(Math.random()*700-350);n.y=WORLD_H/2+(Math.random()*460-230);n.talk=false;n.reactT=0;}}P.x=x;P.y=y;enemies=[];shots=[];eshots=[];parts=[];floats=[];fx=[];zones=[];funnels=[];pending=[];passers=[];boss=null;bossCD=MAP.boss?3:1e9;P.invuln=1.2;P.casting=false;P.channels=[];P.kana='';P.pend='';if(!MAP.town)for(let i=0;i<5;i++)spawnEnemy();flash(MAP.name+' へ移動');}
+
+function castTime(s,modOrRunes){const m=modOrRunes&&modOrRunes.castMul!==undefined?modOrRunes:buildMod(modOrRunes||[]);const rn=Array.isArray(modOrRunes)?modOrRunes.length:(m._n||0);return((s.big?1.6:0.3+s.cost*0.025)+rn*0.15)*castMult()*m.castMul;}
+addEventListener('keydown',e=>{audio();
+ if(P.talkNpc){if(e.key==='Escape'||e.key==='f'||e.key==='F'){e.preventDefault();P.talkNpc=null;}return;}
+ if(P.shop){if(e.key==='Escape'||e.key==='i'||e.key==='I'){e.preventDefault();P.shop=null;}return;}
+ if(P.mlist){if(e.key==='Escape'||e.key==='m'||e.key==='M'){e.preventDefault();P.mlist=null;}return;}
+ if((e.key==='m'||e.key==='M')&&!P.casting){e.preventDefault();P.mlist='spell';return;}
+ if((e.key==='i'||e.key==='I')&&!P.casting){e.preventDefault();P.menu=!P.menu;if(P.menu){P.casting=false;P.kana='';P.pend='';}return;}
+ if(P.menu){if(e.key==='Escape')P.menu=false;return;}
+ if(e.key==='Shift'){if(!held['Shift'])P.parryT=0.35;held['Shift']=true;e.preventDefault();return;}
+ if(P.casting){
+  if(e.code==='Space'||e.key==='Enter'){e.preventDefault();tryCast();return;}
+  if(/^[a-zA-Z'-]$/.test(e.key)){P.pend+=e.key.toLowerCase();flush();e.preventDefault();return;}
+  if(e.key==='Backspace'){if(P.pend)P.pend=P.pend.slice(0,-1);else P.kana=P.kana.slice(0,-1);e.preventDefault();return;}
+  if(e.key==='Escape'){P.casting=false;P.kana='';P.pend='';e.preventDefault();return;}
+  return;}
+ if(e.code==='Space'){e.preventDefault();P.casting=true;P.kana='';P.pend='';return;}
+ if(e.key==='1'){usePot('hp');return;}if(e.key==='2'){usePot('mp');return;}
+ if(e.key==='f'||e.key==='F'){if(P.talkNpc){P.talkNpc=null;return;}if(dummy&&Math.hypot(P.x-dummy.x,P.y-dummy.y)<dummy.r+P.r+40){dummy.dmg=0;flash('案山子の累計ダメージをリセット');return;}const n=nearNpc();if(n)P.talkNpc=n;return;}
+ if((e.code==='ControlLeft'||e.code==='ControlRight'||e.key==='Control')&&!P.casting){e.preventDefault();if(P.tpCD<=0){const d=187;burst(P.x,P.y,'#b48cff',14,4);P.x=Math.max(P.r,Math.min(WORLD_W-P.r,P.x+P.face.x*d));P.y=Math.max(P.r,Math.min(WORLD_H-P.r,P.y+P.face.y*d));burst(P.x,P.y,'#b48cff',16,5);P.tpCD=Math.max(1,3-effStat('AGI')*0.03);}return;}
+ if(['w','a','s','d','W','A','S','D'].includes(e.key))held[e.key.length===1?e.key.toLowerCase():e.key]=true;
+});
+addEventListener('keyup',e=>{held[e.key.length===1?e.key.toLowerCase():e.key]=false;});
+cv.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect();mouseX=(e.clientX-r.left)*(W/r.width);mouseY=(e.clientY-r.top)*(H/r.height);});
+cv.addEventListener('wheel',e=>{if(P.menu){e.preventDefault();P.invScroll=Math.max(0,P.invScroll+(e.deltaY>0?1:-1));}},{passive:false});
+cv.addEventListener('mousedown',e=>{if(!P.menu&&!P.shop&&!P.mlist&&!P.talkNpc)return;const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)*(W/r.width),my=(e.clientY-r.top)*(H/r.height);
+ for(const a of clickAreas)if(mx>=a.x&&mx<=a.x+a.w&&my>=a.y&&my<=a.y+a.h){a.fn();break;}});
+function flash(t){msg=t;msgT=1.8;}
+
+function getBuffs(){const r={pow:0,crit:0,burn:0,def:0,regen:0,mpregen:0,spd:0};buffs.forEach(b=>r[b.kind]+=b.amt);return r;}
+const BLABEL={pow:'威力',crit:'クリ',burn:'火傷',def:'防御',regen:'再生'},BCOL={pow:'#ffb347',crit:'#ff6fae',burn:'#ff7a3a',def:'#6fa8ff',regen:'#7CFFA0'};
+function addBuff(s,dm,am){for(const[k,a,d]of s.buffs)buffs.set(s.name+':'+k,{kind:k,amt:a*(am||1),t:d*(dm||1),dur:d*(dm||1)});}
+function nearest(x,y){let b=1e9,t=null;for(const en of enemies){const d=(en.x-x)**2+(en.y-y)**2;if(d<b){b=d;t=en;}}if(boss){const d=(boss.x-x)**2+(boss.y-y)**2;if(d<b){b=d;t=boss;}}if(dummy){const d=(dummy.x-x)**2+(dummy.y-y)**2;if(d<b){b=d;t=dummy;}}return t;}
+function setBurn(en,dps,dm){en.burn={dps:Math.max(en.burn?en.burn.dps:0,dps),t:3.5*(dm||1)};}
+function setSlow(en,d){en.slow=Math.max(en.slow||0,d);}
+function burst(x,y,col,n,sp){for(let i=0;i<n;i++){const a=Math.random()*7,v=Math.random()*sp+sp*0.3;parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:.45+Math.random()*0.3,col,r:1+Math.random()*3});}}
+function applyDmg(en,base,el,color,critEx,factor){const mult=typeMult(el,en.el);let dmg=Math.max(1,base*(factor||1)*mult-en.def);
+ const crit=Math.random()<critBase()+(critEx||0);if(crit)dmg*=1.5;dmg=Math.max(1,Math.round(dmg*(P.hp/P.maxhp)));
+ if(en.isDummy){en.dmg=(en.dmg||0)+dmg;en.hp=en.maxhp;floats.push({x:en.x,y:en.y-en.r,txt:fmt(dmg)+(crit?'!':''),col:color,life:.9});burst(en.x,en.y,color,5,3);return;}
+ en.hp-=dmg;
+ floats.push({x:en.x,y:en.y-en.r,txt:fmt(dmg)+(crit?'!':''),col:color,life:.9});burst(en.x,en.y,color,5,3);
+ if(!factor){if(mult>1)floats.push({x:en.x,y:en.y-en.r-16,txt:'弱点!',col:'#ff7a7a',life:.9});else if(mult<1)floats.push({x:en.x,y:en.y-en.r-16,txt:'軽減',col:'#9aa',life:.9});}}
+function hurtPlayer(d){if(P.invuln>0)return;
+ if(P.parryT>0){P.parryT=0;const R=165;for(const e of targets()){if(Math.hypot(P.x-e.x,P.y-e.y)<R+e.r){e.stun=5;burst(e.x,e.y,'#ffe27a',8,3);}}
+  fx.push({x:P.x,y:P.y,r:R,life:0.45,col:'#ffe27a'});burst(P.x,P.y,'#ffe27a',24,6);shake=Math.max(shake,8);P.invuln=0.4;flash('パリィ！ 周囲をスタン');return;}
+ const eff=getBuffs();let dd=d*(1-Math.min(0.6,eff.def));if(held['Shift']&&P.mp>0){dd*=0.25;P.mp=Math.max(0,P.mp-P.maxmp*0.10);}
+ P.hp-=dd;floats.push({x:P.x,y:P.y-22,txt:'-'+fmt(dd),col:'#ff9a9a',life:.9});burst(P.x,P.y,'#ff6a6a',8,3.5);shake=Math.max(shake,5);
+ if(dd>=P.maxhp*0.12&&(P.casting||P.channels.length)){P.casting=false;P.kana='';P.pend='';P.channels=[];flash('詠唱中断！');}}
+function targets(){const a=enemies.slice();if(boss)a.push(boss);if(dummy)a.push(dummy);return a;}
+
+function tryCast(){finalize();
+ const ci=NPC_CALL.indexOf(P.kana);if(ci>=0){const n=npcs[ci];n.map=MAPID;n.x=P.x+44;n.y=P.y;n.talk=false;n.reactT=2;n.react='呼ばれて来たよ！';burst(n.x,n.y,n.col,16,4);flash(n.name+'を呼び寄せた');P.casting=false;P.kana='';P.pend='';return;}
+ const seg=segment(P.kana);
+ if(seg.spell){if(seg.spell.big&&bigCD>0){flash('大魔法は冷却中（'+bigCD.toFixed(1)+'s）');P.casting=false;P.kana='';P.pend='';return;}
+  const mod=buildMod(seg.runes);mod._n=seg.runes.length;const cost=incCost(seg.spell,mod);
+  if(P.mp>=cost){P.mp-=cost;P.spellsSeen.add(seg.spell.name);const total=castTime(seg.spell,mod);const tg=nearest(P.x,P.y),aim=tg?Math.atan2(tg.y-P.y,tg.x-P.x):Math.atan2(P.face.y,P.face.x),tx=tg?tg.x:P.x+Math.cos(aim)*220,ty=tg?tg.y:P.y+Math.sin(aim)*220;P.channels.push({spell:seg.spell,runes:seg.runes,mod,cost,aim,tx,ty,t:total,total});if(seg.spell.big)bigCD=10;}
+  else flash('マナ不足（必要'+fmt(cost)+'）');}
+ P.casting=false;P.kana='';P.pend='';}
+function fireSpell(s,runes,mod,cost,aim,tgt){
+ const m=mod||buildMod(runes||[]);const eff=getBuffs(),big=!!s.big,PI=Math.PI;
+ const bd=m.buffDurMul,ba=m.buffAmtMul;
+ if(aim===undefined)aim=Math.atan2(P.face.y,P.face.x);
+ if(s.kind==='return'){const t=MAPS[P.lastTown]?P.lastTown:'town';burst(P.x,P.y,s.color,24,6);switchMap(t,WORLD_W/2,WORLD_H/2+260);flash('リコール：'+MAPS[t].name+'へ帰還');return;}
+ if(s.kind==='heal'){const amt=Math.round(P.maxhp*s.heal);P.hp=Math.min(P.maxhp,P.hp+amt);floats.push({x:P.x,y:P.y-20,txt:'+'+fmt(amt),col:s.color,life:1});burst(P.x,P.y,s.color,14,3);fx.push({x:P.x,y:P.y,r:8,maxr:48,col:s.color,life:.5});addBuff(s,bd,ba);flash(s.name);return;}
+ if(s.kind==='buff'){addBuff(s,bd,ba);burst(P.x,P.y,s.color,16,4);fx.push({x:P.x,y:P.y,r:10,maxr:48,col:s.color,life:.5});flash(s.name+'！');return;}
+ const rPow=big?1+(m.powMul-1)*2:m.powMul,rRad=big?1+(m.radiusMul-1)*2:m.radiusMul;
+ const buffPow=big?1+eff.pow*3:1+eff.pow,critEx=big?Math.min(1.5,eff.crit*3):eff.crit;
+ const mpBonus=big?1+Math.min(0.6,(cost||0)*0.008):1;
+ const base=magicAtk()*s.power*buffPow*rPow*mpBonus*(1+playerAffix(s.el+'%')/100);
+ const burn=s.burn?s.burn*(1+eff.burn*(big?3:1))*m.burnMul:0,splash=(s.splash||0)*m.splashMul;
+ const act=(rep)=>{
+  if(s.kind==='self'||s.kind==='meteo'){let cx=P.x,cy=P.y;if(s.kind==='meteo'&&tgt){cx=tgt.x;cy=tgt.y;}
+   const rad=s.radius*rRad;fx.push({x:cx,y:cy,r:14,maxr:rad,col:s.color,life:big?.7:.45});burst(cx,cy,s.color,big?28:14,big?6:4);if(big||s.power>=1.4)shake=Math.max(shake,big?11:5);
+   for(const en of targets())if(Math.hypot(en.x-cx,en.y-cy)<rad+en.r){applyDmg(en,base,s.el,s.color,critEx);if(burn)setBurn(en,burn,bd);if(s.slow)setSlow(en,s.slow);}
+  }else if(s.kind==='front'||s.kind==='fan'){const rad=(s.radius||120)*rRad,half=s.kind==='fan'?(s.fan||0.6):0.45,cx=P.x+Math.cos(aim)*(s.offset||0),cy=P.y+Math.sin(aim)*(s.offset||0);
+   if(s.kind==='fan'){fx.push({x:P.x,y:P.y,r:14,maxr:rad,col:s.color,life:.45,a0:aim-half,a1:aim+half});for(let q=0;q<10;q++){const aa=aim-half+Math.random()*half*2;burst(P.x+Math.cos(aa)*rad*0.7,P.y+Math.sin(aa)*rad*0.7,s.color,2,3);}}
+   else fx.push({x:cx,y:cy,r:12,maxr:rad,col:s.color,life:.4}),burst(cx,cy,s.color,12,4);
+   for(const en of targets()){const d=Math.hypot(en.x-P.x,en.y-P.y);if(d<rad+en.r){let dd=Math.atan2(en.y-P.y,en.x-P.x)-aim;while(dd>PI)dd-=2*PI;while(dd<-PI)dd+=2*PI;if(Math.abs(dd)<half){applyDmg(en,base,s.el,s.color,critEx);if(burn)setBurn(en,burn,bd);if(s.slow)setSlow(en,s.slow);}}}
+  }else if(s.kind==='zone'){const zx=tgt?tgt.x:P.x+Math.cos(aim)*(s.offset||90),zy=tgt?tgt.y:P.y+Math.sin(aim)*(s.offset||90);
+   zones.push({x:zx,y:zy,r:(s.radius||90)*rRad,el:s.el,color:s.color,dps:base*(s.tickDmg||0.30),rate:s.rate||0.4,tick:0,life:(s.dur||4),slow:s.slow||0,burn});fx.push({x:zx,y:zy,r:14,maxr:(s.radius||90)*rRad,col:s.color,life:.4});
+  }else if(s.kind==='aura'){zones.push({follow:true,x:P.x,y:P.y,r:(s.radius||110)*rRad,el:s.el,color:s.color,dps:base*(s.tickDmg||0.25),rate:s.rate||0.35,tick:0,life:(s.dur||5),slow:s.slow||0,burn});burst(P.x,P.y,s.color,16,4);
+  }else if(s.kind==='multi'){zones.push({x:P.x,y:P.y,vx:Math.cos(aim)*(s.speed||5),vy:Math.sin(aim)*(s.speed||5),r:(s.r||40)*m.sizeMul,el:s.el,color:s.color,dps:base*(s.tickDmg||0.22),rate:s.rate||0.12,tick:0,life:(s.dur||1.1)*m.distMul,slow:s.slow||0,burn});burst(P.x,P.y,s.color,6,3);
+  }else if(s.kind==='funnel'){const n=s.count||3;for(let k=0;k<n;k++)funnels.push({ang:k/n*6.283+rep,dist:s.dist||72,spin:s.spin||2.2,x:P.x,y:P.y,el:s.el,color:s.color,dmg:base*(s.boltDmg||0.5)*0.5,speed:s.speed||7,fireT:0.2,rate:s.rate||0.5,life:(s.dur||6)});burst(P.x,P.y,s.color,14,4);
+  }else{const n=m.split,spread=0.3,pierce=(s.kind==='pierce')||m.pierce,each=n>1?base/n:base;
+   for(let j=0;j<n;j++){const a=aim+(j-(n-1)/2)*spread;shots.push({x:P.x,y:P.y,vx:Math.cos(a)*s.speed*m.speedMul,vy:Math.sin(a)*s.speed*m.speedMul,r:(s.r||7)*m.sizeMul,el:s.el,color:s.color,dmg:each,critEx,splash,burn,slow:s.slow||0,durMul:bd,pierce,homing:m.homing,life:1.8*m.distMul,hit:new Set()});}
+   burst(P.x+Math.cos(aim)*14,P.y+Math.sin(aim)*14,s.color,5,3);if(big)shake=Math.max(shake,7);}
+ };
+ act(0);for(let r=1;r<m.repeatMul;r++)pending.push({t:0.1*r,fn:()=>act(r)});
+ if(big){buffs.clear();flash(s.name+'！全バフ解放');}else addBuff(s,bd,ba);}
+
+function finishAtk(en){en.combo=(en.combo||0)+1;
+ if((en.maxCombo||1)>1&&en.combo<en.maxCombo&&Math.random()<0.7){en.st=en.recover*0.35;}
+ else{const burst=en.combo;if(burst>1){en.st=en.recover*(1.5+burst*0.8);floats.push({x:en.x,y:en.y-en.r-12,txt:'スキ！',col:'#ffe27a',life:.9});}else en.st=en.recover;en.combo=0;}
+ en.state='recover';}
+function spawnEnemy(){if(!MAP.enemies||!MAP.enemies.length)return;const ks=MAP.enemies,k=ks[Math.floor(Math.random()*ks.length)],t=ET[k];
+ const a=Math.random()*7,rr=520+Math.random()*120;let x=Math.max(20,Math.min(WORLD_W-20,P.x+Math.cos(a)*rr)),y=Math.max(20,Math.min(WORLD_H-20,P.y+Math.sin(a)*rr));
+ const lv=mapLv(),sc=1+0.11*(lv-1),mv=t.mv||(t.at==='ranged'?'circle':t.at==='charge'?'burst':(Math.random()<0.5?'weave':'straight'));
+ const hpSc=1+0.2*(lv-1)+0.012*(lv-1)*(lv-1),atkSc=1+0.07*(lv-1),expSc=1+0.10*(lv-1);
+ enemies.push({...t,x,y,enLv:lv,key:k,mv,ph:Math.random()*7,hp:Math.round(t.hp*hpSc),maxhp:Math.round(t.hp*hpSc),def:t.def+Math.floor((lv-1)/2),atk:Math.round(t.atk*atkSc),exp:Math.round(t.exp*expSc),state:'wander',st:0,wAng:Math.random()*7,burn:null,bt:0,slow:0,stun:0,combo:0,maxCombo:1+Math.floor(Math.random()*3)});}
+for(let i=0;i<5;i++)spawnEnemy();
+function makeDummy(){return{x:WORLD_W/2,y:WORLD_H/2-120,r:20,dmg:0,isDummy:true,el:'無',def:0,hp:1e9,maxhp:1e9,col:'#caa46a',stun:0,slow:0,burn:null};}
+if(MAPID==='town')dummy=makeDummy();
+function genMegaWand(){const rar=RAR.find(r=>r.k==='B1');return{name:'めっちゃ強い杖',slot:'武器',rar,stats:{INT:180,PIE:120,VIT:100,DEX:90,AGI:90,LUK:80},affixes:{'allstat%':50,'火%':90,'水%':90,'風%':90,'土%':90,'gem%':120,'exp%':120},col:rar.col,lv:99,plus:0,sockets:5,socketed:0};}
+function spawnBoss(){const lv=mapLv(),sc=1+0.12*(lv-1),d=MAP.bossDef,mega=!!d.mega;
+ boss={jp:d.jp,el:d.el,x:MAP.bx,y:MAP.by,r:mega?52:34,col:d.col,enLv:lv,mega,fixedDrop:!!d.fixedDrop,
+  hp:mega?d.hp:Math.round(d.hp*sc),maxhp:mega?d.hp:Math.round(d.hp*sc),def:mega?60:14+Math.floor((lv-1)/2),atk:mega?d.atk:Math.round(d.atk*(1+0.04*(lv-1))),
+  spd:mega?0.55:0.45,exp:mega?8000:Math.round(300*(1+0.06*(lv-1))),state:'move',t:1.6,burn:null,bt:0,slow:0,stun:0,shots:0,fireT:0,tx:0,ty:0,trad:0,cvx:0,cvy:0,aim:0,fan:0.55};
+ flash(mega?'☠ 最強の敵 出現：'+d.jp+'（Lv.'+lv+'）':'強敵 出現：'+d.jp+'（'+d.el+'・Lv.'+lv+'）');}
+function bossPattern(b){const p=Math.floor(Math.random()*3),ang=Math.atan2(P.y-b.y,P.x-b.x);
+ if(p===0){b.state='slam';b.t=1.2;b.tx=P.x;b.ty=P.y;b.trad=130;}else if(p===1){b.state='barrage_t';b.t=1.0;b.aim=ang;b.fan=0.55;}else{b.state='charge_t';b.t=0.85;b.aim=ang;}}
+function levelUp(){P.exp-=P.need;P.lv++;P.need=Math.round(P.need*1.18);P.sp+=2;recompute();P.hp=P.maxhp;P.mp=P.maxmp;flash("レベルアップ！ Lv."+P.lv+"（ステP+2）");burst(P.x,P.y,'#ffe08a',24,5);}
+function updateBoss(dt){
+ if(!boss){bossCD-=dt;if(bossCD<=0&&MAP.boss)spawnBoss();return;}
+ const b=boss,dist=Math.hypot(P.x-b.x,P.y-b.y);b.t-=dt;
+ if(b.stun>0){b.stun-=dt;if(b.burn){b.burn.t-=dt;b.hp-=b.burn.dps*dt;if(b.burn.t<=0)b.burn=null;}return;}
+ if(b.burn){b.burn.t-=dt;b.hp-=b.burn.dps*dt;if(b.burn.t<=0)b.burn=null;}if(b.slow>0)b.slow-=dt;const spd=b.spd*(b.slow>0?0.5:1);
+ if(b.state==='move'){if(dist>BOSS_AGGRO){const hs=Math.hypot(MAP.bx-b.x,MAP.by-b.y);if(hs>8){const a=Math.atan2(MAP.by-b.y,MAP.bx-b.x);b.x+=Math.cos(a)*spd*dt*60;b.y+=Math.sin(a)*spd*dt*60;}b.t=1.0;}
+  else{if(dist>140){const a=Math.atan2(P.y-b.y,P.x-b.x);b.x+=Math.cos(a)*spd*dt*60;b.y+=Math.sin(a)*spd*dt*60;}if(b.t<=0)bossPattern(b);}}
+ else if(b.state==='slam'){if(b.t<=0){fx.push({x:b.tx,y:b.ty,r:20,maxr:b.trad,col:'#ff7a3a',life:.5});burst(b.tx,b.ty,'#ff8a4a',24,6);shake=Math.max(shake,12);if(Math.hypot(P.x-b.tx,P.y-b.ty)<b.trad)hurtPlayer(b.atk*1.4);b.state='recover';b.t=1.5;}}
+ else if(b.state==='barrage_t'){if(b.t<=0){b.state='barrage';b.t=2.2;b.shots=10;b.fireT=0.18;}}
+ else if(b.state==='barrage'){b.fireT-=dt;if(b.fireT<=0&&b.shots>0){const a=b.aim+(Math.random()*2-1)*b.fan;eshots.push({x:b.x,y:b.y,vx:Math.cos(a)*4.6,vy:Math.sin(a)*4.6,r:9,dmg:b.atk*0.7,life:2.4,col:'#c08aff'});b.shots--;b.fireT=0.18;}if(b.shots<=0&&b.t<=0){b.state='recover';b.t=1.2;}}
+ else if(b.state==='charge_t'){if(b.t<=0){b.state='charging';b.t=0.55;b.cvx=Math.cos(b.aim)*9.5;b.cvy=Math.sin(b.aim)*9.5;}}
+ else if(b.state==='charging'){b.x+=b.cvx;b.y+=b.cvy;if(Math.hypot(P.x-b.x,P.y-b.y)<b.r+P.r+6){hurtPlayer(b.atk);b.t=Math.min(b.t,0.05);}if(b.t<=0){b.state='recover';b.t=1.3;}}
+ else{if(b.t<=0){b.state='move';b.t=1.0+Math.random();}}
+ b.x=Math.max(b.r,Math.min(WORLD_W-b.r,b.x));b.y=Math.max(b.r,Math.min(WORLD_H-b.r,b.y));
+ if(b.hp<=0){gainGem(Math.round(b.exp*0.8),b.x,b.y);floats.push({x:b.x,y:b.y,txt:'+'+fmt(b.exp)+' EXP',col:'#ffe08a',life:1.4});burst(b.x,b.y,b.col,40,7);shake=Math.max(shake,14);tryDrop(b.x,b.y,true);
+  if(b.fixedDrop&&Math.random()<0.01&&P.inv.length<24){const w=genMegaWand();P.inv.push(w);dropSE(w.rar);floats.push({x:b.x,y:b.y-30,txt:'★ めっちゃ強い杖 入手！',col:w.col,life:3});flash('★★ めっちゃ強い杖 をドロップ！ ★★');}
+  gainExp(b.exp*expMul(b.enLv)*wmul(b.x,b.y,"expMul"));boss=null;bossCD=b.mega?9999:5+Math.random()*5;flash(b.jp+' 撃破！');}}
+
+let last=performance.now();
+function update(dt){
+ if(performance.now()>shopResetAt){genShopStock();P.rerollMul=1;shopResetAt=performance.now()+600000;}
+ updateWeather(dt);updateElite(dt);
+ if(P.menu||P.shop||P.mlist||P.talkNpc)return;
+ const eff=getBuffs();
+ for(let qi=P.channels.length-1;qi>=0;qi--){const c=P.channels[qi];c.t-=dt;if(c.t<=0){P.channels.splice(qi,1);fireSpell(c.spell,c.runes,c.mod,c.cost,c.aim,{x:c.tx,y:c.ty});if(c.spell.big){P.expMP=0;P.expT=0;}else{P.expMP=Math.min(P.maxmp,P.expMP+c.cost);P.expT=EXP_DUR;}}}
+ if(!P.casting){let mx=0,my=0;if(held['w'])my-=1;if(held['s'])my+=1;if(held['a'])mx-=1;if(held['d'])mx+=1;
+  if(mx||my){const l=Math.hypot(mx,my),sp=moveSpeed();mx/=l;my/=l;P.face={x:mx,y:my};P.x=Math.max(P.r,Math.min(WORLD_W-P.r,P.x+mx*sp*dt*60));P.y=Math.max(P.r,Math.min(WORLD_H-P.r,P.y+my*sp*dt*60));}}
+ for(const pt of MAP.portals)if(Math.hypot(P.x-pt.x,P.y-pt.y)<pt.r+P.r){switchMap(pt.to,pt.tx,pt.ty);break;}
+ if(MAP.facilities){let on=false;for(const f of MAP.facilities)if(Math.hypot(P.x-f.x,P.y-f.y)<f.r+P.r){on=true;if(!P.facLock){openShop(f.type);P.facLock=true;}}if(!on)P.facLock=false;}
+ updateNpcs(dt);updatePassers(dt);
+ const regen=(7+(P.lv-1)*0.5)*(1+eff.mpregen),effMax=P.maxmp+P.expMP;P.mp=Math.min(effMax,P.mp+regen*dt);
+ const mr=P.mp/effMax;if(P.hp>0)P.hp=Math.min(P.maxhp,P.hp+P.maxhp*0.02*mr*dt);if(eff.regen>0&&P.hp>0)P.hp=Math.min(P.maxhp,P.hp+P.maxhp*eff.regen*dt);
+ if(P.invuln>0)P.invuln-=dt;if(P.parryT>0)P.parryT-=dt;if(P.tpCD>0)P.tpCD-=dt;if(bigCD>0)bigCD-=dt;
+ if(pending.length){for(const p of pending)p.t-=dt;for(const p of pending)if(p.t<=0)p.fn();pending=pending.filter(p=>p.t>0);}
+ P.expT-=dt;if(P.expT<=0&&P.expMP>0){P.expMP=Math.max(0,P.expMP-P.maxmp*0.5*dt);if(P.mp>P.maxmp+P.expMP)P.mp=P.maxmp+P.expMP;}
+ buffs.forEach((b,k)=>{b.t-=dt;if(b.t<=0)buffs.delete(k);});if(shake>0)shake=Math.max(0,shake-dt*30);
+ for(const sh of shots){
+  if(sh.homing){const t=nearest(sh.x,sh.y);if(t){const cur=Math.atan2(sh.vy,sh.vx),tg=Math.atan2(t.y-sh.y,t.x-sh.x);let d=tg-cur;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;const tn=Math.max(-0.14,Math.min(0.14,d)),na=cur+tn,sp=Math.hypot(sh.vx,sh.vy);sh.vx=Math.cos(na)*sp;sh.vy=Math.sin(na)*sp;}}
+  sh.x+=sh.vx;sh.y+=sh.vy;sh.life-=dt;if(Math.random()<0.55)parts.push({x:sh.x,y:sh.y,vx:0,vy:0,life:.22,col:sh.color,r:2});
+  for(const en of targets()){if(sh.hit.has(en))continue;if((en.x-sh.x)**2+(en.y-sh.y)**2<(en.r+sh.r)**2){applyDmg(en,sh.dmg,sh.el,sh.color,sh.critEx);sh.hit.add(en);if(sh.burn)setBurn(en,sh.burn,sh.durMul);if(sh.slow)setSlow(en,sh.slow);
+    if(sh.splash){fx.push({x:sh.x,y:sh.y,r:8,maxr:sh.splash,col:sh.color,life:.35});burst(sh.x,sh.y,sh.color,10,4);shake=Math.max(shake,4);for(const o of targets())if(o!==en&&Math.hypot(o.x-sh.x,o.y-sh.y)<sh.splash+o.r){applyDmg(o,sh.dmg,sh.el,sh.color,sh.critEx,0.5);if(sh.burn)setBurn(o,sh.burn*0.5,sh.durMul);}}
+    if(!sh.pierce){sh.life=0;break;}}}}
+ shots=shots.filter(s=>s.life>0);
+ for(const z of zones){if(z.follow){z.x=P.x;z.y=P.y;}else{z.x+=z.vx||0;z.y+=z.vy||0;}z.life-=dt;z.tick-=dt;if(z.tick<=0){z.tick=z.rate;for(const en of targets())if(Math.hypot(en.x-z.x,en.y-z.y)<z.r+en.r){applyDmg(en,z.dps,z.el,z.color,0);if(z.slow)setSlow(en,z.slow);if(z.burn)setBurn(en,z.burn,1);}}}
+ zones=zones.filter(z=>z.life>0);
+ for(const f of funnels){f.life-=dt;f.ang+=f.spin*dt;f.x=P.x+Math.cos(f.ang)*f.dist;f.y=P.y+Math.sin(f.ang)*f.dist;f.fireT-=dt;if(f.fireT<=0){const a=f.ang;shots.push({x:f.x,y:f.y,vx:Math.cos(a)*f.speed,vy:Math.sin(a)*f.speed,r:6,el:f.el,color:f.color,dmg:f.dmg,critEx:0,splash:0,burn:0,slow:0,durMul:1,pierce:false,homing:false,life:1.4,hit:new Set()});f.fireT=f.rate;}}
+ funnels=funnels.filter(f=>f.life>0);
+ for(const es of eshots){es.x+=es.vx;es.y+=es.vy;es.life-=dt;if(Math.hypot(P.x-es.x,P.y-es.y)<es.r+P.r){hurtPlayer(es.dmg);es.life=0;}}eshots=eshots.filter(e=>e.life>0);
+ for(const en of enemies){
+  if(en.burn){en.burn.t-=dt;en.hp-=en.burn.dps*dt;en.bt-=dt;if(en.bt<=0){floats.push({x:en.x,y:en.y-en.r,txt:Math.round(en.burn.dps*0.5),col:'#ff8a3a',life:.6});en.bt=0.5;}if(en.burn.t<=0)en.burn=null;}
+  if(en.slow>0)en.slow-=dt;if(en.stun>0){en.stun-=dt;continue;}en.ph+=dt;
+  let spd=en.spd*(en.slow>0?0.45:1);if(en.mv==='burst')spd*=1+0.7*Math.max(0,Math.sin(en.ph*1.6));
+  const dist=Math.hypot(P.x-en.x,P.y-en.y),mr2=en.r+P.r+24,at=en.at||'melee',rng=en.range||260,ang=Math.atan2(P.y-en.y,P.x-en.x),px=-Math.sin(ang),py=Math.cos(ang);en.st-=dt;
+  if(en.state==='wander'){if(en.st<=0){en.wAng=Math.random()*7;en.st=1+Math.random()*2;}en.x+=Math.cos(en.wAng)*spd*0.35*dt*60;en.y+=Math.sin(en.wAng)*spd*0.35*dt*60;if(dist<AGGRO)en.state='approach';}
+  else if(en.state==='approach'){
+   if(dist>AGGRO*1.5){en.state='wander';en.st=0;}
+   else if(at==='ranged'){const strafe=Math.sin(en.ph*1.2)*0.8;if(dist>rng){en.x+=Math.cos(ang)*spd*dt*60;en.y+=Math.sin(ang)*spd*dt*60;}else if(dist<rng*0.55){en.x-=Math.cos(ang)*spd*dt*60;en.y-=Math.sin(ang)*spd*dt*60;}else{en.x+=px*spd*strafe*dt*60;en.y+=py*spd*strafe*dt*60;en.state='windup';en.st=en.windup;en.aim=ang;}}
+   else{const w=en.mv==='weave'?Math.sin(en.ph*3)*0.6:0;en.x+=(Math.cos(ang)+px*w)*spd*dt*60;en.y+=(Math.sin(ang)+py*w)*spd*dt*60;const trig=at==='charge'?Math.min(rng,240):mr2;if(dist<trig){en.state='windup';en.st=en.windup;en.aim=ang;}}}
+  else if(en.state==='windup'){
+   if((at==='melee')&&dist>mr2+70)en.state='approach';
+   else if(en.st<=0){
+    if(at==='ranged'){const n=en.burst||1;for(let k=0;k<n;k++){const a=en.aim+(n>1?(k-(n-1)/2)*0.18:0),sp2=en.shotSpd||4.5;eshots.push({x:en.x,y:en.y,vx:Math.cos(a)*sp2,vy:Math.sin(a)*sp2,r:8,dmg:en.atk*0.8,life:2.6,col:en.col});}finishAtk(en);}
+    else if(at==='charge'){en.state='dash';en.st=0.45;en.dvx=Math.cos(en.aim)*(en.dash||9);en.dvy=Math.sin(en.aim)*(en.dash||9);}
+    else{if(dist<mr2+20)hurtPlayer(en.atk);else floats.push({x:en.x,y:en.y-en.r-10,txt:'空振り',col:'#aef',life:.8});finishAtk(en);}}}
+  else if(en.state==='dash'){en.x+=en.dvx;en.y+=en.dvy;if(Math.hypot(P.x-en.x,P.y-en.y)<en.r+P.r+6){hurtPlayer(en.atk);en.st=Math.min(en.st,0.04);}if(en.st<=0){finishAtk(en);}}
+  else{if(en.st<=0)en.state=(dist<AGGRO)?'approach':'wander';}
+  en.x=Math.max(en.r,Math.min(WORLD_W-en.r,en.x));en.y=Math.max(en.r,Math.min(WORLD_H-en.r,en.y));}
+ for(const en of enemies)if(en.hp<=0){gainGem(Math.max(1,Math.round(en.exp*0.5)),en.x,en.y);floats.push({x:en.x,y:en.y,txt:'+'+fmt(en.exp)+' EXP',col:'#ffe08a',life:1.1});burst(en.x,en.y,en.col,16,4);tryDrop(en.x,en.y,false);questProgress(en.key);
+   if(Math.random()<0.06&&P.jewels.length<40){const j=genJewel(jewelTier());P.jewels.push(j);floats.push({x:en.x,y:en.y-20,txt:j.name,col:j.col,life:1.6});}
+   if(en.isElite){P.boxes.push({eliteBox:true,key:en.key,name:ET[en.key].jp+'ボックス'});const ix=elites.indexOf(en.eliteRec);if(ix>=0)elites.splice(ix,1);shake=Math.max(shake,10);flash('エリート '+ET[en.key].jp+' 撃破！「'+ET[en.key].jp+'ボックス」入手（Iで開封）');}
+   {const er=enemyRune(en.key);if(er&&!P.runes.has(er)&&Math.random()<(en.isElite?1:0.07)){P.runes.add(er);floats.push({x:en.x,y:en.y-32,txt:'ルーン解放!',col:'#c08aff',life:1.8});flash('未知のルーン「'+er+'」を解放！');}}
+   for(const n of npcs)if(n.map===MAPID&&n.reactT<=0&&Math.hypot(n.x-en.x,n.y-en.y)<170){n.react=NPC_REACT[n.idx]||'やるね！';n.reactT=1.8;break;}
+   gainExp(en.exp*expMul(en.enLv)*wmul(en.x,en.y,"expMul"));}
+ enemies=enemies.filter(e=>e.hp>0);if(!MAP.town){const wc=weatherAt(P.x,P.y),cap=5+(wc?WTYPES[wc.type].spawnAdd:0);while(enemies.length<cap)spawnEnemy();}
+ updateBoss(dt);
+ if(P.hp<=0){P.hp=P.maxhp*0.6;P.mp=P.maxmp*0.6;P.expMP=0;P.expT=0;P.x=WORLD_W/2;P.y=WORLD_H/2;P.invuln=2.2;P.casting=false;P.channels=[];P.kana='';P.pend='';buffs.clear();enemies=[];eshots=[];zones=[];funnels=[];boss=null;bossCD=MAP.boss?3:1e9;for(let i=0;i<5;i++)spawnEnemy();flash('力尽きた…ギルドに帰還した（敵がリセットされた）');}
+ for(const f of floats){f.y-=24*dt;f.life-=dt;}floats=floats.filter(f=>f.life>0);
+ for(const f of fx){f.r+=(f.maxr-f.r)*0.28;f.life-=dt;}fx=fx.filter(f=>f.life>0);
+ for(const p of parts){p.x+=p.vx;p.y+=p.vy;p.vx*=0.9;p.vy*=0.9;p.life-=dt;}parts=parts.filter(p=>p.life>0);
+ if(msgT>0)msgT-=dt;}
+
+function drawWorld(cx,cy){ctx.fillStyle=MAP.ground;ctx.fillRect(0,0,WORLD_W,WORLD_H);
+ ctx.fillStyle=MAP.gpond;for(const p of MAP.ponds){ctx.beginPath();ctx.ellipse(p.x,p.y,p.rx,p.ry,0,0,7);ctx.fill();}
+ for(const d of MAP.decos){if(d.x<cx-40||d.x>cx+W+40||d.y<cy-40||d.y>cy+FIELD_H+40)continue;
+  if(MAP.deco==='rock'||d.t>=0.72){ctx.fillStyle=MAP.deco==='rock'?'#4a3a30':'#6b6b66';ctx.beginPath();ctx.arc(d.x,d.y,8,0,7);ctx.fill();}
+  else{ctx.fillStyle='#5a3f28';ctx.fillRect(d.x-3,d.y,6,10);ctx.fillStyle=MAP.ground==='#2c5e2b'?'#1f4a20':'#2c5e2b';ctx.beginPath();ctx.arc(d.x,d.y-4,15,0,7);ctx.fill();}}
+ for(const pt of MAP.portals){const ph=performance.now()/300;ctx.save();ctx.globalAlpha=0.8;
+  ctx.strokeStyle=pt.color;ctx.lineWidth=3;ctx.beginPath();ctx.arc(pt.x,pt.y,pt.r+Math.sin(ph)*3,0,7);ctx.stroke();
+  ctx.fillStyle=pt.color;ctx.globalAlpha=0.25;ctx.beginPath();ctx.arc(pt.x,pt.y,pt.r,0,7);ctx.fill();
+  ctx.globalAlpha=0.6;ctx.beginPath();ctx.arc(pt.x,pt.y,pt.r*0.5+Math.sin(ph*1.7)*3,0,7);ctx.fill();ctx.restore();
+  ctx.fillStyle='#fff';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillText(pt.label,pt.x,pt.y-pt.r-8);}
+ if(MAP.facilities)for(const f of MAP.facilities){const col={equip:'#5ab0ff',smith:'#ffae5a',tool:'#7fe07a',jewel:'#ff7ad0',guild:'#ffd24a'}[f.type]||'#ffae5a';
+  ctx.fillStyle='#3a2c20';ctx.fillRect(f.x-30,f.y-22,60,44);ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(f.x-34,f.y-22);ctx.lineTo(f.x,f.y-44);ctx.lineTo(f.x+34,f.y-22);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#1c140e';ctx.fillRect(f.x-9,f.y-2,18,24);ctx.strokeStyle=col;ctx.lineWidth=2;ctx.strokeRect(f.x-30,f.y-22,60,44);
+  ctx.fillStyle='#fff';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillText(f.label,f.x,f.y-50);ctx.fillStyle='#cdb86a';ctx.font='9px system-ui';ctx.fillText('触れて入店',f.x,f.y+34);}
+ drawNpcs();drawPassers();
+ if(dummy){const d=dummy;ctx.strokeStyle='#5a3a22';ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(d.x,d.y-26);ctx.lineTo(d.x,d.y+30);ctx.moveTo(d.x-22,d.y-8);ctx.lineTo(d.x+22,d.y-8);ctx.stroke();
+  ctx.fillStyle='#caa46a';ctx.beginPath();ctx.arc(d.x,d.y-30,13,0,7);ctx.fill();ctx.strokeStyle='#8a6a3a';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='#7a5a32';ctx.fillRect(d.x-20,d.y-6,40,26);ctx.fillStyle='#3a2a18';ctx.fillRect(d.x-3,d.y-46,6,16);
+  ctx.fillStyle='#1a160f';ctx.beginPath();ctx.arc(d.x-4,d.y-32,2,0,7);ctx.arc(d.x+4,d.y-32,2,0,7);ctx.fill();
+  ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='bold 11px system-ui';ctx.fillText('訓練用 案山子',d.x,d.y-58);
+  ctx.fillStyle='#ff9a5a';ctx.font='bold 15px system-ui';ctx.fillText('累計ダメージ '+fmt(d.dmg),d.x,d.y-74);
+  if(Math.hypot(P.x-d.x,P.y-d.y)<d.r+P.r+40){ctx.fillStyle='#bfe8c0';ctx.font='10px system-ui';ctx.fillText('[F] カウンタをリセット',d.x,d.y+44);}ctx.textAlign='left';}}
+function drawMage(){if(held['Shift']&&P.mp>0){ctx.fillStyle='rgba(120,210,255,.22)';ctx.beginPath();ctx.arc(P.x,P.y,P.r+10,0,7);ctx.fill();ctx.strokeStyle='#7fd0ff';ctx.lineWidth=2;ctx.stroke();}
+ if(P.casting){ctx.strokeStyle='rgba(180,140,255,.85)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(P.x,P.y,P.r+8+Math.sin(performance.now()/120)*2,0,7);ctx.stroke();}
+ if(P.invuln>0)ctx.globalAlpha=0.5;
+ ctx.fillStyle='#e7ecf5';ctx.beginPath();ctx.ellipse(P.x,P.y+4,P.r,P.r+4,0,0,7);ctx.fill();ctx.fillStyle='#c9d2e0';ctx.beginPath();ctx.arc(P.x,P.y-6,P.r-3,0,7);ctx.fill();
+ ctx.fillStyle='#f1ead8';ctx.beginPath();ctx.arc(P.x,P.y-10,5,0,7);ctx.fill();ctx.strokeStyle='#8a6b3a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(P.x+12,P.y+12);ctx.lineTo(P.x+16,P.y-16);ctx.stroke();
+ ctx.fillStyle='#7fd0ff';ctx.shadowColor='#7fd0ff';ctx.shadowBlur=10;ctx.beginPath();ctx.arc(P.x+16,P.y-18,4,0,7);ctx.fill();ctx.shadowBlur=0;ctx.globalAlpha=1;
+ for(let ci=0;ci<P.channels.length;ci++){const c=P.channels[ci],pr=1-c.t/c.total,yy=P.y-P.r-20-ci*8;ctx.fillStyle='#000a';ctx.fillRect(P.x-24,yy,48,6);ctx.fillStyle=c.spell.color;ctx.fillRect(P.x-24,yy,48*pr,6);ctx.strokeStyle='#fff6';ctx.lineWidth=1;ctx.strokeRect(P.x-24,yy,48,6);}
+ if(P.casting){const txt=P.kana+P.pend,cur=(Math.floor(performance.now()/400)%2?'｜':' ');ctx.textAlign='center';
+  ctx.font='bold 15px system-ui';const tw=Math.max(46,ctx.measureText('▶'+txt+cur).width)+12,ty=P.y-P.r-46;
+  ctx.fillStyle='rgba(18,14,26,.88)';ctx.strokeStyle='#b48cff';ctx.lineWidth=1.5;ctx.fillRect(P.x-tw/2,ty-14,tw,21);ctx.strokeRect(P.x-tw/2,ty-14,tw,21);
+  ctx.fillStyle='#fff';ctx.fillText('▶'+txt+cur,P.x,ty+1);
+  const seg=segment(P.kana);ctx.font='10px system-ui';
+  if(seg.spell){ctx.fillStyle=seg.spell.color;ctx.fillText(seg.spell.name+'('+seg.spell.el+') 消費'+incCost(seg.spell,seg.runes)+(seg.runes.length?' ['+seg.runes.map(r=>r.name).join('+')+']':''),P.x,ty+19);}
+  else if(txt){ctx.fillStyle='#9a8';ctx.fillText('解析中…',P.x,ty+19);}}}
+function drawEnemy(en){if(en.state==='windup'){const pr=1-Math.max(0,en.st)/en.windup,at=en.at||'melee',aim=en.aim||0,pulse=0.10+0.16*Math.abs(Math.sin(performance.now()/120));
+  if(at==='melee'){ctx.strokeStyle='rgba(255,90,70,.9)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(en.x,en.y,en.r+6+pr*10,0,7);ctx.stroke();ctx.fillStyle='rgba(255,90,70,'+(0.12+0.18*Math.sin(performance.now()/70))+')';ctx.beginPath();ctx.arc(en.x,en.y,en.r+6,0,7);ctx.fill();}
+  else if(at==='charge'){const L=(en.dash||9)*27,hw=en.r+P.r+4;ctx.save();ctx.translate(en.x,en.y);ctx.rotate(aim);
+   ctx.fillStyle='rgba(255,55,40,'+pulse+')';ctx.fillRect(0,-hw,L,hw*2);ctx.fillStyle='rgba(255,80,55,.5)';ctx.fillRect(0,-hw,L*pr,hw*2);ctx.strokeStyle='rgba(255,90,60,.9)';ctx.lineWidth=2;ctx.strokeRect(0,-hw,L,hw*2);ctx.restore();}
+  else{const n=en.burst||1,L=en.range||300,hw=6;for(let k=0;k<n;k++){const off=(n>1?(k-(n-1)/2)*0.18:0);ctx.save();ctx.translate(en.x,en.y);ctx.rotate(aim+off);
+   ctx.fillStyle='rgba(255,55,40,'+pulse+')';ctx.fillRect(0,-hw,L,hw*2);ctx.fillStyle='rgba(255,80,55,.5)';ctx.fillRect(0,-hw,L*pr,hw*2);ctx.strokeStyle='rgba(255,90,60,.85)';ctx.lineWidth=1.5;ctx.strokeRect(0,-hw,L,hw*2);ctx.restore();}}
+  ctx.fillStyle='#ffd27a';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillText('!',en.x,en.y-en.r-14);}
+ ctx.fillStyle=en.col;ctx.beginPath();if(en.jp==='マナスライム')ctx.ellipse(en.x,en.y+3,en.r,en.r-3,0,0,7);else ctx.arc(en.x,en.y,en.r,0,7);ctx.fill();
+ if(en.burn){ctx.strokeStyle='rgba(255,130,50,.85)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(en.x,en.y,en.r+3,0,7);ctx.stroke();}
+ if(en.slow>0){ctx.strokeStyle='rgba(130,200,255,.8)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(en.x,en.y,en.r+5,0,7);ctx.stroke();}
+ ctx.fillStyle='#10141a';ctx.beginPath();ctx.arc(en.x-5,en.y-2,2,0,7);ctx.arc(en.x+5,en.y-2,2,0,7);ctx.fill();
+ const w=en.r*2,hpr=Math.max(0,en.hp/en.maxhp);ctx.fillStyle='#0008';ctx.fillRect(en.x-w/2,en.y-en.r-9,w,4);ctx.fillStyle='#ff5a5a';ctx.fillRect(en.x-w/2,en.y-en.r-9,w*hpr,4);
+ if(en.isElite){const tt=performance.now()/1000;ctx.strokeStyle='rgba(255,70,100,'+(0.5+0.3*Math.sin(tt*4))+')';ctx.lineWidth=3;ctx.beginPath();ctx.arc(en.x,en.y,en.r+8,0,7);ctx.stroke();ctx.fillStyle='#ff5a8a';ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillText('★エリート '+en.jp,en.x,en.y-en.r-16);ctx.textAlign='left';}}
+function drawBoss(b){if(b.state==='slam'){const pr=1-Math.max(0,b.t)/1.2;ctx.fillStyle='rgba(255,90,40,0.18)';ctx.beginPath();ctx.arc(b.tx,b.ty,b.trad,0,7);ctx.fill();ctx.strokeStyle='rgba(255,120,60,.9)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(b.tx,b.ty,b.trad*pr,0,7);ctx.stroke();}
+ if(b.state==='barrage_t'){const pr=1-Math.max(0,b.t)/1.0,L=380,pulse=0.10+0.16*Math.abs(Math.sin(performance.now()/120));ctx.save();ctx.translate(b.x,b.y);
+  ctx.fillStyle='rgba(255,55,40,'+pulse+')';ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,L,b.aim-b.fan,b.aim+b.fan);ctx.closePath();ctx.fill();
+  ctx.fillStyle='rgba(255,80,55,.45)';ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,L*pr,b.aim-b.fan,b.aim+b.fan);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(255,90,60,.9)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,L,b.aim-b.fan,b.aim+b.fan);ctx.closePath();ctx.stroke();ctx.restore();}
+ if(b.state==='charge_t'){const pr=1-Math.max(0,b.t)/0.85,L=320,hw=b.r+P.r+6,pulse=0.10+0.16*Math.abs(Math.sin(performance.now()/120));ctx.save();ctx.translate(b.x,b.y);ctx.rotate(b.aim);
+  ctx.fillStyle='rgba(255,55,40,'+pulse+')';ctx.fillRect(0,-hw,L,hw*2);ctx.fillStyle='rgba(255,80,55,.5)';ctx.fillRect(0,-hw,L*pr,hw*2);ctx.strokeStyle='rgba(255,90,60,.9)';ctx.lineWidth=2;ctx.strokeRect(0,-hw,L,hw*2);ctx.restore();}
+ ctx.fillStyle=b.col;ctx.strokeStyle='#3a3020';ctx.lineWidth=3;ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,7);ctx.fill();ctx.stroke();
+ ctx.fillStyle='#cdbb88';ctx.beginPath();ctx.arc(b.x,b.y,b.r*0.55,0,7);ctx.fill();ctx.fillStyle='#ff5a4a';ctx.beginPath();ctx.arc(b.x-9,b.y-4,3,0,7);ctx.arc(b.x+9,b.y-4,3,0,7);ctx.fill();
+ if(b.burn){ctx.strokeStyle='rgba(255,130,50,.85)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(b.x,b.y,b.r+4,0,7);ctx.stroke();}
+ const w=64,hpr=Math.max(0,b.hp/b.maxhp);ctx.fillStyle='#000a';ctx.fillRect(b.x-w/2,b.y-b.r-16,w,6);ctx.fillStyle='#ff4030';ctx.fillRect(b.x-w/2,b.y-b.r-16,w*hpr,6);
+ ctx.fillStyle='#ffd27a';ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.fillText(b.jp,b.x,b.y-b.r-22);}
+function bar(x,y,w,h,r,c){ctx.fillStyle='#000';ctx.strokeStyle='#caa64b';ctx.lineWidth=2;ctx.fillRect(x,y,w,h);ctx.strokeRect(x,y,w,h);ctx.fillStyle=c;ctx.fillRect(x+2,y+2,(w-4)*Math.max(0,r),h-4);}
+function rainbow(x0,x1){const g=ctx.createLinearGradient(x0,0,x1,0);g.addColorStop(0,'#ff5a5a');g.addColorStop(.25,'#ffd24a');g.addColorStop(.5,'#7CFFA0');g.addColorStop(.75,'#36a8ff');g.addColorStop(1,'#ff6fae');return g;}
+function drawMP(x,y,w,h){const eff=P.maxmp+P.expMP,fr=P.mp/eff,br=P.maxmp/eff,iw=w-4,ix=x+2,iy=y+2,ih=h-4;
+ ctx.fillStyle='#000';ctx.strokeStyle='#caa64b';ctx.lineWidth=2;ctx.fillRect(x,y,w,h);ctx.strokeRect(x,y,w,h);ctx.fillStyle='#3b7bd2';ctx.fillRect(ix,iy,iw*Math.min(fr,br),ih);
+ if(P.expMP>0){const zx=ix+iw*br,zw=iw*(1-br),g=rainbow(zx,zx+zw);ctx.globalAlpha=0.22;ctx.fillStyle=g;ctx.fillRect(zx,iy,zw,ih);ctx.globalAlpha=1;if(fr>br){ctx.fillStyle=g;ctx.fillRect(zx,iy,iw*(fr-br),ih);}ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(zx,iy);ctx.lineTo(zx,iy+ih);ctx.stroke();}}
+function drawBuffs(){let bx=14,by=12;ctx.textAlign='left';ctx.fillStyle='#caa64b';ctx.font='bold 11px system-ui';ctx.fillText('強化',bx,by+10);by+=16;
+ buffs.forEach(b=>{ctx.fillStyle='rgba(10,8,6,.8)';ctx.strokeStyle=BCOL[b.kind];ctx.lineWidth=2;ctx.fillRect(bx,by,120,24);ctx.strokeRect(bx,by,120,24);ctx.fillStyle=BCOL[b.kind];ctx.font='bold 11px system-ui';const v=b.kind==='regen'?('+'+Math.round(b.amt*100)+'%/s'):('+'+Math.round(b.amt*100)+'%');ctx.fillText(BLABEL[b.kind]+v+' '+b.t.toFixed(0)+'s',bx+6,by+15);by+=28;});}
+function drawMinimap(){const mw=150,mh=Math.round(mw*WORLD_H/WORLD_W),mx=W-mw-14,my=14,sx=mw/WORLD_W,sy=mh/WORLD_H;
+ ctx.textAlign='right';ctx.fillStyle='#d9c98f';ctx.font='bold 12px system-ui';ctx.fillText(MAP.name,mx+mw,my-3);
+ ctx.fillStyle='rgba(10,16,12,.82)';ctx.strokeStyle='#caa64b';ctx.lineWidth=2;ctx.fillRect(mx,my,mw,mh);ctx.strokeRect(mx,my,mw,mh);
+ ctx.fillStyle=MAP.gpond;for(const p of MAP.ponds)ctx.fillRect(mx+(p.x-p.rx)*sx,my+(p.y-p.ry)*sy,p.rx*2*sx,p.ry*2*sy);
+ for(const pt of MAP.portals){ctx.fillStyle=pt.color;ctx.fillRect(mx+pt.x*sx-2,my+pt.y*sy-2,4,4);}
+ for(const en of enemies){ctx.fillStyle='#fff';ctx.fillRect(mx+en.x*sx-1,my+en.y*sy-1,2,2);}
+ if(boss){ctx.fillStyle='#ff4030';ctx.fillRect(mx+boss.x*sx-2,my+boss.y*sy-2,5,5);}else if(MAP.boss){ctx.fillStyle='#7a3a3a';ctx.fillRect(mx+MAP.bx*sx-2,my+MAP.by*sy-2,5,5);}
+ ctx.fillStyle='#ffd24a';ctx.fillRect(mx+P.x*sx-2,my+P.y*sy-2,4,4);
+ let wtip=null;for(const w of weathers){if(w.map!==MAPID)continue;const wx=mx+w.x*sx,wy=my+w.y*sy,c=WTYPES[w.type].col;
+  ctx.globalAlpha=0.5;ctx.fillStyle=c;ctx.beginPath();ctx.arc(wx,wy,Math.max(4,w.r*sx),0,7);ctx.fill();ctx.globalAlpha=1;
+  ctx.strokeStyle='#223'; ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(wx,wy,6,0,7);ctx.stroke();ctx.strokeStyle=c;ctx.beginPath();ctx.arc(wx,wy,6,-Math.PI/2,-Math.PI/2+7*(w.t/w.dur));ctx.stroke();
+  if(Math.hypot(mouseX-wx,mouseY-wy)<8)wtip=w;}
+ ctx.textAlign='left';
+ if(weathers.some(w=>w.map!==MAPID)){let oy=my+mh+12;ctx.font='9px system-ui';ctx.fillStyle='#9aa';ctx.fillText('他マップの天候:',mx,oy);oy+=12;for(const w of weathers){if(w.map===MAPID)continue;ctx.fillStyle=WTYPES[w.type].col;ctx.fillText('・'+(MAPS[w.map]?MAPS[w.map].name:w.map)+'：'+w.type+'（残'+Math.ceil(w.t/60)+'分）',mx,oy);oy+=12;}}
+ const eh=eliteHere();
+ if(eh){for(const en of enemies)if(en.eliteRec===eh){ctx.fillStyle='#ff3a6a';ctx.fillRect(mx+en.x*sx-2,my+en.y*sy-2,5,5);}
+  let oy=my+mh+(weathers.some(w=>w.map!==MAPID)?12+12*(weathers.filter(w=>w.map!==MAPID).length+1):12);ctx.textAlign='right';ctx.fillStyle='#ff5a8a';ctx.font='bold 13px system-ui';ctx.fillText('⚔ エリート '+eh.jp+' 出現中！',W-14,oy);
+  ctx.font='10px system-ui';ctx.fillStyle='#ffd2a0';ctx.fillText('残り '+Math.floor(eh.t/60)+':'+String(Math.floor(eh.t%60)).padStart(2,'0'),W-14,oy+14);
+  if(eh.t<=60){ctx.fillStyle='#ff8a5a';ctx.font='bold 11px system-ui';ctx.fillText('…もう少しで逃走しそう！',W-14,oy+28);}ctx.textAlign='left';}
+ if(wtip){const T=WTYPES[wtip.type],bw=210,bx=mx-bw-8,by=my+8,L=['天候：'+wtip.type,T.note,'EXP×'+T.expMul+' / gem×'+T.gemMul,'ドロップ×'+T.dropMul+(T.spawnAdd?' / 敵+'+T.spawnAdd:''),'残り '+Math.floor(wtip.t/60)+':'+String(Math.floor(wtip.t%60)).padStart(2,'0')];
+  ctx.fillStyle='rgba(10,12,8,.95)';ctx.strokeStyle=T.col;ctx.lineWidth=2;ctx.fillRect(bx,by,bw,L.length*16+10);ctx.strokeRect(bx,by,bw,L.length*16+10);ctx.font='11px system-ui';for(let i=0;i<L.length;i++){ctx.fillStyle=i===0?T.col:'#dfe6e0';ctx.fillText(L[i],bx+8,by+18+i*16);}}}
+function drawHUD(){ctx.fillStyle='#15110c';ctx.fillRect(0,FIELD_H,W,H-FIELD_H);ctx.fillStyle='#caa64b';ctx.fillRect(0,FIELD_H,W,2);
+ bar(26,FIELD_H+30,330,22,P.hp/P.maxhp,'#d23b3b');drawMP(W-356,FIELD_H+30,330,22);
+ if(bigCD>0){const cx=W-356+13,cy=FIELD_H+30-15,r=11;ctx.fillStyle='rgba(0,0,0,.6)';ctx.beginPath();ctx.arc(cx,cy,r+2,0,7);ctx.fill();ctx.strokeStyle='#3a3450';ctx.lineWidth=4;ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.stroke();ctx.strokeStyle='#b48cff';ctx.beginPath();ctx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+7*(bigCD/10));ctx.stroke();ctx.fillStyle='#e8d8ff';ctx.font='bold 9px system-ui';ctx.textAlign='center';ctx.fillText(Math.ceil(bigCD),cx,cy+3);ctx.fillStyle='#b48cff';ctx.font='8px system-ui';ctx.fillText('大魔法CT',cx+34,cy+3);ctx.textAlign='left';}
+ ctx.font='bold 12px system-ui';ctx.textAlign='left';ctx.fillStyle='#e8a0a0';ctx.fillText('HP',26,FIELD_H+22);ctx.textAlign='right';ctx.fillStyle='#a0c0ff';ctx.fillText('MP',W-26,FIELD_H+22);
+ ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText(fmt(Math.ceil(P.hp))+' / '+fmt(P.maxhp),191,FIELD_H+46);ctx.fillText(fmt(Math.ceil(P.mp))+' / '+fmt(P.maxmp+P.expMP),W-191,FIELD_H+46);
+ if(P.expMP>0){ctx.fillStyle='#ffd27a';ctx.font='10px system-ui';ctx.fillText('拡張MP +'+Math.round(P.expMP)+'（'+Math.max(0,P.expT).toFixed(1)+'s）',W-191,FIELD_H+68);}
+ ctx.fillStyle='#1d160d';ctx.strokeStyle='#caa64b';ctx.lineWidth=3;ctx.beginPath();ctx.arc(W/2,FIELD_H+44,34,0,7);ctx.fill();ctx.stroke();
+ ctx.fillStyle='#ffe08a';ctx.font='bold 20px system-ui';ctx.fillText('Lv.'+P.lv,W/2,FIELD_H+42);ctx.font='10px system-ui';ctx.fillStyle='#caa64b';ctx.fillText('EXP '+fmt(P.exp)+'/'+fmt(P.need)+(P.sp?'  ステP:'+P.sp+'(I)':''),W/2,FIELD_H+58);
+ ctx.fillStyle='#9fe8ff';ctx.font='bold 12px system-ui';ctx.fillText('◆ '+fmt(P.gem)+' gem',W/2,FIELD_H+74);
+ {const cw=weatherAt(P.x,P.y);if(cw){ctx.fillStyle=WTYPES[cw.type].col;ctx.font='bold 11px system-ui';ctx.fillText('☼ '+cw.type+' 効果中！',W/2,FIELD_H+106);}}
+ ctx.fillStyle='#bfe8c0';ctx.font='11px system-ui';ctx.fillText('HP薬:'+P.hpPot+'(1)  MP薬:'+P.mpPot+'(2)',W/2,FIELD_H+90);
+ {ctx.textAlign='left';ctx.font='10px system-ui';let qy=FIELD_H-118;const npcq=npcs.filter(n=>n.q);
+  if(P.quests.length||npcq.length){ctx.fillStyle='#caa64b';ctx.font='bold 10px system-ui';ctx.fillText('― クエスト ―',14,qy);qy+=14;ctx.font='10px system-ui';}
+  for(const q of P.quests){const done=q.count>=q.need;ctx.fillStyle=done?'#9fe07a':'#cfc8a0';ctx.fillText('★'+q.jp+' '+Math.min(q.count,q.need)+'/'+q.need+(done?'（ギルドで受取）':''),14,qy);qy+=12;ctx.fillStyle='#8a96a0';ctx.fillText('  ＠'+questLoc(q.key),14,qy);qy+=14;}
+  for(const n of npcq){const q=n.q,done=q.count>=q.need;ctx.fillStyle=done?'#9fe07a':'#cfc8a0';ctx.fillText('◆'+q.jp+' '+Math.min(q.count,q.need)+'/'+q.need+(done?'（'+n.name+'に報告）':''),14,qy);qy+=12;ctx.fillStyle='#8a96a0';ctx.fillText('  ＠'+questLoc(q.key)+(done?'':' / 依頼主:'+n.name),14,qy);qy+=14;}}
+ ctx.textAlign='center';ctx.fillStyle='#7e8a82';ctx.font='12px system-ui';ctx.fillText('Space：詠唱開始／確定（不成立なら閉じる）・ Esc：中断 ・ I：キャラクター',W/2,FIELD_H+86);
+ if(msgT>0){ctx.textAlign='center';ctx.globalAlpha=Math.min(1,msgT);ctx.fillStyle='#ffe08a';ctx.font='bold 16px system-ui';ctx.fillText(msg,W/2,FIELD_H-12);ctx.globalAlpha=1;}}
+function drawPanel(){clickAreas=[];tipAreas=[];ctx.fillStyle='rgba(6,10,8,.92)';ctx.fillRect(0,0,W,H);
+ const x0=40,y0=20,w=820,h=560;ctx.fillStyle='rgba(20,18,14,.98)';ctx.strokeStyle='#caa64b';ctx.lineWidth=2;ctx.fillRect(x0,y0,w,h);ctx.strokeRect(x0,y0,w,h);
+ ctx.textAlign='left';ctx.fillStyle='#d9c98f';ctx.font='bold 16px system-ui';ctx.fillText('キャラクター',x0+20,y0+28);ctx.fillStyle='#8a9690';ctx.font='12px system-ui';ctx.fillText('I / Esc で閉じる',x0+150,y0+28);
+ let lx=x0+24,ly=y0+62;ctx.fillStyle='#ffe08a';ctx.font='bold 14px system-ui';ctx.fillText('Lv.'+P.lv+'   EXP '+fmt(P.exp)+'/'+fmt(P.need)+'   未割当P: '+P.sp+'   ◆'+fmt(P.gem)+' gem',lx,ly);ly+=30;
+ ctx.font='13px system-ui';for(const s of STN){ctx.fillStyle='#cfd6e0';ctx.fillText(s,lx,ly);ctx.fillStyle='#fff';ctx.fillText(effStat(s)+' (基礎'+P.base[s]+')',lx+64,ly);
+  if(P.sp>0){const bx=lx+210,by=ly-14;ctx.fillStyle='#2a6e3a';ctx.fillRect(bx,by,18,18);ctx.strokeStyle='#6fe07a';ctx.lineWidth=1;ctx.strokeRect(bx,by,18,18);ctx.fillStyle='#dfffe0';ctx.textAlign='center';ctx.fillText('+',bx+9,by+14);ctx.textAlign='left';clickAreas.push({x:bx,y:by,w:18,h:18,fn:()=>{if(P.sp>0){P.base[s]+=5;P.sp--;recompute();}}});}ly+=26;}
+ ly+=8;ctx.fillStyle='#caa64b';ctx.font='bold 13px system-ui';ctx.fillText('詳細ステータス（内部数値）',lx,ly);ly+=18;ctx.font='11px system-ui';ctx.fillStyle='#cfd6e0';
+ const ef=getBuffs(),emax=P.maxmp+P.expMP,detail=[
+  'HP '+fmt(Math.ceil(P.hp))+' / '+fmt(P.maxhp)+'   MP '+fmt(Math.ceil(P.mp))+' / '+fmt(P.maxmp)+'（拡張+'+fmt(Math.round(P.expMP))+' 残'+Math.max(0,P.expT).toFixed(1)+'s）',
+  '魔法攻撃 '+magicAtk().toFixed(2)+'（INT寄与'+(effStat('INT')*1.2).toFixed(1)+' / PIE寄与'+(effStat('PIE')*0.8).toFixed(1)+'）',
+  '会心率 '+(critBase()*100).toFixed(1)+'%  会心倍率 ×1.5   移動速度 '+moveSpeed().toFixed(2),
+  '詠唱速度 ×'+(1/castMult()).toFixed(2)+'（castMult '+castMult().toFixed(3)+'）',
+  'MP自動回復 '+(7+(P.lv-1)*0.5).toFixed(1)+'/s   HP自然回復 '+(P.maxhp*0.02*(P.mp/emax)).toFixed(1)+'/s',
+  '属性ダメ％  火'+playerAffix('火%').toFixed(0)+' 水'+playerAffix('水%').toFixed(0)+' 風'+playerAffix('風%').toFixed(0)+' 土'+playerAffix('土%').toFixed(0),
+  '全ステ％ '+playerAffix('allstat%').toFixed(0)+'  gem％ '+playerAffix('gem%').toFixed(0)+'  EXP％ '+playerAffix('exp%').toFixed(0),
+  '各ステ％ INT'+playerAffix('INT%').toFixed(0)+' VIT'+playerAffix('VIT%').toFixed(0)+' DEX'+playerAffix('DEX%').toFixed(0)+' AGI'+playerAffix('AGI%').toFixed(0)+' PIE'+playerAffix('PIE%').toFixed(0)+' LUK'+playerAffix('LUK%').toFixed(0),
+  'バフ 威力+'+(ef.pow*100).toFixed(0)+'% 会心+'+(ef.crit*100).toFixed(0)+'% 火傷+'+(ef.burn*100).toFixed(0)+'% 防御+'+(ef.def*100).toFixed(0)+'% 再生'+(ef.regen*100).toFixed(1)+'%',
+  'パリィ窓 '+Math.max(0,P.parryT).toFixed(2)+'s  テレポCT '+Math.max(0,P.tpCD).toFixed(1)+'s  無敵 '+Math.max(0,P.invuln).toFixed(1)+'s',
+  'ジュエル '+P.jewels.length+'  HP薬 '+P.hpPot+'  MP薬 '+P.mpPot+'  受注 '+P.quests.length+'/3',
+  '現在地 '+MAP.name+'（mlv'+(MAP.mlv||0)+' / 敵Lv'+mapLv()+'）',
+  '名声レベル '+P.fameLv+'（'+fmt(P.fame)+'/'+fmt(fameNeed(P.fameLv))+'）',
+ ];
+ for(const d of detail){ctx.fillText(d,lx,ly);ly+=16;}
+ let rx=x0+430,ry=y0+62;ctx.fillStyle='#caa64b';ctx.font='bold 14px system-ui';ctx.fillText('装備（クリックで外す）',rx,ry);
+ for(const k of EQKEYS){ry+=28;const it=P.equip[k];ctx.fillStyle='rgba(40,36,28,.9)';ctx.strokeStyle=it?it.col:'#4a4030';ctx.lineWidth=2;ctx.fillRect(rx,ry-15,366,23);ctx.strokeRect(rx,ry-15,366,23);
+  ctx.fillStyle='#9aa';ctx.font='11px system-ui';ctx.fillText(k,rx+6,ry);ctx.fillStyle=it?it.col:'#667';ctx.font='12px system-ui';ctx.fillText(it?(it.name+((it.plus||0)>0?' +'+it.plus:'')):'（なし）',rx+62,ry);if(it){clickAreas.push({x:rx,y:ry-15,w:366,h:23,fn:()=>unequip(k)});tipAreas.push({x:rx,y:ry-15,w:366,h:23,it});}}
+ ry+=40;const tabs=[['equip','装備'],['jewel','ジュエル'],['item','アイテム']];
+ for(let i=0;i<3;i++){const tx=rx+i*92,on=P.invTab===tabs[i][0];ctx.fillStyle=on?'#caa64b':'#3a342a';ctx.fillRect(tx,ry-14,86,22);ctx.fillStyle=on?'#1a160e':'#cfc8a0';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillText(tabs[i][1],tx+43,ry+1);clickAreas.push({x:tx,y:ry-14,w:86,h:22,fn:()=>{P.invTab=tabs[i][0];P.invScroll=0;}});}ctx.textAlign='left';
+ // 行データ構築（スタック）
+ let rows=[];
+ if(P.invTab==='equip'){rows=P.inv.map(it=>({label:'・'+it.name+((it.plus||0)>0?' +'+it.plus:''),col:it.col,it,act:()=>equipItem(it),del:()=>discardItem(it)}));}
+ else if(P.invTab==='jewel'){const g={};for(const j of P.jewels){(g[j.name]=g[j.name]||{j,n:0}).n++;}rows=Object.values(g).map(o=>({label:'・'+o.j.name+'  ★'+(o.j.tier+1)+'/6  ×'+o.n,col:o.j.col,it:o.j}));if(!rows.length)rows=[{label:'（ジュエルなし）装着・合成は宝飾店で',col:'#778'}];}
+ else{rows=[];if(P.hpPot>0)rows.push({label:'・HPポーション ×'+P.hpPot,col:'#7CFFA0',act:()=>usePot('hp'),actLabel:'使用'});if(P.mpPot>0)rows.push({label:'・MPポーション ×'+P.mpPot,col:'#6fd0ff',act:()=>usePot('mp'),actLabel:'使用'});
+  const bg={};for(const b of P.boxes){(bg[b.name]=bg[b.name]||{b,n:0}).n++;}for(const o of Object.values(bg))rows.push({label:'🎁 '+o.b.name+' ×'+o.n,col:'#ffd9a0',act:()=>openBox(o.b),actLabel:'開封'});
+  if(!rows.length)rows=[{label:'（アイテムなし）',col:'#778'}];}
+ // スクロール領域
+ const listY=ry+22,listH=y0+h-listY-12,rowH=19,vis=Math.floor(listH/rowH),maxSc=Math.max(0,rows.length-vis);if(P.invScroll>maxSc)P.invScroll=maxSc;
+ ctx.font='11px system-ui';ctx.fillStyle='#8a9690';ctx.fillText('全'+rows.length+'件'+(maxSc>0?'（ホイールでスクロール '+(P.invScroll+1)+'-'+Math.min(rows.length,P.invScroll+vis)+'）':''),rx,ry+16);
+ for(let i=0;i<vis;i++){const idx=P.invScroll+i,r=rows[idx];if(!r)break;const iy=listY+12+i*rowH;
+  ctx.fillStyle=r.col;ctx.font='11px system-ui';ctx.fillText(r.label,rx,iy);
+  if(r.it)tipAreas.push({x:rx-2,y:iy-12,w:320,h:18,it:r.it});
+  if(r.act){const aw=r.actLabel?40:0;}
+  if(r.act&&r.actLabel){ctx.fillStyle='#2a5a3a';ctx.fillRect(rx+300,iy-12,44,16);ctx.strokeStyle=r.col;ctx.lineWidth=1;ctx.strokeRect(rx+300,iy-12,44,16);ctx.fillStyle='#dfffe0';ctx.fillText(r.actLabel,rx+308,iy);clickAreas.push({x:rx+300,y:iy-12,w:44,h:16,fn:r.act});}
+  else if(r.act){clickAreas.push({x:rx-2,y:iy-12,w:300,h:18,fn:r.act});}
+  if(r.del){ctx.fillStyle='#c44';ctx.fillText('✕',rx+356,iy);clickAreas.push({x:rx+350,y:iy-12,w:18,h:18,fn:r.del});}}
+ if(maxSc>0){const sbH=listH*vis/rows.length,sbY=listY+(listH-sbH)*(P.invScroll/maxSc);ctx.fillStyle='#332b18';ctx.fillRect(rx+372,listY,5,listH);ctx.fillStyle='#caa64b';ctx.fillRect(rx+372,sbY,5,sbH);}
+ renderTips();}
+function drawShop(){clickAreas=[];tipAreas=[];ctx.fillStyle='rgba(6,10,8,.93)';ctx.fillRect(0,0,W,H);
+ const x0=40,y0=20,w=820,h=560;ctx.fillStyle='rgba(20,18,14,.98)';ctx.strokeStyle='#caa64b';ctx.lineWidth=2;ctx.fillRect(x0,y0,w,h);ctx.strokeRect(x0,y0,w,h);
+ ctx.textAlign='left';ctx.fillStyle='#d9c98f';ctx.font='bold 16px system-ui';ctx.fillText({equip:'装備屋',smith:'鍛冶屋',tool:'道具屋',guild:'冒険者ギルド',jewel:'宝飾店'}[P.shop]||'',x0+20,y0+28);
+ ctx.fillStyle='#9fe8ff';ctx.font='bold 13px system-ui';ctx.fillText('◆ '+fmt(P.gem)+' gem',x0+120,y0+28);ctx.fillStyle='#8a9690';ctx.font='12px system-ui';ctx.fillText('Esc / I で閉じる',x0+w-150,y0+28);
+ if(P.shop==='equip'){
+  let lx=x0+24,ly=y0+62;ctx.fillStyle='#caa64b';ctx.font='bold 14px system-ui';ctx.fillText('購入（クリックで購入）',lx,ly);
+  const rc=rerollCost();ctx.fillStyle='#2a6e3a';ctx.fillRect(lx+170,ly-15,150,22);ctx.strokeStyle='#6fe07a';ctx.lineWidth=1;ctx.strokeRect(lx+170,ly-15,150,22);ctx.fillStyle='#dfffe0';ctx.font='11px system-ui';ctx.fillText('品揃え更新 ◆'+fmt(rc),lx+178,ly);clickAreas.push({x:lx+170,y:ly-15,w:150,h:22,fn:reroll});
+  ctx.font='11px system-ui';for(let i=0;i<P.shopStock.length;i++){const it=P.shopStock[i],iy=ly+24+i*22;ctx.fillStyle=it.col;ctx.fillText('・'+itemLabel(it),lx,iy);ctx.fillStyle='#ffd27a';ctx.fillText('◆'+fmt(buyCost(it)),lx+300,iy);clickAreas.push({x:lx,y:iy-13,w:360,h:20,fn:()=>buyItem(it)});tipAreas.push({x:lx,y:iy-13,w:360,h:20,it});}
+  const rs=Math.max(0,Math.ceil((shopResetAt-performance.now())/1000));ctx.fillStyle='#9fd0ff';ctx.font='11px system-ui';ctx.fillText('品揃え＆リロール価格 初期化まで '+Math.floor(rs/60)+':'+String(rs%60).padStart(2,'0'),lx,ly+24+6*22+10);
+  let rx=x0+430,ry=y0+62;ctx.fillStyle='#caa64b';ctx.font='bold 14px system-ui';ctx.fillText('売却（クリックで売却）',rx,ry);ctx.font='11px system-ui';
+  for(let i=0;i<P.inv.length;i++){const it=P.inv[i],iy=ry+24+i*19;if(iy>y0+h-14)break;ctx.fillStyle=it.col;ctx.fillText('・'+itemLabel(it),rx,iy);ctx.fillStyle='#9fe8ff';ctx.fillText('◆'+fmt(itemValueSell(it)),rx+300,iy);clickAreas.push({x:rx,y:iy-12,w:360,h:18,fn:()=>sellItem(it)});tipAreas.push({x:rx,y:iy-12,w:360,h:18,it});}
+ }else if(P.shop==='smith'){
+  let lx=x0+24,ly=y0+62;ctx.fillStyle='#caa64b';ctx.font='bold 14px system-ui';ctx.fillText('強化する装備を選択（[装]=装備中も可）',lx,ly);ctx.font='11px system-ui';
+  const slist=[...EQKEYS.map(k=>P.equip[k]).filter(Boolean),...P.inv];
+  for(let i=0;i<slist.length;i++){const it=slist[i],eq=i<EQKEYS.filter(k=>P.equip[k]).length,iy=ly+22+i*19;if(iy>y0+h-14)break;const sel=P.smithSel===it;if(sel){ctx.fillStyle='rgba(255,210,80,.15)';ctx.fillRect(lx-4,iy-13,372,18);}ctx.fillStyle=it.col;ctx.fillText((sel?'▶':'・')+(eq?'[装]':'')+itemLabel(it),lx,iy);clickAreas.push({x:lx-4,y:iy-13,w:372,h:18,fn:()=>{P.smithSel=it;}});}
+  const rx=x0+430,it=P.smithSel;ctx.fillStyle='#caa64b';ctx.font='bold 14px system-ui';ctx.fillText('強化',rx,y0+62);ctx.font='12px system-ui';
+  if(it){const plus=it.plus||0,succ=Math.max(0.12,0.92-plus*0.09),cost=smithCost(it);let yy=y0+90;
+   ctx.fillStyle=it.col;ctx.fillText(itemLabel(it),rx,yy);yy+=24;
+   ctx.fillStyle='#cfd6e0';ctx.fillText('現在の強化値: +'+plus+'（+1ごとにステ+10%）',rx,yy);yy+=20;
+   ctx.fillStyle='#9fe07a';ctx.fillText('成功率: '+(succ*100).toFixed(0)+'%　費用: ◆'+fmt(cost),rx,yy);yy+=22;
+   ctx.fillStyle='#9aa';ctx.fillText('成功時 → +1:80% / +2:15% / +3:5%',rx,yy);yy+=16;ctx.fillStyle='#c99';ctx.fillText('失敗時 → 不変:30% / -1:50% / リセット:15% / 消失:5%',rx,yy);yy+=24;
+   ctx.fillStyle='#6a3a3a';ctx.fillRect(rx,yy,170,28);ctx.strokeStyle='#ffae5a';ctx.lineWidth=2;ctx.strokeRect(rx,yy,170,28);ctx.fillStyle='#ffe0b0';ctx.font='bold 13px system-ui';ctx.fillText('強化する ◆'+fmt(cost),rx+12,yy+19);clickAreas.push({x:rx,y:yy,w:170,h:28,fn:()=>enhance(it)});}
+  else{ctx.fillStyle='#778';ctx.fillText('左の一覧から装備を選んでください',rx,y0+90);}
+ }else if(P.shop==='tool'){
+  let lx=x0+24,ly=y0+70;ctx.fillStyle='#caa64b';ctx.font='bold 14px system-ui';ctx.fillText('消耗品（クリックで購入 / 使用は 1・2 キー）',lx,ly);ly+=34;ctx.font='12px system-ui';
+  const items=[['hp','HPポーション（HP40%回復）','#7CFFA0',P.hpPot],['mp','MPポーション（MP50%回復）','#6fd0ff',P.mpPot]];
+  for(const [k,label,c,cnt] of items){ctx.fillStyle=c;ctx.fillText('・'+label+'  所持: '+cnt,lx,ly);ctx.fillStyle='#2a5a4a';ctx.fillRect(lx+440,ly-15,150,24);ctx.strokeStyle=c;ctx.lineWidth=1;ctx.strokeRect(lx+440,ly-15,150,24);ctx.fillStyle='#dfffe0';ctx.fillText('購入 ◆'+fmt(potCost(k)),lx+450,ly+2);clickAreas.push({x:lx+440,y:ly-15,w:150,h:24,fn:()=>buyPot(k)});ly+=40;}
+ }else if(P.shop==='guild'){
+  let lx=x0+24,ly=y0+62;ctx.fillStyle='#ffd24a';ctx.font='bold 13px system-ui';ctx.fillText('名声レベル '+P.fameLv+'（'+fmt(P.fame)+'/'+fmt(fameNeed(P.fameLv))+'）',lx,y0+h-12);
+  {const bw=320,bx2=lx+220,fr=Math.min(1,P.fame/fameNeed(P.fameLv));ctx.fillStyle='#332b18';ctx.fillRect(bx2,y0+h-22,bw,12);ctx.fillStyle='#ffd24a';ctx.fillRect(bx2,y0+h-22,bw*fr,12);ctx.strokeStyle='#caa64b';ctx.lineWidth=1;ctx.strokeRect(bx2,y0+h-22,bw,12);ctx.fillStyle='#9aa';ctx.font='9px system-ui';ctx.fillText('クエスト達成で名声UP→ルーン/装備/固有報酬',bx2,y0+h-26);}
+  ctx.fillStyle='#caa64b';ctx.font='bold 14px system-ui';ctx.fillText('依頼ボード（クリックで受注・最大5件）',lx,ly);ctx.font='11px system-ui';
+  for(let i=0;i<(P.questBoard||[]).length;i++){const q=P.questBoard[i],iy=ly+24+i*22;ctx.fillStyle='#e8dcb0';ctx.fillText('・'+q.jp+'×'+q.need+' ＠'+questLoc(q.key)+' → ◆'+fmt(q.gem)+'/'+fmt(q.exp)+'EXP',lx,iy);clickAreas.push({x:lx-4,y:iy-13,w:390,h:19,fn:()=>acceptQuest(q)});}
+  const qleft=Math.max(0,Math.ceil((180000-(performance.now()-P.questBoardAt))/1000)),by2=ly+24+4*22+6;ctx.fillStyle=qleft?'#333':'#2a4e6e';ctx.fillRect(lx,by2,180,22);ctx.strokeStyle='#7fb0e0';ctx.lineWidth=1;ctx.strokeRect(lx,by2,180,22);ctx.fillStyle='#dfeaff';ctx.font='11px system-ui';ctx.fillText(qleft?('更新まで '+Math.floor(qleft/60)+':'+String(qleft%60).padStart(2,'0')):'ボード更新（3分に1回）',lx+10,by2+15);clickAreas.push({x:lx,y:by2,w:180,h:22,fn:refreshBoard});
+  let rx=x0+440,ry=y0+62;ctx.fillStyle='#caa64b';ctx.font='bold 14px system-ui';ctx.fillText('受注中の依頼（達成で報酬 / ✕で取消）',rx,ry);ctx.font='11px system-ui';
+  if(!P.quests.length){ctx.fillStyle='#778';ctx.fillText('受注中の依頼はありません',rx,ry+26);}
+  for(let i=0;i<P.quests.length;i++){const q=P.quests[i],iy=ry+26+i*24,done=q.count>=q.need;ctx.fillStyle=done?'#9fe07a':'#cfd6e0';ctx.fillText((done?'【達成】':'・')+q.jp+'  '+Math.min(q.count,q.need)+'/'+q.need,rx,iy);if(done){ctx.fillStyle='#2a6e3a';ctx.fillRect(rx+250,iy-14,76,20);ctx.strokeStyle='#6fe07a';ctx.strokeRect(rx+250,iy-14,76,20);ctx.fillStyle='#dfffe0';ctx.fillText('報酬受取',rx+258,iy);clickAreas.push({x:rx+250,y:iy-14,w:76,h:20,fn:()=>claimQuest(q)});}ctx.fillStyle='#c44';ctx.fillText('✕',rx+336,iy);clickAreas.push({x:rx+330,y:iy-14,w:18,h:20,fn:()=>cancelQuest(q)});}
+ }else if(P.shop==='jewel'){
+  let lx=x0+24,ly=y0+62;ctx.fillStyle='#caa64b';ctx.font='bold 14px system-ui';ctx.fillText('ジュエル（クリックで選択 / ホバーで候補ステ）',lx,ly);ctx.font='11px system-ui';
+  for(let i=0;i<P.jewels.length;i++){const j=P.jewels[i],iy=ly+22+i*18;if(iy>y0+h-40)break;const sel=P.jewelSel===j;if(sel){ctx.fillStyle='rgba(255,210,80,.15)';ctx.fillRect(lx-4,iy-12,380,16);}ctx.fillStyle=j.col;ctx.fillText((sel?'▶':'・')+j.name+'  ★'+(j.tier+1)+'/6',lx,iy);clickAreas.push({x:lx-4,y:iy-12,w:380,h:16,fn:()=>{P.jewelSel=j;}});tipAreas.push({x:lx-4,y:iy-12,w:380,h:16,it:j});}
+  const cok=P.jewelSel&&P.jewels.filter(x=>P.jewelSel&&x.tier===P.jewelSel.tier&&x.type===P.jewelSel.type).length>=5&&P.jewelSel.tier<5;
+  ctx.fillStyle=cok?'#3a2a5a':'#2a2436';ctx.fillRect(lx,y0+h-34,300,24);ctx.strokeStyle='#c08aff';ctx.lineWidth=1;ctx.strokeRect(lx,y0+h-34,300,24);ctx.fillStyle='#e8d8ff';ctx.fillText('選択中と同種・同レア5個 → 上位へ合成',lx+10,y0+h-18);clickAreas.push({x:lx,y:y0+h-34,w:300,h:24,fn:convertJewels});
+  let rx=x0+440,ry=y0+62;ctx.fillStyle='#caa64b';ctx.font='bold 14px system-ui';ctx.fillText('装着先の装備を選択（不可逆）',rx,ry);ctx.font='11px system-ui';
+  const list=[...EQKEYS.map(k=>P.equip[k]).filter(Boolean),...P.inv];
+  for(let i=0;i<list.length;i++){const it=list[i],iy=ry+24+i*18;if(iy>y0+h-44)break;const sel=P.socketSel===it;if(sel){ctx.fillStyle='rgba(255,122,208,.15)';ctx.fillRect(rx-4,iy-12,360,16);}ctx.fillStyle=it.col;ctx.fillText((sel?'▶':'・')+it.name+((it.plus||0)>0?' +'+it.plus:'')+'  [◆'+(it.socketed||0)+'/'+(it.sockets||0)+']',rx,iy);clickAreas.push({x:rx-4,y:iy-12,w:360,h:16,fn:()=>{P.socketSel=it;}});tipAreas.push({x:rx-4,y:iy-12,w:360,h:16,it});}
+  ctx.fillStyle=(P.jewelSel&&P.socketSel)?'#6e2a5a':'#3a2a36';ctx.fillRect(rx,y0+h-34,200,24);ctx.strokeStyle='#ff7ad0';ctx.lineWidth=2;ctx.strokeRect(rx,y0+h-34,200,24);ctx.fillStyle='#ffd8f0';ctx.fillText('▶ ジュエルを装着する',rx+12,y0+h-18);clickAreas.push({x:rx,y:y0+h-34,w:200,h:24,fn:socketJewel});
+ }
+ if(msgT>0){ctx.textAlign='center';ctx.globalAlpha=Math.min(1,msgT);ctx.fillStyle='#ffe08a';ctx.font='bold 15px system-ui';ctx.fillText(msg,W/2,y0+h-16);ctx.globalAlpha=1;ctx.textAlign='left';}renderTips();}
+const BLAB={pow:'威',crit:'会',burn:'焼',def:'防',regen:'再',mpregen:'M回',spd:'速'};
+function buffDesc(s){if(!s.buffs||!s.buffs.length)return '-';return s.buffs.map(([k,a])=>(BLAB[k]||k)+'+'+(a<1?Math.round(a*100)+'%':a)).join(',');}
+const KINDLAB={bolt:'弾',impact:'着弾爆発',pierce:'貫通',self:'自周囲',meteo:'着弾AoE',front:'前方',fan:'扇形',zone:'設置',aura:'追従周囲',multi:'多段',funnel:'ファンネル',buff:'バフ',heal:'回復',return:'帰還'};
+const RUNE_CATS=[['威力',5],['節約',5],['範囲',5],['収束',5],['飛距離',5],['発動回数',4],['遅延',5],['迅速',5],['バフ量',5],['バフ時間',5],['全体バフ',5],['分裂',3],['変質',4],['確率',4]];
+const RUNE_INFO={'パワー':'威1.3 / MP1.5','エコ':'MP0.9','ギャンブル':'MP0.5-3 威/範/距0.1-3','エコー':'MP2 発動×2','ダブル':'威0.7 MP1.5 発動×2','トリプル':'威0.6 MP2 発動×3','ワイド':'範囲1.5','ヒュージ':'範囲2 MP1.5','ロング':'飛距離1.5','レンジド':'飛距離2 MP1.5','ピアース':'貫通 威1.2','ホーミング':'追尾 威1.3','スプリット':'3方向各0.7','レイト':'詠唱2 威1.5 MP1.2','ディレイ':'詠唱3 威2 MP1.5','タイム':'バフ継続2 威0.5 MP1.5','エクステンド':'バフ継続1.5 威0.5','アフリクト':'状態異常蓄積1.8'};
+function drawMagicList(){clickAreas=[];tipAreas=[];ctx.fillStyle='rgba(6,10,8,.95)';ctx.fillRect(0,0,W,H);
+ const x0=30,y0=16,w=840,h=572;ctx.fillStyle='rgba(20,18,14,.98)';ctx.strokeStyle='#caa64b';ctx.lineWidth=2;ctx.fillRect(x0,y0,w,h);ctx.strokeRect(x0,y0,w,h);
+ ctx.textAlign='left';ctx.fillStyle='#d9c98f';ctx.font='bold 16px system-ui';ctx.fillText('魔法・ルーン一覧',x0+18,y0+26);ctx.fillStyle='#8a9690';ctx.font='12px system-ui';ctx.fillText('M / Esc で閉じる',x0+w-150,y0+26);
+ const tabs=[['spell','呪文'],['rune','ルーン']];for(let i=0;i<tabs.length;i++){const tx=x0+150+i*90,on=P.mlist===tabs[i][0];ctx.fillStyle=on?'#caa64b':'#3a342a';ctx.fillRect(tx,y0+12,80,22);ctx.fillStyle=on?'#1a160e':'#cfc8a0';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillText(tabs[i][1],tx+40,y0+27);clickAreas.push({x:tx,y:y0+12,w:80,h:22,fn:()=>{P.mlist=tabs[i][0];}});}ctx.textAlign='left';
+ if(P.mlist==='spell'){const ELC={火:'#ff7a3a',水:'#3aa8ff',風:'#46e0c0',土:'#c79a5a',特殊:'#9fe8ff'},ELS=['火','水','風','土','特殊'],cw=(w-30)/5;
+  ctx.font='9px system-ui';ctx.fillStyle='#9aa';ctx.fillText('列=属性＋特殊／上:小・下:大（MP順）。一度でも詠唱した魔法のみ名称と詳細（ホバー）が解放される',x0+18,y0+48);
+  for(let ci=0;ci<5;ci++){const el=ELS[ci],col=ELC[el],bx=x0+16+ci*cw;let by=y0+66;
+   ctx.fillStyle=col;ctx.font='bold 13px system-ui';ctx.fillText('■ '+el+(el==='特殊'?'':' 属性'),bx,by);by+=15;
+   const draw=(s)=>{const seen=P.spellsSeen.has(s.name);if(seen){ctx.fillStyle=col;ctx.font='bold 11px system-ui';ctx.fillText(s.name,bx,by);ctx.fillStyle='#8a96a0';ctx.font='8px system-ui';ctx.fillText('['+(KINDLAB[s.kind]||s.kind)+']',bx,by+9);tipAreas.push({x:bx-2,y:by-11,w:cw-14,h:20,it:{spell:s}});}else{ctx.fillStyle='#55504a';ctx.font='11px system-ui';ctx.fillText('未知の魔法',bx,by);}by+=20;};
+   if(el==='特殊'){const sp=SPELLS.filter(s=>!['火','水','風','土'].includes(s.el)).sort((a,b)=>a.cost-b.cost);ctx.fillStyle='#7a8a80';ctx.font='8px system-ui';ctx.fillText('― 特殊 ―',bx,by);by+=11;for(const s of sp)draw(s);}
+   else{const sm=SPELLS.filter(s=>s.el===el&&!s.big).sort((a,b)=>a.cost-b.cost),bg=SPELLS.filter(s=>s.el===el&&s.big).sort((a,b)=>a.cost-b.cost);
+    ctx.fillStyle='#7a8a80';ctx.font='8px system-ui';ctx.fillText('― 小魔法 ―',bx,by);by+=11;for(const s of sm)draw(s);
+    by+=2;ctx.fillStyle='#7a8a80';ctx.font='8px system-ui';ctx.fillText('― 大魔法 ―',bx,by);by+=11;for(const s of bg)draw(s);}}
+ }else{ctx.font='10px system-ui';ctx.fillStyle='#9aa';ctx.fillText('種類別。未開放は「未知のルーン」。モンスター撃破やクエスト報酬で解放（各モンスター固有1種）',x0+18,y0+48);
+  const colW=(w-36)/3;let ci=0,by=y0+66,bx=x0+18,idx=0;const place=h2=>{if(by+h2>y0+h-12){ci++;by=y0+66;bx=x0+18+ci*colW;}};
+  for(const[cat,cnt]of RUNE_CATS){place(16);ctx.fillStyle='#caa64b';ctx.font='bold 11px system-ui';ctx.fillText('【'+cat+'】',bx,by);by+=13;
+   for(let k=0;k<cnt;k++){const r=RUNES[idx++];if(!r)continue;const unl=P.runes.has(r.name);place(12);ctx.font='9px system-ui';ctx.fillStyle=unl?'#cfd6e0':'#55504a';ctx.fillText(unl?('・'+r.name+'（'+r.read[0]+'）'):'・未知のルーン',bx,by);if(unl)tipAreas.push({x:bx-2,y:by-9,w:colW-12,h:12,it:{rune:r}});by+=11;}by+=4;}}
+ if(msgT>0){ctx.textAlign='center';ctx.globalAlpha=Math.min(1,msgT);ctx.fillStyle='#ffe08a';ctx.font='bold 15px system-ui';ctx.fillText(msg,W/2,y0+h-8);ctx.globalAlpha=1;ctx.textAlign='left';}renderTips();}
+function drawTooltip(it){let title,col,lines=[];
+ if(it.rune){const r=it.rune;title=r.name+'（'+r.read[0]+'）';col='#caa64b';lines.push('効果: '+(r.info||'-'));lines.push('呪文の前に続けて唱える（MPは乗算）');
+ }else if(it.spell){const s=it.spell,ct=((s.big?1.6:0.3+s.cost*0.025))*castMult();title=s.name+'（'+s.read[0]+'）';col=s.color||'#cfd6e0';
+  lines.push('属性 '+s.el+' ／ '+(s.big?'大魔法':'小魔法')+' ／ 種別 '+(KINDLAB[s.kind]||s.kind));
+  lines.push('MP '+s.cost+'   威力 '+(s.power||'-')+'   詠唱 '+ct.toFixed(1)+'s');
+  if(s.heal)lines.push('回復 '+Math.round(s.heal*100)+'%');
+  if(s.radius)lines.push('範囲 '+s.radius);if(s.splash)lines.push('爆発範囲 '+s.splash);if(s.fan)lines.push('扇角 '+s.fan.toFixed(2));
+  if(s.buffs&&s.buffs.length)lines.push('バフ '+buffDesc(s));
+ }else if(it.jewel){const tp=JTYPES[it.type];title=it.name;col=it.col;lines.push('種類 '+tp.n+' ／ レアリティ ★'+(it.tier+1)+'/6');lines.push('装着で下記からランダム確定（不可逆）:');
+  for(const k of tp.affs){const a=AFFIXMAP[k],r=jewelRange(it,k);lines.push('  ・'+a.n+' +'+r[0]+'〜'+r[1]+'%');}
+  lines.push('同種・同レアを5個で上位へ合成可');
+ }else{title=it.name+((it.plus||0)>0?' +'+it.plus:'');col=it.col;lines.push('レア度 '+it.rar.n+' / Lv'+(it.lv||1)+' / '+it.slot+((it.plus||0)>0?'  強化+'+it.plus:''));
+  for(const [k,v] of Object.entries(it.stats||{}))lines.push('  '+k+' +'+Math.round(v*(1+0.1*(it.plus||0))));
+  for(const [k,v] of Object.entries(it.affixes||{}))lines.push('  '+(AFFIXMAP[k]?AFFIXMAP[k].n:k)+' +'+Math.round(v*(1+0.1*(it.plus||0)))+'%');
+  if(it.sockets)lines.push('ソケット '+(it.socketed||0)+'/'+it.sockets);
+  lines.push('売値 ◆'+fmt(itemValue(it)));}
+ ctx.font='11px system-ui';let wmax=ctx.measureText(title).width;for(const l of lines)wmax=Math.max(wmax,ctx.measureText(l).width);
+ const bw=wmax+20,bh=18+lines.length*14+8;let tx=Math.min(mouseX+16,W-bw-6),ty=Math.min(mouseY+12,H-bh-6);
+ ctx.fillStyle='rgba(10,8,6,.97)';ctx.strokeStyle=col;ctx.lineWidth=2;ctx.fillRect(tx,ty,bw,bh);ctx.strokeRect(tx,ty,bw,bh);
+ ctx.fillStyle=col;ctx.font='bold 12px system-ui';ctx.fillText(title,tx+10,ty+16);ctx.font='11px system-ui';ctx.fillStyle='#cfd6e0';let yy=ty+32;for(const l of lines){ctx.fillText(l,tx+10,yy);yy+=14;}}
+function renderTips(){for(const t of tipAreas)if(mouseX>=t.x&&mouseX<=t.x+t.w&&mouseY>=t.y&&mouseY<=t.y+t.h){drawTooltip(t.it);return;}}
+
+function render(){const cx=P.x-W/2,cy=P.y-FIELD_H/2,sx=shake>0?(Math.random()-.5)*shake:0,sy=shake>0?(Math.random()-.5)*shake:0;
+ ctx.fillStyle='#0c1410';ctx.fillRect(0,0,W,H);ctx.save();ctx.translate(-cx+sx,-cy+sy);drawWorld(cx,cy);drawWeatherFx();
+ for(const f of fx){ctx.globalAlpha=Math.min(1,f.life*2);ctx.strokeStyle=f.col;ctx.lineWidth=3;ctx.beginPath();if(f.a0!==undefined){ctx.moveTo(f.x,f.y);ctx.arc(f.x,f.y,f.r,f.a0,f.a1);ctx.closePath();ctx.fillStyle=f.col;ctx.globalAlpha=Math.min(0.4,f.life);ctx.fill();ctx.globalAlpha=Math.min(1,f.life*2);ctx.stroke();}else{ctx.arc(f.x,f.y,f.r,0,7);ctx.stroke();}ctx.globalAlpha=1;}
+ for(const p of parts){ctx.globalAlpha=Math.min(1,p.life*2.2);ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();ctx.globalAlpha=1;}
+ for(const z of zones){ctx.globalAlpha=0.16+0.1*Math.sin(performance.now()/120);ctx.fillStyle=z.color;ctx.beginPath();ctx.arc(z.x,z.y,z.r,0,7);ctx.fill();ctx.globalAlpha=0.5;ctx.strokeStyle=z.color;ctx.lineWidth=2;ctx.stroke();ctx.globalAlpha=1;}
+ drawPredict();
+ for(const en of enemies)drawEnemy(en);if(boss)drawBoss(boss);
+ for(const f of funnels){ctx.fillStyle=f.color;ctx.shadowColor=f.color;ctx.shadowBlur=8;ctx.beginPath();ctx.arc(f.x,f.y,6,0,7);ctx.fill();ctx.shadowBlur=0;}
+ for(const es of eshots){ctx.fillStyle=es.col;ctx.shadowColor=es.col;ctx.shadowBlur=8;ctx.beginPath();ctx.arc(es.x,es.y,es.r,0,7);ctx.fill();ctx.shadowBlur=0;}
+ for(const sh of shots){ctx.fillStyle=sh.color;ctx.shadowColor=sh.color;ctx.shadowBlur=8;ctx.beginPath();ctx.arc(sh.x,sh.y,sh.r,0,7);ctx.fill();ctx.shadowBlur=0;}
+ drawMage();for(const f of floats){ctx.globalAlpha=Math.min(1,f.life*1.4);ctx.fillStyle=f.col;ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.fillText(f.txt,f.x,f.y);ctx.globalAlpha=1;}
+ ctx.restore();drawBuffs();drawMinimap();drawHUD();if(P.menu)drawPanel();if(P.shop)drawShop();if(P.mlist)drawMagicList();if(P.talkNpc)drawTalk();}
+function drawWeatherFx(){const tm=performance.now()/1000;for(const w of weathers){if(w.map!==MAPID)continue;const c=WTYPES[w.type].col;
+  const g=ctx.createRadialGradient(w.x,w.y,w.r*0.2,w.x,w.y,w.r);g.addColorStop(0,c+'33');g.addColorStop(1,c+'00');ctx.fillStyle=g;ctx.beginPath();ctx.arc(w.x,w.y,w.r,0,7);ctx.fill();
+  ctx.strokeStyle=c+'88';ctx.lineWidth=2;ctx.stroke();
+  for(let i=0;i<26;i++){const a=i*2.39+tm*(w.type==='マナ嵐'?2.2:0.5),rr=((i*53+tm*60*(w.type==='宝物雨'?3:1))%w.r),px=w.x+Math.cos(a)*rr,py=w.y+Math.sin(a)*rr+(w.type==='宝物雨'?((tm*120+i*40)%w.r):0);ctx.globalAlpha=0.5;ctx.fillStyle=c;ctx.beginPath();ctx.arc(px,py,w.type==='宝物雨'?2.4:1.8,0,7);ctx.fill();ctx.globalAlpha=1;}
+  ctx.fillStyle=c;ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillText('☼ '+w.type,w.x,w.y-w.r-8);}}
+function drawPredict(){for(const c of P.channels){const s=c.spell,m=c.mod||{radiusMul:1,distMul:1},big=!!s.big,rr=big?1+(m.radiusMul-1)*2:m.radiusMul;ctx.strokeStyle='rgba(90,170,255,.7)';ctx.fillStyle='rgba(90,170,255,.14)';ctx.lineWidth=2;
+  if(s.kind==='meteo'||s.kind==='zone'){const r=(s.radius||90)*rr;ctx.beginPath();ctx.arc(c.tx,c.ty,r,0,7);ctx.fill();ctx.stroke();}
+  else if(s.kind==='self'||s.kind==='aura'){const r=(s.radius||110)*rr;ctx.beginPath();ctx.arc(P.x,P.y,r,0,7);ctx.fill();ctx.stroke();}
+  else if(s.kind==='front'||s.kind==='fan'){const rad=(s.radius||140)*rr,half=s.kind==='fan'?(s.fan||0.6):0.45;ctx.beginPath();ctx.moveTo(P.x,P.y);ctx.arc(P.x,P.y,rad,c.aim-half,c.aim+half);ctx.closePath();ctx.fill();ctx.stroke();}
+  else if(s.kind==='funnel'){ctx.beginPath();ctx.arc(P.x,P.y,(s.dist||72),0,7);ctx.stroke();}
+  else{const len=440*(m.distMul||1);ctx.beginPath();ctx.moveTo(P.x,P.y);ctx.lineTo(P.x+Math.cos(c.aim)*len,P.y+Math.sin(c.aim)*len);ctx.stroke();ctx.beginPath();ctx.arc(c.tx,c.ty,8,0,7);ctx.stroke();}}}
+document.getElementById('ref').innerHTML='<b>M</b> キーで魔法・ルーン一覧を表示　／　属性相性: 火→風→土→水→火';
+function loop(now){let dt=(now-last)/1000;last=now;if(dt>0.05)dt=0.05;update(dt);render();requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
