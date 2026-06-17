@@ -350,11 +350,11 @@ function castMult(){return 1/(1+effStat('DEX')*0.025);}
 function recompute(){const hpR=P.maxhp?P.hp/P.maxhp:1,mpR=P.maxmp?P.mp/P.maxmp:1;
  P.maxhp=Math.round(90+effStat('VIT')*7+(P.lv-1)*8);P.maxmp=Math.round(20+effStat('PIE')*3+(P.lv-1)*8);
  P.hp=Math.min(P.maxhp,Math.round(P.maxhp*hpR));P.mp=Math.min(P.maxmp,Math.round(P.maxmp*mpR));}
-const SAVE_COOKIE='amc_save_v1',SAVE_VERSION=3,SAVE_AUTOSAVE_MS=60000;
+const SAVE_COOKIE='amc_save_v1',SAVE_VERSION=4,SAVE_AUTOSAVE_MS=60000;
 function packItem(it){return it?[it.name,it.slot,it.rar&&it.rar.k,it.stats||{},it.affixes||{},it.lv||1,it.plus||0,it.sockets||0,it.socketed||0,it.col||'']:null;}
 function unpackItem(a){if(!a)return null;const rar=RAR.find(r=>r.k===a[2])||RAR[0];return{name:a[0],slot:a[1],rar,stats:a[3]||{},affixes:a[4]||{},lv:a[5]||1,plus:a[6]||0,sockets:a[7]||0,socketed:a[8]||0,col:a[9]||rar.col};}
 function packSave(){const eq={};for(const k of EQKEYS)eq[k]=packItem(P.equip[k]);return{v:SAVE_VERSION,n:P.name,m:MAPID,x:Math.round(P.x),y:Math.round(P.y),lv:P.lv,ex:P.exp,ne:P.need,sp:P.sp,g:P.gem,bk:P.bank||0,b:P.base,hp:Math.round(P.hp),mp:Math.round(P.mp),hpp:P.hpPot,mpp:P.mpPot,fa:P.fame,fl:P.fameLv,ls:P.lastTown,eq,iv:P.inv.map(packItem),jw:P.jewels.map(j=>[j.tier,j.type]),qu:P.quests.map(q=>[q.key,q.jp,q.need,q.count,q.gem,q.exp]),bx:P.boxes.map(b=>[b.eliteBox?1:0,b.key,b.npc,b.name]),ru:[...P.runes],ss:[...P.spellsSeen]};}
-function migrateSave(d){if(!d||typeof d!=='object')return null;if(!d.v)d.v=1;if(d.v===1){d.bk=d.bk||0;d.v=2;}if(d.v===2){d.ne=Math.max(120,Math.round((d.ne||40)*3));d.v=3;}if(d.v!==SAVE_VERSION)return null;d.g=Math.max(0,Math.round(d.g||0));d.bk=Math.max(0,Math.round(d.bk||0));d.m=MAPS[d.m]?d.m:'town';d.ls=MAPS[d.ls]?d.ls:'town';d.x=Number.isFinite(d.x)?d.x:WORLD_W/2;d.y=Number.isFinite(d.y)?d.y:WORLD_H/2;d.iv=Array.isArray(d.iv)?d.iv:[];d.jw=Array.isArray(d.jw)?d.jw:[];d.qu=Array.isArray(d.qu)?d.qu:[];d.bx=Array.isArray(d.bx)?d.bx:[];d.ru=Array.isArray(d.ru)&&d.ru.length?d.ru:BASIC_RUNES.slice();d.ss=Array.isArray(d.ss)?d.ss:[];return d;}
+function migrateSave(d){if(!d||typeof d!=='object')return null;if(!d.v)d.v=1;if(d.v===1){d.bk=d.bk||0;d.v=2;}if(d.v===2){d.ne=Math.max(120,Math.round((d.ne||40)*3));d.v=3;}if(d.v===3){d.ne=Math.max(80,Math.round((d.ne||120)*2/3));d.v=4;}if(d.v!==SAVE_VERSION)return null;d.g=Math.max(0,Math.round(d.g||0));d.bk=Math.max(0,Math.round(d.bk||0));d.m=MAPS[d.m]?d.m:'town';d.ls=MAPS[d.ls]?d.ls:'town';d.x=Number.isFinite(d.x)?d.x:WORLD_W/2;d.y=Number.isFinite(d.y)?d.y:WORLD_H/2;d.iv=Array.isArray(d.iv)?d.iv:[];d.jw=Array.isArray(d.jw)?d.jw:[];d.qu=Array.isArray(d.qu)?d.qu:[];d.bx=Array.isArray(d.bx)?d.bx:[];d.ru=Array.isArray(d.ru)&&d.ru.length?d.ru:BASIC_RUNES.slice();d.ss=Array.isArray(d.ss)?d.ss:[];return d;}
 function applySave(d,quiet){d=migrateSave(d);if(!d)throw new Error('bad save');P.name=(d.n||'Player').slice(0,16);localStorage.setItem('amc_player_name',P.name);P.lv=d.lv||1;P.exp=d.ex||0;P.need=d.ne||40;P.sp=d.sp||0;P.gem=d.g||0;P.bank=d.bk||0;P.base={...P.base,...(d.b||{})};P.hpPot=d.hpp||0;P.mpPot=d.mpp||0;P.fame=d.fa||0;P.fameLv=d.fl||1;P.lastTown=d.ls||'town';P.inv=(d.iv||[]).map(unpackItem).filter(Boolean);for(const k of EQKEYS)P.equip[k]=unpackItem(d.eq&&d.eq[k]);P.jewels=(d.jw||[]).map(j=>({jewel:true,tier:j[0]||0,type:j[1]||0,name:JRAR[j[0]||0]+JTYPES[j[1]||0].n,col:JTYPES[j[1]||0].col}));P.quests=(d.qu||[]).map(q=>({key:q[0],jp:q[1],need:q[2],count:q[3],gem:q[4],exp:q[5],accepted:true,claimed:false}));P.boxes=(d.bx||[]).map(b=>b[0]?{eliteBox:true,key:b[1],name:b[3]}:{box:true,npc:b[2],name:b[3]});P.runes=new Set(d.ru&&d.ru.length?d.ru:BASIC_RUNES);P.spellsSeen=new Set(d.ss||[]);if(!P.spellsSeen.size)unlockBasicSpells();else P.spellsSeen.add('\u30ea\u30b6\u30ec\u30af\u30b7\u30e7\u30f3');recompute();P.hp=Math.max(1,Math.min(P.maxhp,d.hp||P.maxhp));P.mp=Math.max(0,Math.min(P.maxmp,d.mp||P.maxmp));P.downT=0;P.menu=false;P.saveMenu=false;P.shop=null;P.mlist=null;P.talkNpc=null;switchMap(MAPS[d.m]?d.m:'town',Math.max(P.r,Math.min(WORLD_W-P.r,d.x||WORLD_W/2)),Math.max(P.r,Math.min(WORLD_H-P.r,d.y||WORLD_H/2)));P.hp=Math.max(1,Math.min(P.maxhp,d.hp||P.maxhp));P.mp=Math.max(0,Math.min(P.maxmp,d.mp||P.maxmp));if(!quiet){flash('Loaded');se('ui');}}
 function encSave(d){const s=JSON.stringify(d),u=new TextEncoder().encode(s);let b='';for(let i=0;i<u.length;i++)b+=String.fromCharCode(u[i]);return btoa(b);}
 function decSave(s){const b=atob((s||'').trim()),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return JSON.parse(new TextDecoder().decode(u));}
@@ -447,14 +447,14 @@ function enhance(it){const c=smithCost(it);if(P.gem<c){flash('gem不足（必要
 
 const EXP_DUR=18;
 [SPELLS,RUNES,ET,RAR,AFFIXES].forEach(o=>{try{Object.freeze(o);o.forEach&&o.forEach(x=>x&&typeof x==='object'&&Object.freeze(x));}catch(e){}});
-const P={name:(localStorage.getItem('amc_player_name')||'Player').slice(0,16),nameEdit:false,say:'',sayT:0,x:WORLD_W/2,y:WORLD_H/2,r:14,face:{x:0,y:1},hp:1,maxhp:1,mp:1,maxmp:1,expMP:0,expT:0,lv:1,exp:0,need:120,
+const P={name:(localStorage.getItem('amc_player_name')||'Player').slice(0,16),nameEdit:false,say:'',sayT:0,x:WORLD_W/2,y:WORLD_H/2,r:14,face:{x:0,y:1},hp:1,maxhp:1,mp:1,maxmp:1,expMP:0,expT:0,lv:1,exp:0,need:80,
  base:{DEX:6,AGI:6,INT:12,PIE:8,VIT:10,LUK:5},sp:0,gem:80,bank:0,equip:{武器:null,頭:null,胴:null,脚:null,装飾1:null,装飾2:null},inv:[],
  shop:null,shopStock:[],smithSel:null,facLock:false,rerollMul:1,parryT:0,tpCD:0,
  hpPot:1,mpPot:1,jewels:[],quests:[],questBoard:null,questBoardAt:0,jewelSel:null,socketSel:null,talkNpc:null,mlist:null,
  runes:new Set(),boxes:[],spellsSeen:new Set(),lastTown:'town',fame:0,fameLv:1,invTab:'equip',invScroll:0,
  casting:false,menu:false,saveMenu:false,channels:[],kana:'',pend:'',invuln:0,downT:0,downMap:'',downX:0,downY:0};
 recompute();P.hp=P.maxhp;P.mp=P.maxmp;P.inv.push(genItem(1,false,'R'),genItem(1,false,'R'));
-let enemies=[],demons=[],shots=[],eshots=[],floats=[],fx=[],parts=[],zones=[],funnels=[],pending=[],dummy=null,msg='',msgT=0,shake=0,boss=null,bossCD=3,bigCD=0,demonCD=75,clickAreas=[],tipAreas=[],mouseX=0,mouseY=0,shopResetAt=performance.now()+600000,lastAutoSave=performance.now(),saveBusyT=0,saveOkT=0,saveErrT=0;const held={},buffs=new Map();
+let enemies=[],demons=[],shots=[],eshots=[],floats=[],fx=[],parts=[],zones=[],funnels=[],pending=[],dummy=null,msg='',msgT=0,shake=0,boss=null,bossCD=3,bigCD=0,demonCD=75,clickAreas=[],tipAreas=[],mouseX=0,mouseY=0,shopResetAt=performance.now()+600000,lastAutoSave=performance.now(),saveBusyT=0,saveOkT=0,saveErrT=0;const held={},buffs=new Map(),bosses=new Map(),bossTimers=new Map();
 const MP_MAX=4,MP_URL='https://bbpdphmztyzznxyphprf.supabase.co',MP_KEY='sb_publishable_T6awXv8PgWgF_e9LKhFzBQ_AcS00gRe',MP_ICE=[{urls:'stun:stun.l.google.com:19302'}];
 function mpPeerId(){try{let id=localStorage.getItem('amc_mp_peer_id');if(!id){id='p'+Math.random().toString(36).slice(2,10);localStorage.setItem('amc_mp_peer_id',id);}return id;}catch(e){return'p'+Math.random().toString(36).slice(2,10);}}
 const MP={enabled:false,isHost:false,room:'',peerId:mpPeerId(),hostId:null,channel:null,supabase:null,peers:new Map(),players:new Map(),seen:new Set(),sendT:0,stateT:0,startedAt:0,status:'off'};
@@ -486,26 +486,29 @@ function mpSetupDc(p,dc){p.dc=dc;dc.onopen=()=>{p.open=true;p.lostAt=0;mpStatus(
 function mpSendTo(id,msg){const p=MP.peers.get(id);if(!p||!p.open||!p.dc||p.dc.readyState!=='open')return;if((p.dc.bufferedAmount||0)>262144)return;try{p.dc.send(JSON.stringify(msg));}catch(e){mpMarkLost(p);}}
 function mpSendAll(msg,skip){for(const id of MP.peers.keys())if(id!==skip)mpSendTo(id,msg);}
 function mpSend(msg){if(!MP.enabled)return;msg.from=MP.peerId;msg.sent=performance.now();if(MP.isHost)mpSendAll(msg);else if(MP.hostId)mpSendTo(MP.hostId,msg);}
+function mpSendHurt(id,dmg){if(MP.enabled&&MP.isHost)mpSendTo(id,{type:'hurt',from:MP.peerId,map:MAPID,dmg});}
 function mpTouchPlayer(msg){if(!msg||!msg.from)return;const old=MP.players.get(msg.from)||{};MP.players.set(msg.from,{...old,from:msg.from,map:msg.map||old.map||MAPID,x:Math.round(msg.x==null?old.x||0:msg.x),y:Math.round(msg.y==null?old.y||0:msg.y),hp:old.hp||1,maxhp:old.maxhp||1,face:msg.face||old.face||{x:0,y:1},name:old.name||('P'+String(msg.from).slice(-3)),typing:'',seen:performance.now()});}
 function mpReceive(msg,from){if(!msg||msg.from===MP.peerId)return;if(msg.eid){if(MP.seen.has(msg.eid))return;MP.seen.add(msg.eid);if(MP.seen.size>256)MP.seen.clear();}
  if(msg.type==='player'){msg.seen=performance.now();MP.players.set(msg.from,msg);if(MP.isHost)mpSendAll(msg,from);}
  else if(msg.type==='spell'){mpTouchPlayer(msg);mpApplyRemoteSpell(msg);if(MP.isHost){mpSendAll(msg,from);mpSyncHostState(true);}}
+ else if(msg.type==='hurt'&&!MP.isHost&&msg.map===MAPID)hurtPlayer(msg.dmg||1);
  else if(msg.type==='bossState'&&!MP.isHost)mpApplyBossState(msg);
  else if(msg.type==='eliteState'&&!MP.isHost)mpApplyEliteState(msg);
  else if(msg.type==='demonState'&&!MP.isHost)mpApplyDemonState(msg);}
 function mpLocalPlayer(){return{type:'player',from:MP.peerId,name:(P.name||'Player').slice(0,16),map:MAPID,x:Math.round(P.x),y:Math.round(P.y),hp:Math.round(P.hp),maxhp:P.maxhp,face:{x:P.face.x,y:P.face.y},lv:P.lv,down:P.downT>0,downT:Math.max(0,P.downT),typing:(P.casting?(P.kana+P.pend):'').slice(0,32),speech:(P.sayT>0?P.say:'').slice(0,32)};}
 function mpUpdate(dt){if(!MP.enabled)return;MP.sendT+=dt;MP.stateT+=dt;if(MP.sendT>0.08){MP.sendT=0;mpSend(mpLocalPlayer());}if(MP.isHost&&MP.stateT>0.2){MP.stateT=0;mpSyncHostState(false);}const now=performance.now();for(const [id,p]of MP.players)if(now-(p.seen||0)>20000)MP.players.delete(id);for(const [id,p]of MP.peers)if(p.lostAt&&now-p.lostAt>12000)mpClosePeer(id);}
-function mpBossSnapshot(force){return{type:'bossState',from:MP.peerId,map:MAPID,exists:!!boss,force:!!force,boss:boss?{jp:boss.jp,el:boss.el,x:boss.x,y:boss.y,r:boss.r,col:boss.col,enLv:boss.enLv,mega:!!boss.mega,fixedDrop:!!boss.fixedDrop,hp:boss.hp,maxhp:boss.maxhp,def:boss.def,atk:boss.atk,spd:boss.spd,exp:boss.exp,state:boss.state,t:boss.t,burn:boss.burn,bt:boss.bt,slow:boss.slow,stun:boss.stun,shots:boss.shots,fireT:boss.fireT,tx:boss.tx,ty:boss.ty,trad:boss.trad,cvx:boss.cvx,cvy:boss.cvy,aim:boss.aim,fan:boss.fan}:null};}
+function bossWire(b){return{map:b.map||MAPID,jp:b.jp,el:b.el,x:b.x,y:b.y,r:b.r,col:b.col,enLv:b.enLv,mega:!!b.mega,fixedDrop:!!b.fixedDrop,hp:b.hp,maxhp:b.maxhp,def:b.def,atk:b.atk,spd:b.spd,exp:b.exp,state:b.state,t:b.t,burn:b.burn,bt:b.bt,slow:b.slow,stun:b.stun,shots:b.shots,fireT:b.fireT,tx:b.tx,ty:b.ty,trad:b.trad,cvx:b.cvx,cvy:b.cvy,aim:b.aim,fan:b.fan};}
+function mpBossSnapshot(force){return{type:'bossState',from:MP.peerId,force:!!force,list:Array.from(bosses.values()).map(bossWire)};}
 function mpEliteSnapshot(){return{type:'eliteState',from:MP.peerId,map:MAPID,list:elites.map(r=>{const en=enemies.find(e=>e.eliteRec===r);return{map:r.map,key:r.key,jp:r.jp,t:r.t,hp:en?en.hp:r.hp,maxhp:en?en.maxhp:null,x:en&&en.x,y:en&&en.y,state:en&&en.state,st:en&&en.st,active:!!en};})};}
 function mpDemonSnapshot(){return{type:'demonState',from:MP.peerId,list:demons.map(d=>({id:d.id,map:d.map,jp:d.jp,x:d.x,y:d.y,r:d.r,col:d.col,hp:d.hp,maxhp:d.maxhp,atk:d.atk,enLv:d.enLv,state:d.state,t:d.t,castT:d.castT,spell:d.spell&&d.spell.name,say:d.say,sayT:d.sayT,active:d.hp>0}))};}
 function mpSyncHostState(force){if(!MP.enabled||!MP.isHost)return;mpSendAll(mpBossSnapshot(force));mpSendAll(mpEliteSnapshot());mpSendAll(mpDemonSnapshot());}
 function rewardBossKill(b){if(!b||b.rewarded)return;b.rewarded=true;gainGem(Math.round((b.exp||0)*0.8),b.x,b.y);tryDrop(b.x,b.y,true);gainExp((b.exp||0)*expMul(b.enLv)*wmul(b.x,b.y,"expMul"));flash((b.jp||'ボス')+' 撃破！');}
 function rewardEliteKill(en){if(!en||en.rewarded)return;en.rewarded=true;gainGem(Math.max(1,Math.round(en.exp*0.5)),en.x,en.y);P.boxes.push({eliteBox:true,key:en.key,name:ET[en.key].jp+'ボックス'});gainExp(en.exp*expMul(en.enLv)*wmul(en.x,en.y,"expMul"));flash('エリート '+ET[en.key].jp+' 撃破！');}
-function mpApplyBossState(s){if(s.map!==MAPID){if(boss&&boss.mpRemote)boss=null;return;}if(!s.exists){if(boss&&boss.mpRemote)rewardBossKill(boss);boss=null;return;}boss=Object.assign(boss||{},s.boss,{mpRemote:true});}
+function mpApplyBossState(s){const old=new Map(bosses);bosses.clear();for(const b of s.list||[]){bosses.set(b.map,Object.assign({},b,{mpRemote:true}));}for(const [id,b]of old)if(!bosses.has(id)&&b.mpRemote&&id===MAPID)rewardBossKill(b);boss=bosses.get(MAPID)||null;}
 function mpApplyEliteState(s){const old=enemies.filter(e=>e.isElite);enemies=enemies.filter(e=>!e.isElite);elites=(s.list||[]).map(r=>({map:r.map,key:r.key,jp:r.jp,t:r.t,hp:r.hp}));for(const en of old){const alive=(s.list||[]).some(r=>r.active&&r.map===MAPID&&r.key===en.key);if(!alive)rewardEliteKill(en);}for(const r of s.list||[]){if(!r.active||r.map!==MAPID||!ET[r.key])continue;const rec=elites.find(e=>e.key===r.key&&e.map===r.map);spawnEliteEnemy(rec);const en=enemies.find(e=>e.eliteRec===rec);if(en){en.x=r.x;en.y=r.y;en.hp=r.hp;en.maxhp=r.maxhp||en.maxhp;en.state=r.state||en.state;en.st=r.st||0;}}}
 function mpSendSpell(s,m,cost,aim,tgt,base,radMul){if(!MP.enabled)return;mpSend(mpLocalPlayer());const eid=MP.peerId+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6),center=['self','aura','funnel','heal','buff'].includes(s.kind);const tx=center?P.x:(tgt?tgt.x:P.x+Math.cos(aim||0)*220),ty=center?P.y:(tgt?tgt.y:P.y+Math.sin(aim||0)*220);const msg={type:'spell',eid,from:MP.peerId,map:MAPID,spell:s.name,kind:s.kind,el:s.el,color:s.color,big:!!s.big,x:P.x,y:P.y,face:{x:P.face.x,y:P.face.y},aim,tx,ty,radius:(s.radius||s.splash||90)*(radMul||1),power:Math.max(1,Math.round(base||magicAtk()*Math.max(0.5,s.power||1))),cost:cost||0};MP.seen.add(eid);mpSend(msg);mpSend(mpLocalPlayer());MP.sendT=0;}
 function mpLineDist(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,l=dx*dx+dy*dy||1,t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/l)),x=ax+dx*t,y=ay+dy*t;return Math.hypot(px-x,py-y);}
-function mpApplyRemoteSpell(m){if(m.map!==MAPID)return;if(m.kind==='resurrect'&&P.downT>0){reviveHere();return;}const s=SPELLS.find(x=>x.name===m.spell)||m,rad=m.radius||90,col=m.color||'#9fe8ff';burst(m.x,m.y,col,m.big?18:8,m.big?5:3);fx.push({x:m.tx,y:m.ty,r:10,maxr:rad,col,life:m.big?.65:.38,el:m.el,area:true,spark:true,seed:performance.now()%97});if(m.big)shake=Math.max(shake,12);
+function mpApplyRemoteSpell(m){if(m.map!==MAPID)return;if(m.kind==='resurrect'&&P.downT>0){reviveHere();return;}const s=SPELLS.find(x=>x.name===m.spell)||m,rad=m.radius||90,col=m.color||'#9fe8ff';if(m.kind==='heal'){const amt=Math.round(P.maxhp*(s.heal||0.2));P.hp=Math.min(P.maxhp,P.hp+amt);floats.push({x:P.x,y:P.y-20,txt:'+'+fmt(amt),col:col,life:1});burst(P.x,P.y,col,12,3);return;}burst(m.x,m.y,col,m.big?18:8,m.big?5:3);fx.push({x:m.tx,y:m.ty,r:10,maxr:rad,col,life:m.big?.65:.38,el:m.el,area:true,spark:true,seed:performance.now()%97});if(m.big)shake=Math.max(shake,12);
  if(!MP.isHost)return;const ts=[];if(boss)ts.push(boss);for(const e of enemies)if(e.isElite)ts.push(e);for(const d of demons)if(d.map===MAPID)ts.push(d);for(const t of ts){let hit=false;if(['meteo','zone','self','aura'].includes(m.kind))hit=Math.hypot(t.x-m.tx,t.y-m.ty)<rad+t.r;else if(['front','fan'].includes(m.kind)){const d=Math.hypot(t.x-m.x,t.y-m.y),a=Math.atan2(t.y-m.y,t.x-m.x),da=Math.abs(Math.atan2(Math.sin(a-m.aim),Math.cos(a-m.aim)));hit=d<rad+t.r&&da<0.8;}else hit=mpLineDist(t.x,t.y,m.x,m.y,m.tx,m.ty)<t.r+18;if(hit)applyDmg(t,m.power||1,m.el,col,0,m.big?1:0.75);}}
 mpRestore();mpEl('mpHost').onclick=()=>mpStart('host');mpEl('mpJoin').onclick=()=>mpStart('join');
 function genDecos(seed,count){const d=[];let s=seed;const rnd=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};
@@ -877,7 +880,7 @@ function updateDemons(dt){if(MP.enabled&&!MP.isHost)return;demonCD-=dt;if(demonC
 function rewardDemonKill(d){if(!d||d.rewarded)return;d.rewarded=true;se('elite');shake=Math.max(shake,16);P.boxes.push({demonCorpse:true,lv:d.enLv,name:'魔人の遺骸'});gainGem(Math.round(d.exp*.8),d.x,d.y);gainExp(d.exp*expMul(d.enLv)*wmul(d.x,d.y,'expMul'));burst(d.x,d.y,d.col,44,8);flash('魔人 討伐！ 魔人の遺骸を入手');}
 function mpApplyDemonState(s){const old=demons.slice();demons=(s.list||[]).filter(d=>d.active).map(d=>({...d,el:'無',def:18,spd:.65,exp:1200,mpRemote:true,burn:null,slow:0,stun:0,spell:SPELLS.find(x=>x.name===d.spell)||null}));for(const o of old)if(o.mpRemote&&!demons.some(d=>d.id===o.id))rewardDemonKill(o);}
 function switchMap(id,x,y){for(const en of enemies)if(en.eliteRec)en.eliteRec.hp=en.hp;MAP=MAPS[id];MAPID=id;dummy=(id==='town')?makeDummy():null;
- if(MAP.town){P.lastTown=id;for(const n of npcs){n.map=id;n.x=WORLD_W/2+(Math.random()*700-350);n.y=WORLD_H/2+(Math.random()*460-230);n.talk=false;n.reactT=0;}}P.x=x;P.y=y;enemies=[];shots=[];eshots=[];parts=[];floats=[];fx=[];zones=[];funnels=[];pending=[];passers=[];boss=null;bossCD=MAP.boss?3:1e9;P.invuln=1.2;P.casting=false;P.channels=[];P.kana='';P.pend='';if(!MAP.town)for(let i=0;i<5;i++)spawnEnemy();playBgmForMap();flash(MAP.name+' へ移動');}
+ if(MAP.town){P.lastTown=id;for(const n of npcs){n.map=id;n.x=WORLD_W/2+(Math.random()*700-350);n.y=WORLD_H/2+(Math.random()*460-230);n.talk=false;n.reactT=0;}}P.x=x;P.y=y;enemies=[];shots=[];eshots=[];parts=[];floats=[];fx=[];zones=[];funnels=[];pending=[];passers=[];boss=bosses.get(id)||null;if(!bossTimers.has(id))bossTimers.set(id,MAP.boss?3:1e9);bossCD=bossTimers.get(id);P.invuln=1.2;P.casting=false;P.channels=[];P.kana='';P.pend='';if(!MAP.town)for(let i=0;i<5;i++)spawnEnemy();playBgmForMap();flash(MAP.name+' へ移動');}
 
 function castTime(s,modOrRunes){const m=modOrRunes&&modOrRunes.castMul!==undefined?modOrRunes:buildMod(modOrRunes||[]);const rn=Array.isArray(modOrRunes)?modOrRunes.length:(m._n||0);return((s.big?1.6:0.3+s.cost*0.025)+rn*0.15)*castMult()*m.castMul;}
 addEventListener('keydown',e=>{audio();
@@ -932,7 +935,7 @@ function hurtPlayer(d){if(P.downT>0||P.invuln>0)return;
  const eff=getBuffs();let dd=d*(1-Math.min(0.6,eff.def));if(held['Shift']&&P.mp>0){dd*=0.25;P.mp=Math.max(0,P.mp-P.maxmp*0.10);}
  P.hp-=dd;floats.push({x:P.x,y:P.y-22,txt:'-'+fmt(dd),col:'#ff9a9a',life:.9});burst(P.x,P.y,'#ff6a6a',8,3.5);shake=Math.max(shake,6);se('hurt');
  if(dd>=P.maxhp*0.12&&(P.casting||P.channels.length)){P.casting=false;P.kana='';P.pend='';P.channels=[];flash('詠唱中断！');}}
-function startDown(){if(P.downT>0)return;P.downT=10;P.downMap=MAPID;P.downX=P.x;P.downY=P.y;P.hp=1;P.mp=0;P.casting=false;P.channels=[];P.kana='';P.pend='';buffs.clear();shake=Math.max(shake,8);flash('ダウン！10秒以内にリザレクションで復活可能');se('hurt');}
+function startDown(){if(P.downT>0)return;P.downT=10;P.downMap=MAPID;P.downX=P.x;P.downY=P.y;P.hp=1;P.mp=0;P.casting=false;P.channels=[];P.kana='';P.pend='';buffs.clear();flash('ダウン！10秒以内にリザレクションで復活可能');se('hurt');}
 function reviveHere(){if(P.downT<=0)return;P.downT=0;P.hp=Math.max(1,Math.round(P.maxhp*0.5));P.mp=Math.max(0,Math.round(P.maxmp*0.35));P.invuln=2.5;burst(P.x,P.y,'#dfffe0',28,5);flash('リザレクションで復活！');se('levelup');}
 function finishDeath(){const lost=Math.floor(P.gem*0.1),town=MAPS[P.lastTown]?P.lastTown:'town';P.gem-=lost;P.downT=0;P.hp=Math.round(P.maxhp*0.6);P.mp=Math.round(P.maxmp*0.6);P.expMP=0;P.expT=0;P.invuln=2.2;P.casting=false;P.channels=[];P.kana='';P.pend='';buffs.clear();switchMap(town,WORLD_W/2,WORLD_H/2+260);flash('力尽きた…'+MAPS[town].name+'へ帰還（gem -'+fmt(lost)+'）');}
 function targets(){const a=enemies.slice();for(const d of demons)if(d.map===MAPID)a.push(d);if(boss)a.push(boss);if(dummy)a.push(dummy);return a;}
@@ -996,32 +999,36 @@ for(let i=0;i<5;i++)spawnEnemy();
 function makeDummy(){return{x:WORLD_W/2,y:WORLD_H/2-120,r:20,dmg:0,isDummy:true,el:'無',def:0,hp:1e9,maxhp:1e9,col:'#caa46a',stun:0,slow:0,burn:null};}
 if(MAPID==='town')dummy=makeDummy();
 function genMegaWand(){const rar=RAR.find(r=>r.k==='B1');return{name:'めっちゃ強い杖',slot:'武器',rar,stats:{INT:180,PIE:120,VIT:100,DEX:90,AGI:90,LUK:80},affixes:{'allstat%':50,'火%':90,'水%':90,'風%':90,'土%':90,'gem%':120,'exp%':120},col:rar.col,lv:99,plus:0,sockets:5,socketed:0};}
-function spawnBoss(){const lv=mapLv(),sc=1+0.12*(lv-1),d=MAP.bossDef,mega=!!d.mega;
- boss={jp:d.jp,el:d.el,x:MAP.bx,y:MAP.by,r:mega?52:34,col:d.col,enLv:lv,mega,fixedDrop:!!d.fixedDrop,
+function bossLevelFor(id){return P.lv+((MAPS[id]&&MAPS[id].mlv)||0);}
+function spawnBoss(id){const m=MAPS[id||MAPID];if(!m||!m.bossDef)return null;const lv=bossLevelFor(id||MAPID),sc=1+0.12*(lv-1),d=m.bossDef,mega=!!d.mega;
+ const b={map:id||MAPID,jp:d.jp,el:d.el,x:m.bx,y:m.by,r:mega?52:34,col:d.col,enLv:lv,mega,fixedDrop:!!d.fixedDrop,
   hp:mega?d.hp:Math.round(d.hp*sc),maxhp:mega?d.hp:Math.round(d.hp*sc),def:mega?60:14+Math.floor((lv-1)/2),atk:mega?d.atk:Math.round(d.atk*(1+0.04*(lv-1))),
   spd:mega?0.55:0.45,exp:mega?8000:Math.round(300*(1+0.06*(lv-1))),state:'move',t:1.6,burn:null,bt:0,slow:0,stun:0,shots:0,fireT:0,tx:0,ty:0,trad:0,cvx:0,cvy:0,aim:0,fan:0.55};
- flash(mega?'☠ 最強の敵 出現：'+d.jp+'（Lv.'+lv+'）':'強敵 出現：'+d.jp+'（'+d.el+'・Lv.'+lv+'）');}
+ bosses.set(id||MAPID,b);if((id||MAPID)===MAPID)boss=b;flash(mega?'☠ 最強の敵 出現：'+d.jp+'（Lv.'+lv+'）':'強敵 出現：'+d.jp+'（'+d.el+'・Lv.'+lv+'）');return b;}
 function bossPattern(b){const p=Math.floor(Math.random()*3),ang=Math.atan2(P.y-b.y,P.x-b.x);
  if(p===0){b.state='slam';b.t=1.2;b.tx=P.x;b.ty=P.y;b.trad=130;}else if(p===1){b.state='barrage_t';b.t=1.0;b.aim=ang;b.fan=0.55;}else{b.state='charge_t';b.t=0.85;b.aim=ang;}}
+function bossTarget(b){let best={id:null,x:P.x,y:P.y,d:Math.hypot(P.x-b.x,P.y-b.y)};if(MP.enabled&&MP.isHost)for(const [id,p]of MP.players){if(p.map!==MAPID||p.down)continue;const d=Math.hypot(p.x-b.x,p.y-b.y);if(d<best.d)best={id,x:p.x,y:p.y,d};}return best;}
+function bossHitPlayer(t,dmg,cx,cy,rad){if(!t.id){if(Math.hypot(P.x-cx,P.y-cy)<rad)hurtPlayer(dmg);}else mpSendHurt(t.id,dmg);}
 function levelUp(){P.exp-=P.need;P.lv++;P.need=Math.round(P.need*1.18);P.sp+=2;recompute();P.hp=P.maxhp;P.mp=P.maxmp;flash("レベルアップ！ Lv."+P.lv+"（ステP+2）");burst(P.x,P.y,'#ffe08a',24,5);se('levelup');}
 function updateBoss(dt){
  if(MP.enabled&&!MP.isHost)return;
- if(!boss){bossCD-=dt;if(bossCD<=0&&MAP.boss)spawnBoss();return;}
- const b=boss,dist=Math.hypot(P.x-b.x,P.y-b.y);b.t-=dt;
+ for(const id in MAPS){const m=MAPS[id];if(!m.boss)continue;let t=bossTimers.get(id);if(t==null){t=id===MAPID?bossCD:8+Math.random()*18;bossTimers.set(id,t);}if(!bosses.has(id)){t-=dt;bossTimers.set(id,t);if(t<=0){spawnBoss(id);bossTimers.set(id,5+Math.random()*8);}}}
+ boss=bosses.get(MAPID)||null;if(!boss)return;
+ const b=boss,tgt=bossTarget(b),dist=tgt.d;b.t-=dt;
  if(b.stun>0){b.stun-=dt;if(b.burn){b.burn.t-=dt;b.hp-=b.burn.dps*dt;if(b.burn.t<=0)b.burn=null;}return;}
  if(b.burn){b.burn.t-=dt;b.hp-=b.burn.dps*dt;if(b.burn.t<=0)b.burn=null;}if(b.slow>0)b.slow-=dt;const spd=b.spd*(b.slow>0?0.5:1);
  if(b.state==='move'){if(dist>BOSS_AGGRO){const hs=Math.hypot(MAP.bx-b.x,MAP.by-b.y);if(hs>8){const a=Math.atan2(MAP.by-b.y,MAP.bx-b.x);b.x+=Math.cos(a)*spd*dt*60;b.y+=Math.sin(a)*spd*dt*60;}b.t=1.0;}
-  else{if(dist>140){const a=Math.atan2(P.y-b.y,P.x-b.x);b.x+=Math.cos(a)*spd*dt*60;b.y+=Math.sin(a)*spd*dt*60;}if(b.t<=0)bossPattern(b);}}
- else if(b.state==='slam'){if(b.t<=0){se('attack');fx.push({x:b.tx,y:b.ty,r:20,maxr:b.trad,col:'#ff7a3a',life:.5});burst(b.tx,b.ty,'#ff8a4a',24,6);shake=Math.max(shake,12);if(Math.hypot(P.x-b.tx,P.y-b.ty)<b.trad)hurtPlayer(b.atk*1.4);b.state='recover';b.t=1.5;}}
+ else{if(dist>140){const a=Math.atan2(tgt.y-b.y,tgt.x-b.x);b.x+=Math.cos(a)*spd*dt*60;b.y+=Math.sin(a)*spd*dt*60;}if(b.t<=0){const p=Math.floor(Math.random()*3),ang=Math.atan2(tgt.y-b.y,tgt.x-b.x);if(p===0){b.state='slam';b.t=1.2;b.tx=tgt.x;b.ty=tgt.y;b.trad=130;}else if(p===1){b.state='barrage_t';b.t=1.0;b.aim=ang;b.fan=0.55;}else{b.state='charge_t';b.t=0.85;b.aim=ang;}}}}
+ else if(b.state==='slam'){if(b.t<=0){se('attack');fx.push({x:b.tx,y:b.ty,r:20,maxr:b.trad,col:'#ff7a3a',life:.5});burst(b.tx,b.ty,'#ff8a4a',24,6);shake=Math.max(shake,12);for(const t of [bossTarget(b)])bossHitPlayer(t,b.atk*1.4,b.tx,b.ty,b.trad);b.state='recover';b.t=1.5;}}
  else if(b.state==='barrage_t'){if(b.t<=0){se('attack');b.state='barrage';b.t=2.2;b.shots=10;b.fireT=0.18;}}
- else if(b.state==='barrage'){b.fireT-=dt;if(b.fireT<=0&&b.shots>0){se('attack');const a=b.aim+(Math.random()*2-1)*b.fan;eshots.push({x:b.x,y:b.y,vx:Math.cos(a)*4.6,vy:Math.sin(a)*4.6,r:9,dmg:b.atk*0.7,life:2.4,col:'#c08aff',el:b.el});b.shots--;b.fireT=0.18;}if(b.shots<=0&&b.t<=0){b.state='recover';b.t=1.2;}}
+ else if(b.state==='barrage'){b.fireT-=dt;if(b.fireT<=0&&b.shots>0){se('attack');const t=bossTarget(b),base=Math.atan2(t.y-b.y,t.x-b.x),a=base+(Math.random()*2-1)*b.fan;eshots.push({x:b.x,y:b.y,vx:Math.cos(a)*4.6,vy:Math.sin(a)*4.6,r:9,dmg:b.atk*0.7,life:2.4,col:'#c08aff',el:b.el,bossShot:true});b.shots--;b.fireT=0.18;}if(b.shots<=0&&b.t<=0){b.state='recover';b.t=1.2;}}
  else if(b.state==='charge_t'){if(b.t<=0){se('attack');b.state='charging';b.t=0.55;b.cvx=Math.cos(b.aim)*9.5;b.cvy=Math.sin(b.aim)*9.5;}}
- else if(b.state==='charging'){b.x+=b.cvx;b.y+=b.cvy;if(Math.hypot(P.x-b.x,P.y-b.y)<b.r+P.r+6){hurtPlayer(b.atk);b.t=Math.min(b.t,0.05);}if(b.t<=0){b.state='recover';b.t=1.3;}}
+ else if(b.state==='charging'){b.x+=b.cvx;b.y+=b.cvy;const t=bossTarget(b);if(t.d<b.r+P.r+6){bossHitPlayer(t,b.atk,b.x,b.y,b.r+P.r+6);b.t=Math.min(b.t,0.05);}if(b.t<=0){b.state='recover';b.t=1.3;}}
  else{if(b.t<=0){b.state='move';b.t=1.0+Math.random();}}
  b.x=Math.max(b.r,Math.min(WORLD_W-b.r,b.x));b.y=Math.max(b.r,Math.min(WORLD_H-b.r,b.y));
  if(b.hp<=0){se('elite');gainGem(Math.round(b.exp*0.8),b.x,b.y);floats.push({x:b.x,y:b.y,txt:'+'+fmt(b.exp)+' EXP',col:'#ffe08a',life:1.4});burst(b.x,b.y,b.col,40,7);shake=Math.max(shake,14);tryDrop(b.x,b.y,true);
   if(b.fixedDrop&&Math.random()<0.01&&P.inv.length<24){const w=genMegaWand();P.inv.push(w);dropSE(w.rar);floats.push({x:b.x,y:b.y-30,txt:'★ めっちゃ強い杖 入手！',col:w.col,life:3});flash('★★ めっちゃ強い杖 をドロップ！ ★★');}
-  gainExp(b.exp*expMul(b.enLv)*wmul(b.x,b.y,"expMul"));boss=null;bossCD=b.mega?9999:5+Math.random()*5;flash(b.jp+' 撃破！');}}
+  gainExp(b.exp*expMul(b.enLv)*wmul(b.x,b.y,"expMul"));bosses.delete(MAPID);boss=null;bossTimers.set(MAPID,b.mega?9999:5+Math.random()*5);flash(b.jp+' 撃破！');}}
 
 let last=performance.now();
 function update(dt){
@@ -1032,13 +1039,13 @@ function update(dt){
  updateWeather(dt);updateElite(dt);updateDemons(dt);
  mpUpdate(dt);
  if(P.downT>0){P.downT-=dt;if(P.downT<=0)finishDeath();if(msgT>0)msgT-=dt;return;}
- if(P.menu||P.saveMenu||P.shop||P.mlist||P.talkNpc)return;
+ const uiOpen=P.menu||P.saveMenu||P.shop||P.mlist||P.talkNpc;
  const eff=getBuffs();
- for(let qi=P.channels.length-1;qi>=0;qi--){const c=P.channels[qi];c.t-=dt;if(c.t<=0){P.channels.splice(qi,1);fireSpell(c.spell,c.runes,c.mod,c.cost,c.aim,{x:c.tx,y:c.ty});if(c.spell.big){P.expMP=0;P.expT=0;}else{P.expMP=Math.min(P.maxmp,P.expMP+c.cost);P.expT=EXP_DUR;}}}
- if(!P.casting){let mx=0,my=0;if(held['w'])my-=1;if(held['s'])my+=1;if(held['a'])mx-=1;if(held['d'])mx+=1;
+ if(!uiOpen)for(let qi=P.channels.length-1;qi>=0;qi--){const c=P.channels[qi];c.t-=dt;if(c.t<=0){P.channels.splice(qi,1);fireSpell(c.spell,c.runes,c.mod,c.cost,c.aim,{x:c.tx,y:c.ty});if(c.spell.big){P.expMP=0;P.expT=0;}else{P.expMP=Math.min(P.maxmp,P.expMP+c.cost);P.expT=EXP_DUR;}}}
+ if(!uiOpen&&!P.casting){let mx=0,my=0;if(held['w'])my-=1;if(held['s'])my+=1;if(held['a'])mx-=1;if(held['d'])mx+=1;
   if(mx||my){const l=Math.hypot(mx,my),sp=moveSpeed();mx/=l;my/=l;P.face={x:mx,y:my};P.x=Math.max(P.r,Math.min(WORLD_W-P.r,P.x+mx*sp*dt*60));P.y=Math.max(P.r,Math.min(WORLD_H-P.r,P.y+my*sp*dt*60));}}
- for(const pt of MAP.portals)if(Math.hypot(P.x-pt.x,P.y-pt.y)<pt.r+P.r){switchMap(pt.to,pt.tx,pt.ty);break;}
- if(MAP.facilities){let on=false;for(const f of MAP.facilities)if(Math.hypot(P.x-f.x,P.y-f.y)<f.r+P.r){on=true;if(!P.facLock){openShop(f.type);P.facLock=true;}}if(!on)P.facLock=false;}
+ if(!uiOpen)for(const pt of MAP.portals)if(Math.hypot(P.x-pt.x,P.y-pt.y)<pt.r+P.r){switchMap(pt.to,pt.tx,pt.ty);break;}
+ if(!uiOpen&&MAP.facilities){let on=false;for(const f of MAP.facilities)if(Math.hypot(P.x-f.x,P.y-f.y)<f.r+P.r){on=true;if(!P.facLock){openShop(f.type);P.facLock=true;}}if(!on)P.facLock=false;}
  updateNpcs(dt);updatePassers(dt);
  const regen=(7+(P.lv-1)*0.5)*(1+eff.mpregen),effMax=P.maxmp+P.expMP;P.mp=Math.min(effMax,P.mp+regen*dt);
  const mr=P.mp/effMax;if(P.hp>0)P.hp=Math.min(P.maxhp,P.hp+P.maxhp*0.02*mr*dt);if(eff.regen>0&&P.hp>0)P.hp=Math.min(P.maxhp,P.hp+P.maxhp*eff.regen*dt);
@@ -1057,7 +1064,7 @@ function update(dt){
  zones=zones.filter(z=>z.life>0);
  for(const f of funnels){f.life-=dt;f.ang+=f.spin*dt;f.x=P.x+Math.cos(f.ang)*f.dist;f.y=P.y+Math.sin(f.ang)*f.dist;f.fireT-=dt;if(f.fireT<=0){const a=f.ang;shots.push({x:f.x,y:f.y,vx:Math.cos(a)*f.speed,vy:Math.sin(a)*f.speed,r:6,el:f.el,color:f.color,dmg:f.dmg,critEx:0,splash:0,burn:0,slow:0,durMul:1,pierce:false,homing:false,life:1.4,hit:new Set()});f.fireT=f.rate;}}
  funnels=funnels.filter(f=>f.life>0);
- for(const es of eshots){es.x+=es.vx;es.y+=es.vy;es.life-=dt;if(Math.hypot(P.x-es.x,P.y-es.y)<es.r+P.r){hurtPlayer(es.dmg);es.life=0;}}eshots=eshots.filter(e=>e.life>0);
+ for(const es of eshots){es.x+=es.vx;es.y+=es.vy;es.life-=dt;if(Math.hypot(P.x-es.x,P.y-es.y)<es.r+P.r){hurtPlayer(es.dmg);es.life=0;}if(es.bossShot&&MP.enabled&&MP.isHost){for(const [id,p]of MP.players){if(p.map!==MAPID||p.down)continue;if(Math.hypot(p.x-es.x,p.y-es.y)<es.r+P.r){mpSendHurt(id,es.dmg);es.life=0;break;}}}}eshots=eshots.filter(e=>e.life>0);
  for(const en of enemies){
   if(en.burn){en.burn.t-=dt;en.hp-=en.burn.dps*dt;en.bt-=dt;if(en.bt<=0){floats.push({x:en.x,y:en.y-en.r,txt:Math.round(en.burn.dps*0.5),col:'#ff8a3a',life:.6});en.bt=0.5;}if(en.burn.t<=0)en.burn=null;}
   if(en.slow>0)en.slow-=dt;if(en.stun>0){en.stun-=dt;continue;}en.ph+=dt;
@@ -1160,11 +1167,15 @@ function drawMP(x,y,w,h){const eff=P.maxmp+P.expMP,fr=P.mp/eff,br=P.maxmp/eff,iw
  if(P.expMP>0){const zx=ix+iw*br,zw=iw*(1-br),g=rainbow(zx,zx+zw);ctx.globalAlpha=0.22;ctx.fillStyle=g;ctx.fillRect(zx,iy,zw,ih);ctx.globalAlpha=1;if(fr>br){ctx.fillStyle=g;ctx.fillRect(zx,iy,iw*(fr-br),ih);}ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(zx,iy);ctx.lineTo(zx,iy+ih);ctx.stroke();}}
 function drawBuffs(){let bx=14,by=12;ctx.textAlign='left';ctx.fillStyle='#caa64b';ctx.font='bold 11px system-ui';ctx.fillText('強化',bx,by+10);by+=16;
  buffs.forEach(b=>{ctx.fillStyle='rgba(10,8,6,.8)';ctx.strokeStyle=BCOL[b.kind];ctx.lineWidth=2;ctx.fillRect(bx,by,120,24);ctx.strokeRect(bx,by,120,24);ctx.fillStyle=BCOL[b.kind];ctx.font='bold 11px system-ui';const v=b.kind==='regen'?('+'+Math.round(b.amt*100)+'%/s'):('+'+Math.round(b.amt*100)+'%');ctx.fillText(BLABEL[b.kind]+v+' '+b.t.toFixed(0)+'s',bx+6,by+15);by+=28;});}
+function drawPlayerList(){let x=14,y=FIELD_H-100,w=230,row=24;ctx.textAlign='left';ctx.font='bold 11px system-ui';const list=[{name:P.name||'Player',lv:P.lv,hp:P.hp,maxhp:P.maxhp,map:MAPID,self:true,speech:P.sayT>0?P.say:''},...Array.from(MP.players.values()).filter(p=>performance.now()-(p.seen||0)<20000)];
+ for(let i=0;i<Math.min(4,list.length);i++){const p=list[i],yy=y+i*row,same=p.map===MAPID;ctx.fillStyle='rgba(8,10,8,.72)';ctx.strokeStyle=p.self?'#ffd24a':'#6fa8ff';ctx.lineWidth=1;ctx.fillRect(x,yy,w,20);ctx.strokeRect(x,yy,w,20);ctx.fillStyle=p.self?'#ffe08a':'#dff7ff';ctx.fillText((p.name||'P')+' Lv.'+(p.lv||1),x+6,yy+13);if(same){const bw=54,r=Math.max(0,Math.min(1,(p.hp||1)/(p.maxhp||1)));ctx.fillStyle='#000a';ctx.fillRect(x+w-bw-8,yy+6,bw,7);ctx.fillStyle='#d23b3b';ctx.fillRect(x+w-bw-8,yy+6,bw*r,7);if(p.speech){ctx.fillStyle='#d8d0b8';ctx.font='10px system-ui';ctx.fillText(p.speech.slice(0,14),x+92,yy+13);ctx.font='bold 11px system-ui';}}else{ctx.textAlign='right';ctx.fillStyle='#9aa';ctx.fillText((MAPS[p.map]&&MAPS[p.map].name)||p.map||'-',x+w-8,yy+13);ctx.textAlign='left';}}}
 function drawMinimap(){const mw=150,mh=Math.round(mw*WORLD_H/WORLD_W),mx=W-mw-14,my=14,sx=mw/WORLD_W,sy=mh/WORLD_H;
  ctx.textAlign='right';ctx.fillStyle='#d9c98f';ctx.font='bold 12px system-ui';ctx.fillText(MAP.name,mx+mw,my-3);
  ctx.fillStyle='rgba(10,16,12,.82)';ctx.strokeStyle='#caa64b';ctx.lineWidth=2;ctx.fillRect(mx,my,mw,mh);ctx.strokeRect(mx,my,mw,mh);
  ctx.fillStyle=MAP.gpond;for(const p of MAP.ponds)ctx.fillRect(mx+(p.x-p.rx)*sx,my+(p.y-p.ry)*sy,p.rx*2*sx,p.ry*2*sy);
  for(const pt of MAP.portals){ctx.fillStyle=pt.color;ctx.fillRect(mx+pt.x*sx-2,my+pt.y*sy-2,4,4);}
+ for(const n of npcs)if(n.map===MAPID){ctx.fillStyle='#ffd27a';ctx.fillRect(mx+n.x*sx-1,my+n.y*sy-1,3,3);}
+ if(MP.enabled)for(const p of MP.players.values())if(p.map===MAPID&&performance.now()-(p.seen||0)<15000){ctx.fillStyle='#74d6ff';ctx.fillRect(mx+p.x*sx-2,my+p.y*sy-2,4,4);}
  for(const en of enemies){ctx.fillStyle='#fff';ctx.fillRect(mx+en.x*sx-1,my+en.y*sy-1,2,2);}for(const d of demons)if(d.map===MAPID){ctx.fillStyle='#d05aff';ctx.fillRect(mx+d.x*sx-2,my+d.y*sy-2,5,5);}
  if(boss){ctx.fillStyle='#ff4030';ctx.fillRect(mx+boss.x*sx-2,my+boss.y*sy-2,5,5);}else if(MAP.boss){ctx.fillStyle='#7a3a3a';ctx.fillRect(mx+MAP.bx*sx-2,my+MAP.by*sy-2,5,5);}
  ctx.fillStyle='#ffd24a';ctx.fillRect(mx+P.x*sx-2,my+P.y*sy-2,4,4);
@@ -1373,7 +1384,7 @@ function render(){const cx=P.x-W/2,cy=P.y-FIELD_H/2,sx=shake>0?(Math.random()-.5
  for(const es of eshots){ctx.shadowColor=es.col;ctx.shadowBlur=8;drawEffectBall(es);ctx.shadowBlur=0;}
  for(const sh of shots){ctx.shadowColor=sh.color;ctx.shadowBlur=8;drawEffectBall(sh);ctx.shadowBlur=0;}
  drawRemotePlayers();drawMage();for(const f of floats){ctx.globalAlpha=Math.min(1,f.life*1.4);ctx.fillStyle=f.col;ctx.font='bold 14px system-ui';ctx.textAlign='center';ctx.fillText(f.txt,f.x,f.y);ctx.globalAlpha=1;}
- ctx.restore();drawBuffs();drawMinimap();drawHUD();if(P.menu)drawPanel();if(P.shop)drawShop();if(P.mlist)drawMagicList();if(P.talkNpc)drawTalk();if(P.saveMenu)drawSaveMenu();}
+ ctx.restore();drawBuffs();drawPlayerList();drawMinimap();drawHUD();if(P.menu)drawPanel();if(P.shop)drawShop();if(P.mlist)drawMagicList();if(P.talkNpc)drawTalk();if(P.saveMenu)drawSaveMenu();}
 function drawWeatherFx(){const tm=performance.now()/1000;for(const w of weathers){if(w.map!==MAPID)continue;const c=WTYPES[w.type].col;
   const g=ctx.createRadialGradient(w.x,w.y,w.r*0.2,w.x,w.y,w.r);g.addColorStop(0,c+'33');g.addColorStop(1,c+'00');ctx.fillStyle=g;ctx.beginPath();ctx.arc(w.x,w.y,w.r,0,7);ctx.fill();
   ctx.strokeStyle=c+'88';ctx.lineWidth=2;ctx.stroke();
