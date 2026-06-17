@@ -12,7 +12,7 @@
  .ref{font-size:11px;color:#7e8a82;max-width:1000px;line-height:1.8;text-align:left;background:#0d1310;border:1px solid #21281f;border-radius:8px;padding:8px 14px;}
  .ref b{color:#cdb86a}.ref .fire{color:#ff8a5a}.ref .water{color:#5ab0ff}.ref .wind{color:#6fe0c8}.ref .earth{color:#caa46a}.ref .rune{color:#ffcf8a}
  kbd{background:#1c1812;border:1px solid #4a3f2a;border-bottom-width:2px;border-radius:4px;padding:1px 6px;color:#e8dcae;font-size:11px}
- .mp{display:grid;grid-template-columns:120px 170px 170px 86px 86px 1fr;gap:6px;align-items:center;width:min(1000px,100%);font-size:11px;color:#aeb8b0}
+ .mp{display:grid;grid-template-columns:190px 170px 86px 86px 1fr;gap:6px;align-items:center;width:min(1000px,100%);font-size:11px;color:#aeb8b0}
  .mp input{width:100%;background:#0d1310;border:1px solid #283126;border-radius:4px;color:#e8eefc;padding:5px 7px;font:inherit}
  .mp button{background:#2a2218;border:1px solid #5e4a24;border-radius:4px;color:#eadca8;padding:5px 8px;font:inherit;cursor:pointer}
  .mp button:hover{border-color:#caa64b}
@@ -25,9 +25,10 @@
  <h1>AMC（A Mana Circulation）<small>詠唱時間・ステータス・装備試作</small></h1>
  <canvas id="game" width="900" height="600"></canvas>
  <div class="mp" id="mpPanel">
-  <input id="mpRoom" placeholder="room">
-  <input id="mpUrl" placeholder="supabase url">
-  <input id="mpKey" placeholder="anon key">
+  <input id="mpPhrase" placeholder="合言葉">
+  <input id="mpPass" type="password" placeholder="password">
+  <input id="mpUrl" type="hidden">
+  <input id="mpKey" type="hidden">
   <button id="mpHost">Host</button>
   <button id="mpJoin">Join</button>
   <div class="st" id="mpStatus">multiplayer off</div>
@@ -442,15 +443,17 @@ const MP_MAX=4,MP_URL='https://bbpdphmztyzznxyphprf.supabase.co',MP_KEY='sb_publ
 const MP={enabled:false,isHost:false,room:'',peerId:'p'+Math.random().toString(36).slice(2,10),hostId:null,channel:null,supabase:null,peers:new Map(),players:new Map(),seen:new Set(),sendT:0,stateT:0,status:'off'};
 function mpEl(id){return document.getElementById(id);}
 function mpStatus(t){MP.status=t;const e=mpEl('mpStatus');if(e)e.textContent=t;}
-function mpStore(){try{localStorage.setItem('amc_mp_url',mpEl('mpUrl').value.trim());localStorage.setItem('amc_mp_key',mpEl('mpKey').value.trim());localStorage.setItem('amc_mp_room',mpEl('mpRoom').value.trim());}catch(e){}}
-function mpRestore(){try{mpEl('mpUrl').value=localStorage.getItem('amc_mp_url')||MP_URL;mpEl('mpKey').value=localStorage.getItem('amc_mp_key')||MP_KEY;mpEl('mpRoom').value=localStorage.getItem('amc_mp_room')||'multiplayer';}catch(e){}}
+function mpStore(){try{localStorage.setItem('amc_mp_url',mpEl('mpUrl').value.trim()||MP_URL);localStorage.setItem('amc_mp_key',mpEl('mpKey').value.trim()||MP_KEY);localStorage.setItem('amc_mp_phrase',mpEl('mpPhrase').value.trim());}catch(e){}}
+function mpRestore(){try{mpEl('mpUrl').value=localStorage.getItem('amc_mp_url')||MP_URL;mpEl('mpKey').value=localStorage.getItem('amc_mp_key')||MP_KEY;mpEl('mpPhrase').value=localStorage.getItem('amc_mp_phrase')||'multiplayer';mpEl('mpPass').value='';}catch(e){}}
+function mpHashFallback(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h.toString(36);}
+async function mpRoomKey(phrase,pass){const raw=(phrase||'multiplayer')+'\n'+(pass||'');try{const data=new TextEncoder().encode(raw),buf=await crypto.subtle.digest('SHA-256',data);return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,32);}catch(e){return mpHashFallback(raw);}}
 function mpClosePeer(id){const p=MP.peers.get(id);if(!p)return;try{p.dc&&p.dc.close();p.pc&&p.pc.close();}catch(e){}MP.peers.delete(id);MP.players.delete(id);}
 function mpStop(){for(const id of Array.from(MP.peers.keys()))mpClosePeer(id);try{MP.channel&&MP.channel.unsubscribe();}catch(e){}MP.channel=null;MP.supabase=null;MP.enabled=false;MP.isHost=false;MP.hostId=null;MP.players.clear();mpStatus('multiplayer off');}
 function mpSignal(to,type,data){if(!MP.channel)return;MP.channel.send({type:'broadcast',event:'signal',payload:{room:MP.room,from:MP.peerId,to,type,data:data||{}}});}
-async function mpStart(role){mpStop();mpStore();const url=mpEl('mpUrl').value.trim(),key=mpEl('mpKey').value.trim(),room=(mpEl('mpRoom').value.trim()||'amc').slice(0,40);if(!url||!key){mpStatus('supabase url/key required');return;}if(!globalThis.supabase){mpStatus('supabase client not loaded');return;}
+async function mpStart(role){mpStop();mpStore();const url=mpEl('mpUrl').value.trim()||MP_URL,key=mpEl('mpKey').value.trim()||MP_KEY,phrase=(mpEl('mpPhrase').value.trim()||'multiplayer').slice(0,40),pass=mpEl('mpPass').value,room='amc-'+await mpRoomKey(phrase,pass);if(!url||!key){mpStatus('supabase url/key required');return;}if(!globalThis.supabase){mpStatus('supabase client not loaded');return;}
  MP.room=room;MP.isHost=role==='host';MP.hostId=MP.isHost?MP.peerId:null;MP.supabase=globalThis.supabase.createClient(url,key);MP.channel=MP.supabase.channel('amc-'+room,{config:{broadcast:{self:false}}});MP.channel.on('broadcast',{event:'signal'},({payload})=>mpOnSignal(payload));
  const ok=await new Promise(resolve=>{let done=false;MP.channel.subscribe(st=>{if(done)return;if(st==='SUBSCRIBED'){done=true;resolve(true);}else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED'){done=true;resolve(false);}});setTimeout(()=>{if(!done){done=true;resolve(false);}},8000);});
- if(!ok){mpStatus('signaling failed');return;}MP.enabled=true;mpStatus((MP.isHost?'host':'join')+' '+room);if(!MP.isHost)mpSignal('*','join',{name:'P'+MP.peerId.slice(-3)});}
+ if(!ok){mpStatus('signaling failed');return;}MP.enabled=true;mpStatus((MP.isHost?'host':'join')+' '+phrase);if(!MP.isHost)mpSignal('*','join',{name:'P'+MP.peerId.slice(-3)});}
 function mpOnSignal(s){if(!s||s.room!==MP.room||s.from===MP.peerId)return;if(s.to&&s.to!==MP.peerId&&s.to!=='*')return;
  if(s.type==='join'&&MP.isHost){if(MP.peers.size>=MP_MAX-1){mpSignal(s.from,'reject',{reason:'room full'});return;}mpCreatePeer(s.from,true);}
  else if(s.type==='reject'){mpStatus(s.data&&s.data.reason||'rejected');}
@@ -835,10 +838,10 @@ addEventListener('keydown',e=>{audio();
  if(P.shop){if(e.key==='Escape'||e.key==='i'||e.key==='I'){e.preventDefault();P.shop=null;se('ui');}return;}
  if(P.mlist){if(e.key==='Escape'||e.key==='m'||e.key==='M'){e.preventDefault();P.mlist=null;se('ui');}return;}
  if((e.key==='m'||e.key==='M')&&!P.casting){e.preventDefault();P.mlist='spell';se('ui');return;}
- if((e.key==='i'||e.key==='I')&&!P.casting){e.preventDefault();P.menu=!P.menu;if(P.menu){P.casting=false;P.kana='';P.pend='';}else P.nameEdit=false;se('ui');return;}
+ if((e.key==='i'||e.key==='I')&&!P.casting&&!P.menu){e.preventDefault();P.menu=true;P.casting=false;P.kana='';P.pend='';se('ui');return;}
  if(P.menu){
   if(P.nameEdit){e.preventDefault();if(e.key==='Enter'||e.key==='Escape'){P.nameEdit=false;localStorage.setItem('amc_player_name',P.name||'Player');se('ui');return;}if(e.key==='Backspace'){P.name=P.name.slice(0,-1);localStorage.setItem('amc_player_name',P.name||'Player');return;}if(e.key.length===1&&P.name.length<16){P.name=(P.name+e.key).replace(/[^\wぁ-んァ-ヶ一-龠ー -]/g,'').slice(0,16);localStorage.setItem('amc_player_name',P.name||'Player');return;}return;}
-  if(e.key==='Escape'){P.menu=false;P.nameEdit=false;se('ui');}return;}
+  if(e.key==='Escape'||e.key==='i'||e.key==='I'){P.menu=false;P.nameEdit=false;se('ui');}return;}
  if(e.key==='Shift'){if(!held['Shift'])P.parryT=0.35;held['Shift']=true;e.preventDefault();return;}
  if(P.casting){
   if(e.code==='Space'||e.key==='Enter'){e.preventDefault();tryCast();return;}
