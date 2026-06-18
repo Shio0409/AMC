@@ -445,11 +445,12 @@ function buyItem(it){const c=buyCost(it);if(P.gem<c){flash('gem不足（必要'+
 function marketSellerId(){return mpPeerId();}
 function marketClient(){if(MP.supabase)return MP.supabase;if(!globalThis.supabase)return null;return globalThis.supabase.createClient(MP_URL,MP_KEY);}
 function marketSellable(it){return it&&it.rar&&RAR.indexOf(it.rar)>=RAR.findIndex(r=>r.k==='L')&&it.rar.k!=='B1'&&!it.jewel&&!it.box&&!it.eliteBox&&!it.demonCorpse&&!/[★☆]/.test(it.name||'')&&!/めっちゃ強い杖/.test(it.name||'');}
+function marketErr(e){const m=String((e&&(e.message||e.details||e.hint||e.code))||e||'');if(/relation .*market|does not exist|schema cache/i.test(m))return'マーケット表が未作成';if(/permission|policy|row-level|RLS|denied/i.test(m))return'マーケット権限エラー';return m?('読込失敗: '+m.slice(0,42)):'マーケット読込失敗';}
 async function marketRefresh(opening){if(marketBusy)return;const sb=marketClient();if(!sb){marketMsg='Supabase未接続';return;}marketBusy=true;marketMsg='読み込み中';
  try{const sid=marketSellerId();let own=await sb.from('market').select('*').eq('seller',sid).limit(1);if(own.error)throw own.error;marketMine=(own.data&&own.data[0])||null;
-  if(marketMine&&marketMine.sold){P.gem+=Math.max(0,Math.round(marketMine.price||0));await sb.from('market').delete().eq('id',marketMine.id);marketMine=null;}
-  const rows=await sb.from('market').select('*').eq('sold',false).neq('seller',sid).order('created_at',{ascending:false}).limit(20);if(rows.error)throw rows.error;marketRows=rows.data||[];marketMsg=opening?'更新完了':'';
- }catch(e){marketMsg='マーケット読込失敗';}finally{marketBusy=false;}}
+  if(marketMine&&marketMine.sold){P.gem+=Math.max(0,Math.round(marketMine.price||0));const del=await sb.from('market').delete().eq('id',marketMine.id);if(del.error)console.warn('market sold cleanup failed',del.error);marketMine=null;}
+  const rows=await sb.from('market').select('*').eq('sold',false).neq('seller',sid).limit(20);if(rows.error)throw rows.error;marketRows=rows.data||[];marketMsg=opening?'更新完了':'';
+ }catch(e){marketRows=[];marketMine=null;marketMsg=marketErr(e);console.warn('marketRefresh failed',e);}finally{marketBusy=false;}}
 async function marketListItem(it){if(marketBusy)return;if(!marketSellable(it)){flash('レジェンダリー以上の通常装備のみ出品できます');se('error');return;}if(marketMine){flash('出品は1キャラ1つまで');se('error');return;}const price=Math.max(1,Math.round(Number(marketPrice)||0));if(!price){flash('価格を入力してください');se('error');return;}const sb=marketClient();if(!sb){flash('Supabase未接続');se('error');return;}marketBusy=true;
  try{const i=P.inv.indexOf(it);if(i<0)throw new Error('missing item');const row={seller:marketSellerId(),seller_name:(P.name||'Player').slice(0,16),item:packItem(it),price,sold:false,buyer:null};const r=await sb.from('market').insert(row).select('*').single();if(r.error)throw r.error;P.inv.splice(i,1);marketSel=null;marketPrice='';marketMine=r.data;marketBusy=false;await marketRefresh(false);flash('出品しました');se('buy');}
  catch(e){marketMsg='出品失敗';se('error');}finally{marketBusy=false;}}
@@ -472,7 +473,7 @@ const EXP_DUR=18;
 [SPELLS,RUNES,ET,RAR,AFFIXES].forEach(o=>{try{Object.freeze(o);o.forEach&&o.forEach(x=>x&&typeof x==='object'&&Object.freeze(x));}catch(e){}});
 const P={name:(localStorage.getItem('amc_player_name')||'Player').slice(0,16),nameEdit:false,say:'',sayT:0,spellHist:[],elHist:[],spellCombo:0,elCombo:0,lootMin:0,x:WORLD_W/2,y:WORLD_H/2,r:14,face:{x:0,y:1},hp:1,maxhp:1,mp:1,maxmp:1,expMP:0,expT:0,lv:1,exp:0,need:80,
  base:{DEX:6,AGI:6,INT:12,PIE:8,VIT:10,LUK:5},sp:0,gem:80,bank:0,equip:{武器:null,頭:null,胴:null,脚:null,装飾1:null,装飾2:null},inv:[],
- shop:null,shopStock:[],smithSel:null,facLock:false,rerollMul:1,parryT:0,tpCD:0,
+ shop:null,shopStock:[],smithSel:null,facLock:false,mapLockT:0,rerollMul:1,parryT:0,tpCD:0,
  hpPot:1,mpPot:1,jewels:[],quests:[],questBoard:null,questBoardAt:0,jewelSel:null,socketSel:null,talkNpc:null,mlist:null,
  runes:new Set(),boxes:[],spellsSeen:new Set(),lastTown:'town',fame:0,fameLv:1,invTab:'equip',invScroll:0,
  casting:false,menu:false,saveMenu:false,channels:[],kana:'',pend:'',invuln:0,downT:0,downMap:'',downX:0,downY:0};
@@ -480,7 +481,7 @@ recompute();P.hp=P.maxhp;P.mp=P.maxmp;P.inv.push(genItem(1,false,'R'),genItem(1,
 let enemies=[],demons=[],shots=[],eshots=[],floats=[],fx=[],parts=[],zones=[],funnels=[],pending=[],enemyRespawns=[],dummy=null,msg='',msgT=0,shake=0,boss=null,bossCD=3,bigCD=0,demonCD=75,clickAreas=[],tipAreas=[],mouseX=0,mouseY=0,shopResetAt=performance.now()+600000,lastAutoSave=performance.now(),saveBusyT=0,saveOkT=0,saveErrT=0,marketRows=[],marketMine=null,marketBusy=false,marketMsg='',marketSel=null,marketPrice='',mpDmgSkip=null;const held={},buffs=new Map(),bosses=new Map(),bossTimers=new Map();
 const MP_MAX=4,MP_URL='https://bbpdphmztyzznxyphprf.supabase.co',MP_KEY='sb_publishable_T6awXv8PgWgF_e9LKhFzBQ_AcS00gRe',MP_ICE=[{urls:'stun:stun.l.google.com:19302'}];
 function mpPeerId(){try{let id=localStorage.getItem('amc_mp_peer_id');if(!id){id='p'+Math.random().toString(36).slice(2,10);localStorage.setItem('amc_mp_peer_id',id);}return id;}catch(e){return'p'+Math.random().toString(36).slice(2,10);}}
-const MP={enabled:false,isHost:false,room:'',peerId:mpPeerId(),hostId:null,channel:null,supabase:null,peers:new Map(),players:new Map(),seen:new Set(),sendT:0,stateT:0,startedAt:0,status:'off'};
+const MP={enabled:false,isHost:false,room:'',peerId:mpPeerId(),hostId:null,channel:null,supabase:null,peers:new Map(),players:new Map(),seen:new Set(),sendT:0,stateT:0,joinT:0,joinN:0,startedAt:0,status:'off'};
 function mpEl(id){return document.getElementById(id);}
 function mpStatus(t){MP.status=t;const e=mpEl('mpStatus');if(e)e.textContent=t;}
 function mpStore(){try{localStorage.setItem('amc_mp_url',mpEl('mpUrl').value.trim()||MP_URL);localStorage.setItem('amc_mp_key',mpEl('mpKey').value.trim()||MP_KEY);localStorage.setItem('amc_mp_phrase',mpEl('mpPhrase').value.trim());}catch(e){}}
@@ -490,25 +491,32 @@ async function mpRoomKey(phrase,pass){const raw=(phrase||'multiplayer')+'\n'+(pa
 function mpClosePeer(id){const p=MP.peers.get(id);if(!p)return;try{p.dc&&p.dc.close();p.pc&&p.pc.close();}catch(e){}MP.peers.delete(id);MP.players.delete(id);}
 function mpMarkLost(p){p.open=false;if(!p.lostAt)p.lostAt=performance.now();mpStatus('reconnecting '+MP.room);}
 function mpStop(){for(const id of Array.from(MP.peers.keys()))mpClosePeer(id);try{MP.channel&&MP.channel.unsubscribe();}catch(e){}MP.channel=null;MP.supabase=null;MP.enabled=false;MP.isHost=false;MP.hostId=null;MP.players.clear();mpStatus('multiplayer off');}
-function mpSignal(to,type,data){if(!MP.channel)return;MP.channel.send({type:'broadcast',event:'signal',payload:{room:MP.room,from:MP.peerId,to,type,data:data||{}}});}
+function mpSignal(to,type,data){if(!MP.channel)return;try{MP.channel.send({type:'broadcast',event:'signal',payload:{room:MP.room,from:MP.peerId,to,type,data:data||{}}});}catch(e){}}
+function mpRelay(to,msg){if(!MP.channel||!msg)return false;try{MP.channel.send({type:'broadcast',event:'relay',payload:{room:MP.room,from:MP.peerId,to,msg}});return true;}catch(e){return false;}}
 async function mpStart(role){mpStop();mpStore();const url=mpEl('mpUrl').value.trim()||MP_URL,key=mpEl('mpKey').value.trim()||MP_KEY,phrase=(mpEl('mpPhrase').value.trim()||'multiplayer').slice(0,40),pass=mpEl('mpPass').value,room='amc-'+await mpRoomKey(phrase,pass);if(!url||!key){mpStatus('supabase url/key required');return;}if(!globalThis.supabase){mpStatus('supabase client not loaded');return;}
- MP.players.clear();MP.seen.clear();MP.sendT=0;MP.stateT=0;MP.startedAt=performance.now();MP.room=room;MP.isHost=role==='host';MP.hostId=MP.isHost?MP.peerId:null;MP.supabase=globalThis.supabase.createClient(url,key);MP.channel=MP.supabase.channel('amc-'+room,{config:{broadcast:{self:false}}});MP.channel.on('broadcast',{event:'signal'},({payload})=>mpOnSignal(payload));
+ MP.players.clear();MP.seen.clear();MP.sendT=0;MP.stateT=0;MP.joinT=0;MP.joinN=0;MP.startedAt=performance.now();MP.room=room;MP.isHost=role==='host';MP.hostId=MP.isHost?MP.peerId:null;MP.supabase=globalThis.supabase.createClient(url,key);MP.channel=MP.supabase.channel('amc-'+room,{config:{broadcast:{self:false}}});MP.channel.on('broadcast',{event:'signal'},({payload})=>mpOnSignal(payload));MP.channel.on('broadcast',{event:'relay'},({payload})=>mpOnRelay(payload));
  const ok=await new Promise(resolve=>{let done=false;MP.channel.subscribe(st=>{if(done)return;if(st==='SUBSCRIBED'){done=true;resolve(true);}else if(st==='CHANNEL_ERROR'||st==='TIMED_OUT'||st==='CLOSED'){done=true;resolve(false);}});setTimeout(()=>{if(!done){done=true;resolve(false);}},20000);});
- if(!ok){mpStatus('signaling failed');return;}MP.enabled=true;mpStatus((MP.isHost?'host':'join')+' '+phrase);if(!MP.isHost)mpSignal('*','join',{name:'P'+MP.peerId.slice(-3)});}
+ if(!ok){mpStatus('signaling failed');return;}MP.enabled=true;mpStatus((MP.isHost?'host':'join')+' '+phrase);if(!MP.isHost){MP.joinN=1;mpSignal('*','join',{name:'P'+MP.peerId.slice(-3),retry:1});}}
 function mpOnSignal(s){if(!s||s.room!==MP.room||s.from===MP.peerId)return;if(s.to&&s.to!==MP.peerId&&s.to!=='*')return;
- if(s.type==='join'&&MP.isHost){if(MP.peers.has(s.from))mpClosePeer(s.from);MP.players.delete(s.from);if(MP.peers.size>=MP_MAX-1){mpSignal(s.from,'reject',{reason:'room full'});return;}mpCreatePeer(s.from,true);}
+ if(s.type==='join'&&MP.isHost){const old=MP.peers.get(s.from);if(old){if(old.open||performance.now()-(old.createdAt||0)<9000)return;mpClosePeer(s.from);}MP.players.delete(s.from);if(MP.peers.size>=MP_MAX-1){mpSignal(s.from,'reject',{reason:'room full'});return;}mpCreatePeer(s.from,true);}
  else if(s.type==='reject'){mpStatus(s.data&&s.data.reason||'rejected');}
- else if(s.type==='offer'){MP.hostId=s.from;const p=mpCreatePeer(s.from,false);p.pc.setRemoteDescription(s.data).then(()=>p.pc.createAnswer()).then(a=>p.pc.setLocalDescription(a).then(()=>mpSignal(s.from,'answer',a))).catch(()=>mpClosePeer(s.from));}
- else if(s.type==='answer'){const p=MP.peers.get(s.from);if(p)p.pc.setRemoteDescription(s.data).catch(()=>mpClosePeer(s.from));}
- else if(s.type==='ice'){const p=MP.peers.get(s.from);if(p&&s.data)p.pc.addIceCandidate(s.data).catch(()=>{});}
+ else if(s.type==='offer'){MP.hostId=s.from;const p=mpCreatePeer(s.from,false);mpSetRemote(p,s.data).then(()=>p.pc.createAnswer()).then(a=>p.pc.setLocalDescription(a).then(()=>mpSignal(s.from,'answer',a))).catch(()=>mpClosePeer(s.from));}
+ else if(s.type==='answer'){const p=MP.peers.get(s.from);if(p)mpSetRemote(p,s.data).catch(()=>mpClosePeer(s.from));}
+ else if(s.type==='ice'){const p=MP.peers.get(s.from);if(p&&s.data)mpAddIce(p,s.data);}
  else if(s.type==='leave'){mpClosePeer(s.from);}}
-function mpCreatePeer(id,offerer){if(MP.peers.has(id))return MP.peers.get(id);const pc=new RTCPeerConnection({iceServers:MP_ICE}),p={id,pc,dc:null,open:false,lostAt:0};MP.peers.set(id,p);
- pc.onicecandidate=e=>{if(e.candidate)mpSignal(id,'ice',e.candidate);};pc.onconnectionstatechange=()=>{if(pc.connectionState==='closed')mpClosePeer(id);else if(['failed','disconnected'].includes(pc.connectionState))mpMarkLost(p);else if(pc.connectionState==='connected'){p.lostAt=0;p.open=!!(p.dc&&p.dc.readyState==='open');}};
+function mpOnRelay(s){if(!s||s.room!==MP.room||s.from===MP.peerId)return;if(s.to&&s.to!==MP.peerId&&s.to!=='*')return;const msg=s.msg;if(!msg)return;msg.from=msg.from||s.from;msg.sent=msg.sent||performance.now();mpReceive(msg,s.from);}
+function mpFlushIce(p){if(!p)return;while(p.ice&&p.ice.length)p.pc.addIceCandidate(p.ice.shift()).catch(()=>{});}
+function mpSetRemote(p,d){return p.pc.setRemoteDescription(d).then(()=>{p.remote=true;mpFlushIce(p);});}
+function mpAddIce(p,c){if(!p||!c)return;if(p.remote||p.pc.remoteDescription)p.pc.addIceCandidate(c).catch(()=>{});else{p.ice=p.ice||[];if(p.ice.length<64)p.ice.push(c);}}
+function mpCreatePeer(id,offerer){if(MP.peers.has(id))return MP.peers.get(id);const pc=new RTCPeerConnection({iceServers:MP_ICE}),p={id,pc,dc:null,open:false,lostAt:0,createdAt:performance.now(),ice:[],remote:false,relay:false,relayPlayerAt:0,relayStateAt:0};MP.peers.set(id,p);
+ pc.onicecandidate=e=>{if(e.candidate)mpSignal(id,'ice',e.candidate);};pc.onconnectionstatechange=()=>{if(pc.connectionState==='closed')mpClosePeer(id);else if(pc.connectionState==='failed')mpMarkLost(p);else if(pc.connectionState==='disconnected')mpStatus('slow reconnect '+MP.room);else if(pc.connectionState==='connected'){p.lostAt=0;p.open=!!(p.dc&&p.dc.readyState==='open');}};
  pc.ondatachannel=e=>mpSetupDc(p,e.channel);if(offerer){mpSetupDc(p,pc.createDataChannel('amc'));pc.createOffer().then(o=>pc.setLocalDescription(o).then(()=>mpSignal(id,'offer',o))).catch(()=>mpClosePeer(id));}return p;}
 function mpSetupDc(p,dc){p.dc=dc;dc.onopen=()=>{p.open=true;p.lostAt=0;mpStatus((MP.isHost?'host ':'peer ')+MP.room+' '+(MP.peers.size+1)+'/'+MP_MAX);mpSendTo(p.id,{type:'hello',id:MP.peerId,host:MP.isHost});if(MP.isHost)mpSyncHostState(true);};dc.onclose=()=>mpMarkLost(p);dc.onerror=()=>mpMarkLost(p);dc.onmessage=e=>{try{mpReceive(JSON.parse(e.data),p.id);}catch(err){}};}
-function mpSendTo(id,msg){const p=MP.peers.get(id);if(!p||!p.open||!p.dc||p.dc.readyState!=='open')return;if((p.dc.bufferedAmount||0)>262144)return;try{p.dc.send(JSON.stringify(msg));}catch(e){mpMarkLost(p);}}
+function mpSendTo(id,msg){const p=MP.peers.get(id),now=performance.now();if(!p)return false;if(p.open&&p.dc&&p.dc.readyState==='open'&&(p.dc.bufferedAmount||0)<=262144){try{p.dc.send(JSON.stringify(msg));return true;}catch(e){mpMarkLost(p);}}
+ if(msg.type==='player'&&now-(p.relayPlayerAt||0)<450)return false;if(['bossState','eliteState','demonState'].includes(msg.type)&&!msg.force&&now-(p.relayStateAt||0)<1200)return false;
+ if(msg.type==='player')p.relayPlayerAt=now;if(['bossState','eliteState','demonState'].includes(msg.type))p.relayStateAt=now;p.relay=true;mpStatus((MP.isHost?'host ':'peer ')+'relay '+MP.room);return mpRelay(id,msg);}
 function mpSendAll(msg,skip){for(const id of MP.peers.keys())if(id!==skip)mpSendTo(id,msg);}
-function mpSend(msg){if(!MP.enabled)return;msg.from=MP.peerId;msg.sent=performance.now();if(MP.isHost)mpSendAll(msg);else if(MP.hostId)mpSendTo(MP.hostId,msg);}
+function mpSend(msg){if(!MP.enabled)return;msg.from=MP.peerId;msg.sent=performance.now();if(MP.isHost)mpSendAll(msg);else if(MP.hostId)mpSendTo(MP.hostId,msg);else mpRelay('*',msg);}
 function mpSendHurt(id,dmg){if(MP.enabled&&MP.isHost)mpSendTo(id,{type:'hurt',from:MP.peerId,map:MAPID,dmg});}
 function mpTouchPlayer(msg){if(!msg||!msg.from)return;const old=MP.players.get(msg.from)||{};MP.players.set(msg.from,{...old,from:msg.from,map:msg.map||old.map||MAPID,x:Math.round(msg.x==null?old.x||0:msg.x),y:Math.round(msg.y==null?old.y||0:msg.y),hp:old.hp||1,maxhp:old.maxhp||1,face:msg.face||old.face||{x:0,y:1},name:old.name||('P'+String(msg.from).slice(-3)),typing:'',seen:performance.now()});}
 function mpReceive(msg,from){if(!msg||msg.from===MP.peerId)return;if(msg.eid){if(MP.seen.has(msg.eid))return;MP.seen.add(msg.eid);if(MP.seen.size>256)MP.seen.clear();}
@@ -521,7 +529,8 @@ function mpReceive(msg,from){if(!msg||msg.from===MP.peerId)return;if(msg.eid){if
  else if(msg.type==='demonState'&&!MP.isHost)mpApplyDemonState(msg);
  else if(msg.type==='demonGone'&&!MP.isHost)mpApplyDemonGone(msg);}
 function mpLocalPlayer(){return{type:'player',from:MP.peerId,name:(P.name||'Player').slice(0,16),map:MAPID,x:Math.round(P.x),y:Math.round(P.y),hp:Math.round(P.hp),maxhp:P.maxhp,face:{x:P.face.x,y:P.face.y},lv:P.lv,down:P.downT>0,downT:Math.max(0,P.downT),typing:(P.casting?(P.kana+P.pend):'').slice(0,32),speech:(P.sayT>0?P.say:'').slice(0,32)};}
-function mpUpdate(dt){if(!MP.enabled)return;MP.sendT+=dt;MP.stateT+=dt;if(MP.sendT>0.08){MP.sendT=0;mpSend(mpLocalPlayer());}if(MP.isHost&&MP.stateT>0.2){MP.stateT=0;mpSyncHostState(false);}const now=performance.now();for(const [id,p]of MP.players)if(now-(p.seen||0)>60000)MP.players.delete(id);for(const [id,p]of MP.peers)if(p.lostAt&&now-p.lostAt>45000)mpClosePeer(id);}
+function mpUpdate(dt){if(!MP.enabled)return;MP.sendT+=dt;MP.stateT+=dt;MP.joinT+=dt;const slow=Array.from(MP.peers.values()).some(p=>!p.open||p.relay||p.lostAt),sendI=slow?0.25:0.08,stateI=slow?0.7:0.2;if(!MP.isHost&&MP.joinN<18&&MP.joinT>2.5&&!Array.from(MP.peers.values()).some(p=>p.open)){MP.joinT=0;MP.joinN++;mpSignal('*','join',{name:'P'+MP.peerId.slice(-3),retry:MP.joinN});}
+ if(MP.sendT>sendI){MP.sendT=0;mpSend(mpLocalPlayer());}if(MP.isHost&&MP.stateT>stateI){MP.stateT=0;mpSyncHostState(false);}const now=performance.now();for(const [id,p]of MP.players)if(now-(p.seen||0)>60000)MP.players.delete(id);for(const [id,p]of MP.peers)if(p.lostAt&&now-p.lostAt>90000)mpClosePeer(id);}
 function bossWire(b){return{map:b.map||MAPID,jp:b.jp,el:b.el,x:b.x,y:b.y,r:b.r,col:b.col,enLv:b.enLv,mega:!!b.mega,fixedDrop:!!b.fixedDrop,hp:b.hp,maxhp:b.maxhp,def:b.def,atk:b.atk,spd:b.spd,exp:b.exp,state:b.state,t:b.t,burn:b.burn,bt:b.bt,slow:b.slow,stun:b.stun,shots:b.shots,fireT:b.fireT,tx:b.tx,ty:b.ty,trad:b.trad,cvx:b.cvx,cvy:b.cvy,aim:b.aim,fan:b.fan};}
 function mpBossSnapshot(force){return{type:'bossState',from:MP.peerId,force:!!force,list:Array.from(bosses.values()).map(bossWire)};}
 function mpEliteSnapshot(){return{type:'eliteState',from:MP.peerId,map:MAPID,list:elites.map(r=>{const en=enemies.find(e=>e.eliteRec===r);return{map:r.map,key:r.key,jp:r.jp,t:r.t,hp:en?en.hp:r.hp,maxhp:en?en.maxhp:null,x:en&&en.x,y:en&&en.y,state:en&&en.state,st:en&&en.st,active:!!en};})};}
@@ -935,7 +944,7 @@ function rewardDemonKill(d){if(!d||d.rewarded)return;d.rewarded=true;se('elite')
 function mpApplyDemonState(s){demons=(s.list||[]).filter(d=>d.active).map(d=>({...d,el:'無',def:18,spd:.65,exp:1200,mpRemote:true,burn:null,slow:0,stun:0,spell:SPELLS.find(x=>x.name===d.spell)||null}));}
 function mpApplyDemonGone(m){const d=demons.find(x=>x.id===m.id);if(d&&m.killed)rewardDemonKill(d);if(d&&!m.killed&&d.map===MAPID)flash('魔人は姿を消した…');demons=demons.filter(x=>x.id!==m.id);}
 function switchMap(id,x,y){for(const en of enemies)if(en.eliteRec)en.eliteRec.hp=en.hp;MAP=MAPS[id];MAPID=id;dummy=(id==='town')?makeDummy():null;
- if(MAP.town){P.lastTown=id;for(const n of npcs){n.map=id;if(n.fixed){n.x=TUTOR_X;n.y=TUTOR_Y;}else{n.x=WORLD_W/2+(Math.random()*700-350);n.y=WORLD_H/2+(Math.random()*460-230);}n.talk=false;n.reactT=0;}}P.x=x;P.y=y;enemies=[];shots=[];eshots=[];parts=[];floats=[];fx=[];zones=[];funnels=[];pending=[];enemyRespawns=[];passers=[];boss=bosses.get(id)||null;if(!bossTimers.has(id))bossTimers.set(id,MAP.boss?3:1e9);bossCD=bossTimers.get(id);P.invuln=1.2;P.casting=false;P.channels=[];P.kana='';P.pend='';if(!MAP.town)for(let i=0;i<5;i++)spawnEnemy();playBgmForMap();flash(MAP.name+' へ移動');}
+ if(MAP.town){P.lastTown=id;for(const n of npcs){n.map=id;if(n.fixed){n.x=TUTOR_X;n.y=TUTOR_Y;}else{n.x=WORLD_W/2+(Math.random()*700-350);n.y=WORLD_H/2+(Math.random()*460-230);}n.talk=false;n.reactT=0;}}P.x=x;P.y=y;enemies=[];shots=[];eshots=[];parts=[];floats=[];fx=[];zones=[];funnels=[];pending=[];enemyRespawns=[];passers=[];boss=bosses.get(id)||null;if(!bossTimers.has(id))bossTimers.set(id,MAP.boss?3:1e9);bossCD=bossTimers.get(id);P.mapLockT=1;P.invuln=1.2;P.casting=false;P.channels=[];P.kana='';P.pend='';if(!MAP.town)for(let i=0;i<5;i++)spawnEnemy();playBgmForMap();flash(MAP.name+' へ移動');}
 
 function castTime(s,modOrRunes){const m=modOrRunes&&modOrRunes.castMul!==undefined?modOrRunes:buildMod(modOrRunes||[]);const rn=Array.isArray(modOrRunes)?modOrRunes.length:(m._n||0);return((s.big?1.6:0.3+s.cost*0.025)+rn*0.15)*castMult()*m.castMul;}
 addEventListener('keydown',e=>{audio();
@@ -1105,12 +1114,12 @@ function update(dt){
  if(!uiOpen)for(let qi=P.channels.length-1;qi>=0;qi--){const c=P.channels[qi];c.t-=dt;if(c.t<=0){P.channels.splice(qi,1);fireSpell(c.spell,c.runes,c.mod,c.cost,c.aim,{x:c.tx,y:c.ty});if(c.spell.big){P.expMP=0;P.expT=0;}else{P.expMP=Math.min(P.maxmp,P.expMP+c.cost);P.expT=EXP_DUR;}}}
  if(!uiOpen&&!P.casting){let mx=0,my=0;if(held['w'])my-=1;if(held['s'])my+=1;if(held['a'])mx-=1;if(held['d'])mx+=1;
   if(mx||my){const l=Math.hypot(mx,my),sp=moveSpeed();mx/=l;my/=l;P.face={x:mx,y:my};P.x=Math.max(P.r,Math.min(WORLD_W-P.r,P.x+mx*sp*dt*60));P.y=Math.max(P.r,Math.min(WORLD_H-P.r,P.y+my*sp*dt*60));}}
- if(!uiOpen)for(const pt of MAP.portals)if(Math.hypot(P.x-pt.x,P.y-pt.y)<pt.r+P.r){switchMap(pt.to,pt.tx,pt.ty);break;}
+ if(!uiOpen&&P.mapLockT<=0)for(const pt of MAP.portals)if(Math.hypot(P.x-pt.x,P.y-pt.y)<pt.r+P.r){switchMap(pt.to,pt.tx,pt.ty);break;}
  if(!uiOpen&&MAP.facilities){let on=false;for(const f of MAP.facilities)if(Math.hypot(P.x-f.x,P.y-f.y)<f.r+P.r){on=true;if(!P.facLock){openShop(f.type);P.facLock=true;}}if(!on)P.facLock=false;}
  updateNpcs(dt);updatePassers(dt);
  const regen=(7+(P.lv-1)*0.5)*(1+eff.mpregen),effMax=P.maxmp+P.expMP;P.mp=Math.min(effMax,P.mp+regen*dt);
  const mr=P.mp/effMax;if(P.hp>0)P.hp=Math.min(P.maxhp,P.hp+P.maxhp*0.02*mr*dt);if(eff.regen>0&&P.hp>0)P.hp=Math.min(P.maxhp,P.hp+P.maxhp*eff.regen*dt);
- if(P.invuln>0)P.invuln-=dt;if(P.parryT>0)P.parryT-=dt;if(P.tpCD>0)P.tpCD-=dt;if(P.sayT>0)P.sayT-=dt;if(bigCD>0)bigCD-=dt;
+ if(P.invuln>0)P.invuln-=dt;if(P.mapLockT>0)P.mapLockT-=dt;if(P.parryT>0)P.parryT-=dt;if(P.tpCD>0)P.tpCD-=dt;if(P.sayT>0)P.sayT-=dt;if(bigCD>0)bigCD-=dt;
  if(pending.length){for(const p of pending)p.t-=dt;for(const p of pending)if(p.t<=0)p.fn();pending=pending.filter(p=>p.t>0);}
  P.expT-=dt;if(P.expT<=0&&P.expMP>0){P.expMP=Math.max(0,P.expMP-P.maxmp*0.5*dt);if(P.mp>P.maxmp+P.expMP)P.mp=P.maxmp+P.expMP;}
  buffs.forEach((b,k)=>{b.t-=dt;if(b.t<=0)buffs.delete(k);});if(shake>0)shake=Math.max(0,shake-dt*30);
