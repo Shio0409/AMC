@@ -19,6 +19,8 @@
  .mp .st{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8fa498}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="maps.js"></script>
+<script src="enemies.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -271,56 +273,9 @@ function incCost(s,runes){const m=runes.mpMul!==undefined?runes:buildMod(runes);
 const CYCLE=['火','風','土','水'];
 function typeMult(a,d){if(d==='無'||!d)return 1.0;const ai=CYCLE.indexOf(a),di=CYCLE.indexOf(d);if(ai<0||di<0)return 1.0;
  if(CYCLE[(ai+1)%4]===d)return 1.5;if(CYCLE[(di+1)%4]===a)return 0.7;return 1.0;}
-const ET={
- // 草原
- slime: {jp:'マナスライム',el:'水',at:'melee', hp:60, def:5, atk:9, spd:0.50,r:15,col:'#3aa0ff',exp:16,windup:2.2,recover:1.3},
- sprite:{jp:'ホーンラビット',el:'風',at:'melee',hp:40,def:5,atk:8,spd:1.05,r:11,col:'#bdf06a',exp:18,windup:1.3,recover:1.0},
- // 深緑の森
- boar:  {jp:'マナウルフ',  el:'土',at:'charge',hp:120,def:9, atk:20,spd:0.70,r:17,col:'#b07a4a',exp:42,windup:1.1,recover:1.3,dash:12},
- hornet:{jp:'ゴブリンアーチャー',el:'風',at:'ranged',hp:70,def:7,atk:14,spd:0.85,r:12,col:'#e6b531',exp:38,windup:1.3,recover:1.1,range:320,shotSpd:5.2,burst:3},
- fungus:{jp:'ゴブリンメイジ',el:'土',at:'ranged',hp:90,def:9,atk:13,spd:0.45,r:15,col:'#8a9a5a',exp:40,windup:1.6,recover:1.3,range:280,shotSpd:3.6},
- // 紅蓮の火山
- wisp:  {jp:'ウィル・オ・ウィスプ',el:'火',at:'ranged',hp:80,def:8,atk:16,spd:0.70,r:13,col:'#ff8a4a',exp:48,windup:1.2,recover:1.1,range:320,shotSpd:4.6},
- salaman:{jp:'サラマンダー',el:'火',at:'melee',hp:150,def:11,atk:22,spd:0.80,r:16,col:'#ff5a2a',exp:56,windup:1.5,recover:1.2},
- magma: {jp:'フレイムスライム',el:'火',at:'charge',hp:170,def:13,atk:26,spd:0.72,r:18,col:'#ff3a1a',exp:60,windup:1.1,recover:1.4,dash:12},
- // 蒼氷の洞窟
- frost: {jp:'ケルピー',el:'水',at:'charge',hp:200,def:14,atk:28,spd:0.74,r:18,col:'#7fe0ff',exp:74,windup:1.2,recover:1.4,dash:11},
- icewisp:{jp:'ウンディーネ',el:'水',at:'ranged',hp:130,def:12,atk:24,spd:0.72,r:13,col:'#bfefff',exp:70,windup:1.3,recover:1.1,range:340,shotSpd:5.0,burst:3},
- yeti:  {jp:'フェンリル',el:'水',at:'melee',hp:260,def:16,atk:30,spd:0.62,r:20,col:'#cfe8f0',exp:80,windup:1.7,recover:1.3},
- // 忘却の遺跡
- wraith:{jp:'スピリット',el:'無',at:'ranged',hp:170,def:16,atk:30,spd:0.82,r:14,col:'#9a7adf',exp:96,windup:1.4,recover:1.0,range:360,shotSpd:5.6,burst:3},
- sentry:{jp:'ホブゴブリン',el:'無',at:'melee',hp:330,def:20,atk:34,spd:0.60,r:20,col:'#8a8f9a',exp:104,windup:1.8,recover:1.4},
- phantom:{jp:'ナイトメア',el:'無',at:'charge',hp:240,def:17,atk:36,spd:0.92,r:16,col:'#b0a0d0',exp:100,windup:1.0,recover:1.3,dash:14},
- // 灼熱の砂漠
- scarab:{jp:'ロックスライム',el:'土',at:'charge',hp:300,def:20,atk:40,spd:0.78,r:17,col:'#c8a060',exp:120,windup:1.1,recover:1.3,dash:13},
- mirage:{jp:'ノーム',el:'火',at:'ranged',hp:220,def:18,atk:38,spd:0.80,r:13,col:'#ffb060',exp:118,windup:1.3,recover:1.0,range:360,shotSpd:5.4,burst:3},
- sandw: {jp:'サイクロプス',el:'土',at:'melee',hp:420,def:24,atk:44,spd:0.60,r:22,col:'#b89050',exp:140,windup:1.7,recover:1.3},
- // 雷鳴の天空
- griffon:{jp:'グリフォン',el:'風',at:'charge',hp:360,def:22,atk:48,spd:1.00,r:18,col:'#dfe8a0',exp:150,windup:0.9,recover:1.2,dash:16},
- thunder:{jp:'サンダーバード',el:'風',at:'ranged',hp:300,def:20,atk:46,spd:0.85,r:14,col:'#ffe14a',exp:148,windup:1.2,recover:1.0,range:380,shotSpd:6.2,burst:3},
- cloud: {jp:'ペガサス',el:'水',at:'melee',hp:480,def:26,atk:50,spd:0.62,r:20,col:'#cfe0f0',exp:160,windup:1.6,recover:1.3},
- // 虚無の深淵
- shade: {jp:'アンブラ',el:'無',at:'melee',hp:560,def:30,atk:58,spd:0.70,r:18,col:'#7a708a',exp:200,windup:1.5,recover:1.2},
- abyssal:{jp:'ルクス',el:'無',at:'ranged',hp:440,def:28,atk:56,spd:0.80,r:14,col:'#9a6aa0',exp:196,windup:1.3,recover:1.0,range:400,shotSpd:6.6,burst:4},
- devour:{jp:'ケルベロス',el:'無',at:'charge',hp:520,def:30,atk:64,spd:0.95,r:18,col:'#a04a6a',exp:210,windup:1.0,recover:1.3,dash:17},
- // 終焉の玉座
- revenant:{jp:'オーガロード',el:'無',at:'melee',hp:900,def:38,atk:88,spd:0.78,r:20,col:'#6a5a7a',exp:320,windup:1.4,recover:1.2},
- doomeye:{jp:'ドレイク',el:'無',at:'ranged',hp:760,def:36,atk:84,spd:0.78,r:15,col:'#b04a9a',exp:316,windup:1.2,recover:0.9,range:420,shotSpd:7.0,burst:5},
- // 風の谷（森・北分岐）
- mantis:{jp:'マナディア',el:'風',at:'melee',hp:90,def:8,atk:18,spd:1.15,r:13,col:'#9ee06a',exp:46,windup:0.9,recover:0.9,mv:'weave'},
- pixie: {jp:'シルフ',el:'風',at:'ranged',hp:60,def:7,atk:15,spd:1.05,r:11,col:'#c0ffd0',exp:44,windup:1.0,recover:1.0,range:300,shotSpd:5.0,burst:2,mv:'circle'},
- // 水晶谷（洞窟・北分岐）
- crystalan:{jp:'ジェムスライム',el:'水',at:'charge',hp:240,def:16,atk:30,spd:0.85,r:17,col:'#aef0ff',exp:82,windup:1.0,recover:1.3,dash:13,mv:'burst'},
- prism: {jp:'プリズムバード',el:'水',at:'ranged',hp:160,def:14,atk:26,spd:0.7,r:13,col:'#dffaff',exp:80,windup:1.2,recover:1.0,range:360,shotSpd:5.6,burst:4,mv:'circle'},
-};
+if(!window.AMC_ENEMIES)throw new Error('enemies.js is not loaded');
+const {ET,ENEMY_RANK}=window.AMC_ENEMIES;
 const ETK=Object.keys(ET);
-const ENEMY_RANK={
- normal:{hpMul:1,atkMul:1,scale:1,expRate:0.5,sync:false},
- rare:{hpMul:4,atkMul:1.8,scale:1.35,expRate:0.7,sync:false,announce:true},
- elite:{hpMul:50,atkMul:3,scale:3,expRate:0.8,sync:true,announce:true},
- boss:{hpMul:1,atkMul:1,scale:1,expRate:0.7,sync:true,announce:true},
- demon:{hpMul:50,atkMul:3,scale:1,expRate:0.8,sync:true,announce:true,caster:true}
-};
 function monsterStats(t){if(t.stats)return{...BASE_STATS,...t.stats};return{
  DEX:Math.max(1,Math.round((t.range||180)/28+(t.shotSpd||4)*2)),
  AGI:Math.max(1,Math.round((t.spd||0.7)*18)),
@@ -704,64 +659,8 @@ function drawMapPaths(cx,cy){const cfg=MAP_TILES[MAPID]||MAP_TILES.field;if(!cfg
 function drawPondTiles(){for(const p of MAP.ponds){ctx.save();ctx.beginPath();ctx.ellipse(p.x,p.y,p.rx,p.ry,0,0,7);ctx.clip();ctx.fillStyle=MAP.gpond;ctx.fillRect(p.x-p.rx,p.y-p.ry,p.rx*2,p.ry*2);
   const list=POND_TILES[MAPID]||POND_TILES.default;for(let y=Math.floor((p.y-p.ry)/TILE)*TILE;y<p.y+p.ry;y+=TILE)for(let x=Math.floor((p.x-p.rx)/TILE)*TILE;x<p.x+p.rx;x+=TILE){const h=hashTile(x/TILE,y/TILE,303),name=list[(h>>>3)%list.length];drawTile(name,x,y,0.9);}
   ctx.restore();ctx.strokeStyle=MAP.gpond;ctx.globalAlpha=0.65;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,p.rx,p.ry,0,0,7);ctx.stroke();ctx.globalAlpha=1;}}
-const MAPS={
- town:{name:'交易の町ルーン',mlv:0,town:true,ground:'#6f675b',gpond:'#5a7a9a',deco:'tree',ponds:[],
-  decos:genDecos(11111,24),enemies:[],boss:false,
-  facilities:[{x:WORLD_W/2-420,y:WORLD_H/2-110,r:44,type:'equip',label:'装備屋'},
-   {x:WORLD_W/2-150,y:WORLD_H/2-190,r:44,type:'smith',label:'鍛冶屋'},
-   {x:WORLD_W/2+150,y:WORLD_H/2-190,r:44,type:'tool',label:'道具屋'},
-   {x:WORLD_W/2+420,y:WORLD_H/2-110,r:44,type:'jewel',label:'宝飾店'},
-   {x:WORLD_W/2+420,y:WORLD_H/2+120,r:44,type:'bank',label:'銀行'},
-   {x:WORLD_W/2-420,y:WORLD_H/2+120,r:44,type:'market',label:'マーケット'},
-   {x:WORLD_W/2+250,y:WORLD_H/2-210,r:44,type:'church',label:'教会'},
-   {x:WORLD_W/2,y:WORLD_H/2+210,r:50,type:'guild',label:'冒険者ギルド'}],
-  portals:[{x:WORLD_W/2,y:WORLD_H-70,r:34,to:'field',tx:330,ty:WORLD_H/2,color:'#7CFFA0',label:'草原へ ↓'}]},
- field:{name:'草原',mlv:0,ground:'#3f7d3a',gpond:'#2f6fb0',deco:'tree',ponds:[{x:1500,y:700,rx:220,ry:120},{x:1900,y:1500,rx:260,ry:150}],
-  decos:genDecos(98765,110),enemies:['slime','sprite'],boss:true,bx:WORLD_W*0.62,by:WORLD_H*0.30,bossDef:{jp:'キングスライム',el:'土',col:'#8a7a55',hp:900,atk:34},
-  portals:[{x:280,y:WORLD_H/2,r:32,to:'town',tx:WORLD_W/2,ty:WORLD_H-130,color:'#ffd27a',label:'← 町ルーン'},
-           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'forest',tx:130,ty:WORLD_H/2,color:'#7CFFA0',label:'深緑の森へ →'}]},
- forest:{name:'深緑の森',mlv:8,ground:'#2c5e2b',gpond:'#2a5a86',deco:'tree',ponds:[{x:1000,y:1200,rx:280,ry:150},{x:2000,y:900,rx:220,ry:130}],
-  decos:genDecos(13579,145),enemies:['boar','hornet','fungus'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'ゴブリンロード',el:'風',col:'#6fe0c8',hp:1500,atk:40},
-  portals:[{x:58,y:WORLD_H/2,r:30,to:'field',tx:WORLD_W-130,ty:WORLD_H/2,color:'#7CFFA0',label:'← 草原へ'},
-           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'volcano',tx:130,ty:WORLD_H/2,color:'#ff8a4a',label:'紅蓮の火山へ →'},
-           {x:WORLD_W/2,y:58,r:30,to:'grove',tx:WORLD_W/2,ty:WORLD_H-130,color:'#bdf06a',label:'風の谷へ ↑'}]},
- volcano:{name:'紅蓮の火山',mlv:16,ground:'#5a3328',gpond:'#c2461f',deco:'rock',ponds:[{x:800,y:600,rx:240,ry:140},{x:1800,y:1400,rx:260,ry:150}],
-  decos:genDecos(24680,95),enemies:['wisp','salaman','magma'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'イグニス',el:'火',col:'#ff5230',hp:2400,atk:48},
-  portals:[{x:58,y:WORLD_H/2,r:30,to:'forest',tx:WORLD_W-130,ty:WORLD_H/2,color:'#ff8a4a',label:'← 深緑の森へ'},
-           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'cavern',tx:130,ty:WORLD_H/2,color:'#9fe8ff',label:'蒼氷の洞窟へ →'}]},
- cavern:{name:'蒼氷の洞窟',mlv:24,ground:'#243b4a',gpond:'#6fc8e0',deco:'rock',ponds:[{x:1100,y:800,rx:260,ry:150},{x:1900,y:1300,rx:240,ry:140}],
-  decos:genDecos(33221,95),enemies:['frost','icewisp','yeti'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'フロストドラゴン',el:'水',col:'#bfefff',hp:3600,atk:56},
-  portals:[{x:58,y:WORLD_H/2,r:30,to:'volcano',tx:WORLD_W-130,ty:WORLD_H/2,color:'#9fe8ff',label:'← 紅蓮の火山へ'},
-           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'ruins',tx:130,ty:WORLD_H/2,color:'#c0a8e0',label:'忘却の遺跡へ →'},
-           {x:WORLD_W/2,y:58,r:30,to:'crystal',tx:WORLD_W/2,ty:WORLD_H-130,color:'#aef0ff',label:'水晶谷へ ↑'}]},
- ruins:{name:'忘却の遺跡',mlv:32,ground:'#2a2630',gpond:'#5a5070',deco:'rock',ponds:[{x:1300,y:1000,rx:240,ry:150}],
-  decos:genDecos(44556,80),enemies:['wraith','sentry','phantom'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'リンドヴルム',el:'無',col:'#9a8fb0',hp:5200,atk:66},
-  portals:[{x:58,y:WORLD_H/2,r:30,to:'cavern',tx:WORLD_W-130,ty:WORLD_H/2,color:'#c0a8e0',label:'← 蒼氷の洞窟へ'},
-           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'desert',tx:130,ty:WORLD_H/2,color:'#ffd27a',label:'灼熱の砂漠へ →'}]},
- desert:{name:'灼熱の砂漠',mlv:40,ground:'#b8924a',gpond:'#5aa0c0',deco:'rock',ponds:[{x:1500,y:1100,rx:220,ry:130}],
-  decos:genDecos(55667,70),enemies:['scarab','mirage','sandw'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'アースドラゴン',el:'土',col:'#e0c060',hp:7200,atk:78},
-  portals:[{x:58,y:WORLD_H/2,r:30,to:'ruins',tx:WORLD_W-130,ty:WORLD_H/2,color:'#ffd27a',label:'← 忘却の遺跡へ'},
-           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'sky',tx:130,ty:WORLD_H/2,color:'#bfe8ff',label:'雷鳴の天空へ →'}]},
- sky:{name:'雷鳴の天空',mlv:48,ground:'#4a6a8a',gpond:'#8fc8e8',deco:'tree',ponds:[{x:1000,y:700,rx:240,ry:150},{x:1900,y:1400,rx:240,ry:140}],
-  decos:genDecos(66778,75),enemies:['griffon','thunder','cloud'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'ストームドラゴン',el:'風',col:'#9fe8d0',hp:9600,atk:92},
-  portals:[{x:58,y:WORLD_H/2,r:30,to:'desert',tx:WORLD_W-130,ty:WORLD_H/2,color:'#bfe8ff',label:'← 灼熱の砂漠へ'},
-           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'abyss',tx:130,ty:WORLD_H/2,color:'#b07ad0',label:'虚無の深淵へ →'}]},
- abyss:{name:'虚無の深淵',mlv:56,ground:'#1a1622',gpond:'#3a2e50',deco:'rock',ponds:[{x:1300,y:1000,rx:260,ry:150}],
-  decos:genDecos(77889,70),enemies:['shade','abyssal','devour'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'ワイバーン',el:'無',col:'#a04a8a',hp:13000,atk:110},
-  portals:[{x:58,y:WORLD_H/2,r:30,to:'sky',tx:WORLD_W-130,ty:WORLD_H/2,color:'#b07ad0',label:'← 雷鳴の天空へ'},
-           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'throne',tx:130,ty:WORLD_H/2,color:'#ff3060',label:'終焉の玉座へ →'}]},
- throne:{name:'終焉の玉座',mlv:72,ground:'#1a0e16',gpond:'#5a1030',deco:'rock',ponds:[{x:1300,y:1000,rx:240,ry:140}],
-  decos:genDecos(99001,60),enemies:['revenant','doomeye'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,
-  bossDef:{jp:'エンシェントドラゴン',el:'無',col:'#ff2d6d',hp:160000,atk:200,mega:true,fixedDrop:true},
-  portals:[{x:58,y:WORLD_H/2,r:30,to:'abyss',tx:WORLD_W-130,ty:WORLD_H/2,color:'#ff3060',label:'← 虚無の深淵へ'}]},
- grove:{name:'風の谷',mlv:12,ground:'#357a4a',gpond:'#2f7fa0',deco:'tree',ponds:[{x:1200,y:900,rx:240,ry:140}],
-  decos:genDecos(22334,135),enemies:['mantis','pixie'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'フェニックス',el:'風',col:'#bdf06a',hp:1900,atk:44},
-  portals:[{x:WORLD_W/2,y:WORLD_H-58,r:30,to:'forest',tx:WORLD_W/2,ty:130,color:'#bdf06a',label:'深緑の森へ ↓'},
-           {x:WORLD_W-58,y:WORLD_H/2,r:30,to:'volcano',tx:130,ty:WORLD_H/2,color:'#ff8a4a',label:'紅蓮の火山へ →'}]},
- crystal:{name:'水晶谷',mlv:28,ground:'#2a4358',gpond:'#7fd0e8',deco:'rock',ponds:[{x:1000,y:1000,rx:260,ry:150},{x:1900,y:800,rx:220,ry:130}],
-  decos:genDecos(55779,90),enemies:['crystalan','prism'],boss:true,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:{jp:'ユニコーン',el:'水',col:'#aef0ff',hp:4200,atk:60},
-  portals:[{x:WORLD_W/2,y:WORLD_H-58,r:30,to:'cavern',tx:WORLD_W/2,ty:130,color:'#aef0ff',label:'蒼氷の洞窟へ ↓'}]},
-};
+if(!window.AMC_MAPS)throw new Error('maps.js is not loaded');
+const MAPS=window.AMC_MAPS({WORLD_W,WORLD_H,genDecos});
 let MAP=MAPS.town,MAPID='town';
 const TUTOR_X=WORLD_W/2-300,TUTOR_Y=WORLD_H/2+190;
 function townSpawn(){return{x:TUTOR_X,y:TUTOR_Y+82};}
