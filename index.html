@@ -340,17 +340,17 @@ function effStat(n){let v=P.base[n]*2;for(const k of EQKEYS){const it=P.equip[k]
  const pct=playerAffix(n+'%')+playerAffix('allstat%');return Math.round(v*(1+pct/100));}
 function statCurve(v,scale,cap){v=Math.max(0,v||0);return cap*(1-Math.exp(-v/scale));}
 function magicAtk(){return effStat('INT')*1.1+effStat('PIE')*0.9;}
-function critChance(){return 0.05+statCurve(effStat('LUK'),130,1.95);}
+function critChance(){return 0.05+statCurve(effStat('LUK'),260,1.95);}
 function critDamageMul(){return 1.5+statCurve(effStat('DEX'),160,1.0);}
-function dodgeChance(){return statCurve(effStat('AGI')+effStat('LUK'),650,0.75);}
-function defenseRate(){return statCurve(effStat('VIT'),220,0.55);}
+function dodgeChance(){return statCurve(effStat('AGI')+effStat('LUK'),1300,0.75);}
+function defenseRate(){return statCurve(effStat('VIT'),600,0.75);}
 function rangeMul(){return 1+statCurve(effStat('DEX'),220,0.45);}
 function expStatMul(){return 1+statCurve(effStat('INT'),240,0.8);}
 function dropStatMul(){return 1+statCurve(effStat('LUK'),240,0.8);}
 function mpRegenBase(){return 7+(P.lv-1)*0.5+effStat('PIE')*0.10;}
 function hpRegenRate(){return 0.02+effStat('PIE')*0.00025+effStat('VIT')*0.00025;}
-function moveSpeed(){return (2.3+effStat('AGI')*0.018+effStat('DEX')*0.014)*1.2*(1+getBuffs().spd);}
-function castMult(){return 1/(1+effStat('AGI')*0.025);}
+function moveSpeed(){return (2.3+effStat('AGI')*0.006+effStat('DEX')*0.0047)*1.2*(1+getBuffs().spd);}
+function castMult(){return 1/(1+effStat('AGI')*0.0083);}
 function recompute(){const hpR=P.maxhp?P.hp/P.maxhp:1,mpR=P.maxmp?P.mp/P.maxmp:1;
  P.maxhp=Math.round(90+effStat('VIT')*14+(P.lv-1)*8);P.maxmp=Math.round(20+effStat('INT')*1.5+(P.lv-1)*8);
  P.hp=Math.min(P.maxhp,Math.round(P.maxhp*hpR));P.mp=Math.min(P.maxmp,Math.round(P.maxmp*mpR));}
@@ -371,10 +371,13 @@ function applySaveProgress(d){P.quests=(d.qu||[]).map(unpackQuest).filter(Boolea
 function closeSaveUi(){P.downT=0;P.menu=false;P.saveMenu=false;P.debugMenu=false;P.shop=null;P.mlist=null;P.talkNpc=null;}
 function restoreSaveVitals(d){P.hp=Math.max(1,Math.min(P.maxhp,d.hp||P.maxhp));P.mp=Math.max(0,Math.min(P.maxmp,d.mp||P.maxmp));}
 function applySave(d,quiet){d=migrateSave(d);if(!d)throw new Error('bad save');applySaveCore(d);applySaveInventory(d);applySaveProgress(d);recompute();restoreSaveVitals(d);closeSaveUi();const sp=townSpawn();switchMap(P.lastTown,sp.x,sp.y);restoreSaveVitals(d);if(!quiet){flash('Loaded');se('ui');}}
-function encSave(d){let s=JSON.stringify(d);for(const [a,b]of [['"name"', '"N"']])s=s.split(a).join(b);const u=new TextEncoder().encode(s);let bin='';for(let i=0;i<u.length;i++)bin+=String.fromCharCode(u[i]);return 'z:'+btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function bytesToB64(u){let bin='',step=0x8000;for(let i=0;i<u.length;i+=step)bin+=String.fromCharCode.apply(null,u.subarray(i,i+step));return btoa(bin);}
+function encSave(d){let s=JSON.stringify(d);for(const [a,b]of [['"name"', '"N"']])s=s.split(a).join(b);return 'z:'+bytesToB64(new TextEncoder().encode(s)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 function decSave(s){s=(s||'').trim();const z=s.startsWith('z:');if(z)s=s.slice(2).replace(/-/g,'+').replace(/_/g,'/');const b=atob(s+'==='.slice((s.length+3)%4)),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);let txt=new TextDecoder().decode(u);if(z)for(const [a,b]of [['"N"', '"name"']])txt=txt.split(a).join(b);return JSON.parse(txt);}
 function markSaveUi(ok){saveBusyT=1.0;if(ok)saveOkT=2.0;else saveErrT=2.0;}
-function saveToCookie(auto){const s=encSave(packSave()),n=Math.ceil(s.length/3000);document.cookie=SAVE_COOKIE+'='+n+'; max-age=31536000; path=/; SameSite=Lax';for(let i=0;i<n;i++)document.cookie=SAVE_COOKIE+'_'+i+'='+encodeURIComponent(s.slice(i*3000,(i+1)*3000))+'; max-age=31536000; path=/; SameSite=Lax';for(let i=n;i<12;i++)document.cookie=SAVE_COOKIE+'_'+i+'=; max-age=0; path=/; SameSite=Lax';markSaveUi(true);if(!auto){flash('Cookieに保存しました');se('ui');}return true;}
+function writeSaveCookieChunk(s,i,n){if(i<0)document.cookie=SAVE_COOKIE+'='+n+'; max-age=31536000; path=/; SameSite=Lax';else if(i<n)document.cookie=SAVE_COOKIE+'_'+i+'='+encodeURIComponent(s.slice(i*3000,(i+1)*3000))+'; max-age=31536000; path=/; SameSite=Lax';else document.cookie=SAVE_COOKIE+'_'+i+'=; max-age=0; path=/; SameSite=Lax';}
+function saveToCookie(auto){try{const s=encSave(packSave()),n=Math.ceil(s.length/3000);writeSaveCookieChunk(s,-1,n);for(let i=0;i<n;i++)writeSaveCookieChunk(s,i,n);for(let i=n;i<12;i++)writeSaveCookieChunk(s,i,n);markSaveUi(true);if(!auto){flash('Cookieに保存しました');se('ui');}return true;}catch(e){markSaveUi(false);if(!auto){flash('Cookie保存失敗');se('error');}return false;}}
+function scheduleAutoSave(){if(autoSaveRunning)return;autoSaveRunning=true;saveBusyT=1.2;const start=()=>{let s='',n=0,i=-1;try{s=encSave(packSave());n=Math.ceil(s.length/3000);}catch(e){autoSaveRunning=false;markSaveUi(false);return;}const step=()=>{try{writeSaveCookieChunk(s,i,n);i++;if(i<12)setTimeout(step,0);else{autoSaveRunning=false;markSaveUi(true);}}catch(e){autoSaveRunning=false;markSaveUi(false);}};step();};if(window.requestIdleCallback)requestIdleCallback(start,{timeout:2500});else setTimeout(start,0);}
 function loadFromCookie(quiet){const ck=Object.fromEntries(document.cookie.split('; ').filter(Boolean).map(x=>{const i=x.indexOf('=');return[i<0?x:x.slice(0,i),i<0?'':x.slice(i+1)];}));let s='';if(ck[SAVE_COOKIE]&&/^\d+$/.test(ck[SAVE_COOKIE])){for(let i=0;i<Number(ck[SAVE_COOKIE]);i++)s+=decodeURIComponent(ck[SAVE_COOKIE+'_'+i]||'');}else if(ck[SAVE_COOKIE])s=decodeURIComponent(ck[SAVE_COOKIE]);if(!s){if(!quiet){flash('Cookieセーブがありません');se('error');}return false;}try{applySave(decSave(s),quiet);return true;}catch(e){if(!quiet){flash('Cookieロード失敗');se('error');}return false;}}
 function exportSaveText(){const s=encSave(packSave());try{navigator.clipboard&&navigator.clipboard.writeText(s);}catch(e){}window.prompt('Save text',s);flash('セーブテキストを書き出しました');se('ui');}
 function importSaveText(){const s=window.prompt('Load text');if(!s)return;try{applySave(decSave(s));}catch(e){flash('セーブテキスト読込失敗');se('error');}}
@@ -516,7 +519,7 @@ const P={name:(localStorage.getItem('amc_player_name')||'Player').slice(0,16),na
  runes:new Set(),boxes:[],spellsSeen:new Set(),lastTown:'town',fame:0,fameLv:1,invTab:'equip',invScroll:0,
  casting:false,castBackspace:false,menu:false,saveMenu:false,debugMenu:false,channels:[],kana:'',pend:'',invuln:0,downT:0,downMap:'',downX:0,downY:0};
 recompute();P.hp=P.maxhp;P.mp=P.maxmp;P.inv.push(genItem(1,false,'R'),genItem(1,false,'R'));
-let enemies=[],demons=[],shots=[],eshots=[],floats=[],fx=[],parts=[],zones=[],funnels=[],pending=[],enemyRespawns=[],dummy=null,msg='',msgT=0,shake=0,boss=null,bossCD=3,bigCD=0,demonCD=75,clickAreas=[],tipAreas=[],mouseX=0,mouseY=0,shopResetAt=performance.now()+600000,lastAutoSave=performance.now(),saveBusyT=0,saveOkT=0,saveErrT=0,marketRows=[],marketMine=null,marketBusy=false,marketMsg='',marketSel=null,marketPrice='',mpDmgSkip=null;const held={},buffs=new Map(),bosses=new Map(),bossTimers=new Map();
+let enemies=[],demons=[],shots=[],eshots=[],floats=[],fx=[],parts=[],zones=[],funnels=[],pending=[],enemyRespawns=[],dummy=null,msg='',msgT=0,shake=0,boss=null,bossCD=3,bigCD=0,demonCD=75,clickAreas=[],tipAreas=[],mouseX=0,mouseY=0,shopResetAt=performance.now()+600000,lastAutoSave=performance.now(),autoSaveRunning=false,saveBusyT=0,saveOkT=0,saveErrT=0,marketRows=[],marketMine=null,marketBusy=false,marketMsg='',marketSel=null,marketPrice='',mpDmgSkip=null,loopErrT=0;const held={},buffs=new Map(),bosses=new Map(),bossTimers=new Map();
 const MP_MAX=4,MP_URL='https://bbpdphmztyzznxyphprf.supabase.co',MP_KEY='sb_publishable_T6awXv8PgWgF_e9LKhFzBQ_AcS00gRe',MP_ICE=[{urls:'stun:stun.l.google.com:19302'}];
 function mpPeerId(){try{let id=localStorage.getItem('amc_mp_peer_id');if(!id){id='p'+Math.random().toString(36).slice(2,10);localStorage.setItem('amc_mp_peer_id',id);}return id;}catch(e){return'p'+Math.random().toString(36).slice(2,10);}}
 const MP={enabled:false,isHost:false,room:'',peerId:mpPeerId(),hostId:null,channel:null,supabase:null,peers:new Map(),players:new Map(),seen:new Set(),sendT:0,stateT:0,joinT:0,joinN:0,startedAt:0,status:'off'};
@@ -1124,7 +1127,7 @@ let last=performance.now();
 function updateGlobalSystems(dt){
  const now=performance.now();
  if(now>shopResetAt){genShopStock();P.rerollMul=1;shopResetAt=now+600000;}
- if(now-lastAutoSave>=SAVE_AUTOSAVE_MS){lastAutoSave=now;saveToCookie(true);}
+ if(now-lastAutoSave>=SAVE_AUTOSAVE_MS){lastAutoSave=now;scheduleAutoSave();}
  if(saveBusyT>0)saveBusyT-=dt;if(saveOkT>0)saveOkT-=dt;if(saveErrT>0)saveErrT-=dt;
  updateWeather(dt);updateElite(dt);updateDemons(dt);
  mpUpdate(dt);
@@ -1544,7 +1547,7 @@ function drawPredict(){for(const c of P.channels){const s=c.spell,m=c.mod||{radi
   else{const len=440*(m.distMul||1);ctx.beginPath();ctx.moveTo(P.x,P.y);ctx.lineTo(P.x+Math.cos(c.aim)*len,P.y+Math.sin(c.aim)*len);ctx.stroke();ctx.beginPath();ctx.arc(c.tx,c.ty,8,0,7);ctx.stroke();}}}
 document.getElementById('ref').innerHTML='<b>M</b> キーで魔法・ルーン一覧を表示　／　属性相性: 火→風→土→水→火';
 if(!loadFromCookie(true)){const sp=townSpawn();switchMap('town',sp.x,sp.y);}
-function loop(now){let dt=(now-last)/1000;last=now;if(dt>0.05)dt=0.05;update(dt);render();requestAnimationFrame(loop);}
+function loop(now){try{let dt=(now-last)/1000;last=now;if(dt>0.05)dt=0.05;update(dt);render();}catch(e){const t=performance.now();if(t>loopErrT){loopErrT=t+3000;console.error(e);msg='処理エラーを検出しました';msgT=2;}}requestAnimationFrame(loop);}
 requestAnimationFrame(loop);
 })();
 </script>
