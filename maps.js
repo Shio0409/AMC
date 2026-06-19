@@ -6,8 +6,8 @@ window.AMC_MAPS=function AMC_MAPS(ctx){
  const FAC={full:['equip','smith','tool','jewel','bank','market','church','guild'],small:['equip','smith','tool','guild'],outpost:['tool','guild']};
  const LABEL={equip:'装備屋',smith:'鍛冶屋',tool:'道具屋',jewel:'宝飾店',bank:'銀行',market:'マーケット',church:'教会',guild:'冒険者ギルド'};
  function facilities(kind){const pos=[[WORLD_W/2-420,WORLD_H/2-110],[WORLD_W/2-150,WORLD_H/2-190],[WORLD_W/2+150,WORLD_H/2-190],[WORLD_W/2+420,WORLD_H/2-110],[WORLD_W/2+420,WORLD_H/2+120],[WORLD_W/2-420,WORLD_H/2+120],[WORLD_W/2+250,WORLD_H/2-210],[WORLD_W/2,WORLD_H/2+210]];return (FAC[kind]||FAC.small).map((type,i)=>({x:pos[i][0],y:pos[i][1],r:type==='guild'?50:44,type,label:LABEL[type]}));}
- function west(to,label){return{x:58,y:WORLD_H/2,r:30,to,tx:WORLD_W-130,ty:WORLD_H/2,color:'#7CFFA0',label:'← '+label};}
- function east(to,label){return{x:WORLD_W-58,y:WORLD_H/2,r:30,to,tx:130,ty:WORLD_H/2,color:'#7CFFA0',label:label+' →'};}
+ function portal(side,to,label){const p={to,r:30,color:'#7CFFA0'};if(side==='n')Object.assign(p,{x:WORLD_W/2,y:58,tx:WORLD_W/2,ty:WORLD_H-130,label:'↑ '+label});else if(side==='s')Object.assign(p,{x:WORLD_W/2,y:WORLD_H-58,tx:WORLD_W/2,ty:130,label:'↓ '+label});else if(side==='w')Object.assign(p,{x:58,y:WORLD_H/2,tx:WORLD_W-130,ty:WORLD_H/2,label:'← '+label});else Object.assign(p,{x:WORLD_W-58,y:WORLD_H/2,tx:130,ty:WORLD_H/2,label:label+' →'});return p;}
+ function spreadPortals(ps){const groups={n:[],s:[],w:[],e:[]};for(const p of ps){const side=p.x<100?'w':p.x>WORLD_W-100?'e':p.y<100?'n':'s';groups[side].push(p);}for(const side in groups){const g=groups[side];for(let i=0;i<g.length;i++){const off=(i-(g.length-1)/2)*88;if(side==='n'||side==='s')g[i].x=Math.max(140,Math.min(WORLD_W-140,g[i].x+off));else g[i].y=Math.max(140,Math.min(WORLD_H-140,g[i].y+off));}}}
  const A=[
  ['town','リンドフィー',0,'village','town',11111,24,[],null,'full'],['field','メイベルの麦畑',1,'farm','field',11112,105,['slime','hornRabbit','manaBunny']],['hill','なだらかな丘陵',3,'plains','field',11113,92,['slime','manaWolf','manaHawk']],['westRoad','西街道',5,'road','field',11114,82,['goblin','goblinArcher','manaWolf']],['eastRoad','東街道',6,'road','field',11115,82,['goblin','goblinMage','hornRabbit']],['oldForest','古街道の森',8,'forest','field',11116,130,['manaWolf','goblinArcher','babyDragon']],['watchtower','街道の監視塔跡',10,'ruin','dungeon',11117,70,['goblin','goblinArcher','goblinMage','hobgoblin'],{jp:'ゴブリンロード',el:'風',col:'#6fe0c8',hp:1200,atk:30}],['windmere','ウィンドミア',0,'village','town',11118,22,[],null,'small'],['mabel','メイベル村',0,'village','town',11119,18,[],null,'outpost'],['fenceEnd','フェンス・エンド',0,'village','town',11120,18,[],null,'outpost'],
  ['goldhahn','ゴールドハーン',0,'village','town',12001,22,[],null,'small'],['goldenPlain','黄金平原',11,'farm','field',12011,115,['mandrake','manaHawk','scarab','pudding']],['farmBelt','農園地帯',13,'farm','field',12012,125,['mandrake','myconid','scarab','manaFlower']],['windPlateau','風車高原',15,'plains','field',12013,90,['manaHawk','scarab','gnome','goblinMage']],['canal','灌漑水路',14,'water','field',12014,82,['aquaJelly','manaFish','mudGolem','scarab']],['stillrow','スティルロウ',0,'village','town',12015,18,[],null,'outpost'],['irrigationRuins','地中灌漑機構跡',17,'ruin','dungeon',12016,72,['mudGolem','scarab','goblinMage','gnome'],{jp:'ゴブリンロード',el:'土',col:'#b89050',hp:1500,atk:36}],
@@ -20,7 +20,104 @@ window.AMC_MAPS=function AMC_MAPS(ctx){
  ['wallguard','ウォールガード',0,'wasteland','town',19001,22,[],null,'full'],['garrison','王国軍駐屯地',0,'wasteland','town',19002,18,[],null,'small'],['pioneerVillages','開拓村群',0,'wasteland','town',19003,18,[],null,'outpost'],['liberta','リベルタ',0,'wasteland','town',19004,18,[],null,'small'],['greyFrontier','灰色の辺境道',84,'wasteland','field',19011,72,['sentryCore','prismWraith','progenitorVampire']],['frontierWilderness','開拓荒野',85,'wasteland','field',19012,72,['prismWraith','manaAnomaly','titanGolem']],['borderForts','境界砦群',87,'ruin','field',19013,68,['sentryCore','progenitorVampire','arcWarden']],['libertaEdge','リベルタ外縁区',87,'wasteland','field',19014,68,['prismWraith','progenitorVampire','manaAnomaly']],['borderDungeon','境界砦地下遺構',90,'ruin','dungeon',19015,56,['sentryCore','manaAnomaly','prismWraith','arcWarden'],{jp:'アーク・ウォーデン',asset:'ルクス',el:'無',col:'#bcd0ff',hp:42000,atk:210}],
  ['lastHold','ラストホールド',0,'wasteland','town',20001,20,[],null,'full'],['exileCamp','流刑者集落',0,'wasteland','town',20002,18,[],null,'outpost'],['ruinedSankt','廃区ザンクト',0,'ruin','town',20003,18,[],null,'small'],['whiteWilderness','白虹の荒野',92,'void','field',20011,66,['manaAnomaly','voidSpirit','ancientLich']],['rottenPioneer','朽ちた開拓地',92,'wasteland','field',20012,66,['manaAnomaly','ancientLich','behemoth']],['sanktRoad','ザンクト外縁廃道',94,'ruin','field',20013,62,['voidSpirit','ancientLich','calamityDragon']],['oblivionOuter','忘却の外郭',96,'void','field',20014,60,['calamityDragon','behemoth','arcGuardian']],['oblivionRuins','忘却の遺跡群',98,'void','dungeon',20015,56,['sentryCore','manaAnomaly','ancientDragon','arcGuardian']],['recordCore','賢者の記録中枢',99,'void','dungeon',20016,52,['arcGuardian','ancientLich','manaAnomaly','voidSpirit']],['starshipWreck','惑星間飛行船の残骸',99,'void','dungeon',20017,50,['sentryCore','arcGuardian','calamityDragon','behemoth']],['finalSector','最終区画',99,'void','dungeon',20018,48,['arcGuardian','ancientLich','calamityDragon','behemoth'],{jp:'忘却の番人アムネシア',asset:'アンブラ',el:'無',col:'#d9c7ff',hp:90000,atk:310,mega:true,fixedDrop:true}],['postGameSector','ポストゲーム区画',99,'void','dungeon',20019,48,['arcGuardian','ancientLich','calamityDragon','behemoth'],{jp:'忘却の番人アムネシア',asset:'アンブラ',el:'無',col:'#d9c7ff',hp:140000,atk:380,mega:true,fixedDrop:true}]
  ];
+ const LINKS={
+  town:[['n','windmere'],['e','field'],['s','mabel']],
+  windmere:[['s','town'],['e','westRoad'],['n','oldForest']],
+  field:[['w','town'],['e','hill'],['s','mabel']],
+  mabel:[['n','field'],['e','eastRoad'],['s','town']],
+  hill:[['w','field'],['e','westRoad'],['s','eastRoad']],
+  westRoad:[['w','hill'],['n','windmere'],['e','oldForest'],['s','ceres']],
+  eastRoad:[['w','mabel'],['n','hill'],['e','watchtower'],['s','goldenPlain']],
+  oldForest:[['w','westRoad'],['e','fenceEnd'],['s','watchtower'],['n','windmere']],
+  fenceEnd:[['w','oldForest']],
+  watchtower:[['w','eastRoad'],['n','oldForest']],
+
+  goldhahn:[['n','goldenPlain'],['e','farmBelt'],['s','canal']],
+  goldenPlain:[['n','eastRoad'],['s','goldhahn'],['e','farmBelt'],['w','royalPlain']],
+  farmBelt:[['w','goldenPlain'],['s','stillrow'],['e','windPlateau'],['n','goldhahn']],
+  windPlateau:[['w','farmBelt'],['s','canal']],
+  canal:[['n','goldhahn'],['e','irrigationRuins'],['w','stillrow'],['s','royalPlain'],['e','windPlateau']],
+  stillrow:[['e','canal'],['n','farmBelt']],
+  irrigationRuins:[['w','canal']],
+
+  univel:[['w','ceres'],['s','royalPlain'],['n','oldRoyalRoad'],['e','mirrorLake']],
+  ceres:[['e','univel'],['w','westRoad']],
+  royalPlain:[['n','univel'],['w','goldenPlain'],['e','mirrorLake'],['s','sewer'],['s','canal']],
+  oldRoyalRoad:[['s','univel'],['n','blackRoad'],['e','undergrow']],
+  sewer:[['n','royalPlain'],['e','undergrow']],
+  undergrow:[['w','oldRoyalRoad'],['s','shrineRuins'],['e','sewer']],
+  shrineRuins:[['n','undergrow']],
+
+  rowendil:[['s','blackRoad'],['e','timber'],['w','greenForest']],
+  timber:[['w','rowendil'],['s','greenhollow'],['n','hunterHideout']],
+  hunterHideout:[['s','timber'],['e','greenForest']],
+  greenhollow:[['n','timber'],['s','mistMarsh']],
+  blackRoad:[['s','oldRoyalRoad'],['n','rowendil'],['e','greenForest']],
+  greenForest:[['w','rowendil'],['e','mistMarsh'],['n','hunterHideout'],['s','oldTreeHunt'],['w','blackRoad']],
+  mistMarsh:[['w','greenForest'],['n','greenhollow'],['s','oldTreeHunt']],
+  oldTreeHunt:[['n','greenForest'],['e','forestLab'],['s','acrossPort'],['w','mistMarsh']],
+  forestLab:[['w','oldTreeHunt']],
+
+  miraLake:[['n','mirrorLake'],['e','ripple'],['s','fogPromenade']],
+  ripple:[['w','miraLake'],['s','rippleShore']],
+  mirrorLake:[['w','univel'],['s','miraLake'],['e','fogPromenade'],['n','royalPlain']],
+  fogPromenade:[['n','miraLake'],['w','mirrorLake'],['e','sunkenRoad']],
+  rippleShore:[['n','ripple'],['e','lakeRuins'],['s','acrossPort']],
+  sunkenRoad:[['w','fogPromenade'],['s','lakeRuins']],
+  lakeRuins:[['w','rippleShore'],['n','sunkenRoad']],
+
+  acrossPort:[['n','rippleShore'],['w','oldTreeHunt'],['e','warehouseCanal'],['s','seaRoad'],['w','dockside'],['s','saltFlat']],
+  dockside:[['e','acrossPort'],['s','warehouseCanal']],
+  saltFlat:[['n','acrossPort'],['e','seaRoad']],
+  seaRoad:[['n','acrossPort'],['w','saltFlat'],['e','windCape']],
+  windCape:[['w','seaRoad'],['s','offshorePier']],
+  warehouseCanal:[['w','acrossPort'],['n','dockside'],['s','offshorePier']],
+  offshorePier:[['n','windCape'],['w','warehouseCanal'],['e','airshipDock'],['s','graubachCity']],
+  airshipDock:[['w','offshorePier']],
+
+  graubachCity:[['n','offshorePier'],['w','ashCommon'],['e','sootyRoad'],['s','elixirField']],
+  ashCommon:[['e','graubachCity'],['s','sootyRoad']],
+  elixirField:[['n','graubachCity'],['e','manaFogLowland']],
+  sootyRoad:[['w','ashCommon'],['e','manaFogLowland'],['n','graubachCity']],
+  manaFogLowland:[['w','elixirField'],['n','sootyRoad'],['s','elixirEdge']],
+  elixirEdge:[['n','manaFogLowland'],['e','refineLine'],['s','eisenroar']],
+  refineLine:[['w','elixirEdge'],['e','elixirPlant']],
+  elixirPlant:[['w','refineLine']],
+
+  eisenroar:[['n','elixirEdge'],['w','deepvein'],['e','ironRoad'],['s','crystalCave']],
+  deepvein:[['e','eisenroar'],['s','oldMine']],
+  freepick:[['w','oldMine'],['s','independentMine']],
+  ironRoad:[['w','eisenroar'],['e','crystalCave']],
+  oldMine:[['n','deepvein'],['e','freepick']],
+  crystalCave:[['w','ironRoad'],['n','eisenroar'],['s','independentMine']],
+  independentMine:[['n','crystalCave'],['w','freepick'],['e','miningMech'],['s','wallguard']],
+  miningMech:[['w','independentMine']],
+
+  wallguard:[['n','independentMine'],['e','garrison'],['s','greyFrontier']],
+  garrison:[['w','wallguard'],['s','pioneerVillages']],
+  pioneerVillages:[['n','garrison'],['e','liberta']],
+  liberta:[['w','pioneerVillages'],['s','libertaEdge']],
+  greyFrontier:[['n','wallguard'],['e','frontierWilderness']],
+  frontierWilderness:[['w','greyFrontier'],['e','borderForts']],
+  borderForts:[['w','frontierWilderness'],['s','libertaEdge']],
+  libertaEdge:[['n','liberta'],['w','borderForts'],['e','borderDungeon'],['s','lastHold']],
+  borderDungeon:[['w','libertaEdge']],
+
+  lastHold:[['n','libertaEdge'],['e','exileCamp'],['s','whiteWilderness']],
+  exileCamp:[['w','lastHold'],['s','ruinedSankt']],
+  ruinedSankt:[['n','exileCamp'],['s','sanktRoad']],
+  whiteWilderness:[['n','lastHold'],['e','rottenPioneer']],
+  rottenPioneer:[['w','whiteWilderness'],['e','sanktRoad']],
+  sanktRoad:[['n','ruinedSankt'],['w','rottenPioneer'],['s','oblivionOuter']],
+  oblivionOuter:[['n','sanktRoad'],['s','oblivionRuins']],
+  oblivionRuins:[['n','oblivionOuter'],['e','recordCore']],
+  recordCore:[['w','oblivionRuins'],['e','starshipWreck']],
+  starshipWreck:[['w','recordCore'],['e','finalSector']],
+  finalSector:[['w','starshipWreck'],['s','postGameSector']],
+  postGameSector:[['n','finalSector']]
+ };
  const out={};
- for(let i=0;i<A.length;i++){const [id,name,mlv,theme,kind,seed,count,enemies,bossDef,fac]=A[i],t=THEME[theme]||THEME.plains,town=kind==='town',portals=[];if(i>0)portals.push(west(A[i-1][0],A[i-1][1]));if(i<A.length-1)portals.push(east(A[i+1][0],A[i+1][1]));out[id]={name,mlv,town,ground:t.ground,gpond:t.gpond,deco:t.deco,ponds:t.ponds.map(p=>({...p})),decos:genDecos(seed,count),enemies:(enemies||[]).slice(),boss:!!bossDef,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:bossDef||null,portals};if(town)out[id].facilities=facilities(fac||'small');}
+ for(let i=0;i<A.length;i++){const [id,name,mlv,theme,kind,seed,count,enemies,bossDef,fac]=A[i],t=THEME[theme]||THEME.plains,town=kind==='town';out[id]={name,mlv,town,ground:t.ground,gpond:t.gpond,deco:t.deco,ponds:t.ponds.map(p=>({...p})),decos:genDecos(seed,count),enemies:(enemies||[]).slice(),boss:!!bossDef,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:bossDef||null,portals:[]};if(town)out[id].facilities=facilities(fac||'small');}
+ for(const id in LINKS)if(out[id]){for(const [side,to] of LINKS[id])if(out[to])out[id].portals.push(portal(side,to,out[to].name));spreadPortals(out[id].portals);}
  return out;
 };

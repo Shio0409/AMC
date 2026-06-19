@@ -177,6 +177,7 @@ const SPELLS=[
  S('グランドインパクト',['ぐらんどいんぱくと'],50,'impact',{el:'土',power:2.3,speed:5.5,r:13,splash:180,big:true,color:'#b58a4a'},[]),
  S('アースクエイク',['あーすくえいく'],50,'self',{el:'土',power:2.1,radius:222,slow:3,big:true,color:'#9a7a3a'},[]),
  S('リコール',['りこーる'],14,'return',{el:'特殊',color:'#9fe8ff'},[]),
+ S('テレポート',['てれぽーと'],22,'teleport',{el:'特殊',color:'#b48cff'},[]),
  S('リザレクション',['りざれくしょん'],24,'resurrect',{el:'特殊',color:'#dfffe0'},[]),
 ];
 const SPELL_N={};SPELLS.forEach(s=>s.read.forEach(r=>SPELL_N[r]=s));
@@ -367,8 +368,8 @@ function packSave(){return{v:SAVE_VERSION,n:P.name,lv:P.lv,rb:P.rebirth||0,ex:P.
 function migrateSave(d){if(!d||typeof d!=='object')return null;if(!d.v)d.v=1;if(d.v===1){d.bk=d.bk||0;d.v=2;}if(d.v===2){d.ne=Math.max(120,Math.round((d.ne||40)*3));d.v=3;}if(d.v===3){d.ne=Math.max(80,Math.round((d.ne||120)*2/3));d.v=4;}if(d.v===4){d.ls=MAPS[d.ls]?d.ls:(MAPS[d.m]?d.m:'town');delete d.m;delete d.x;delete d.y;d.v=5;}if(d.v===5){d.lf=d.lf||0;d.v=6;}if(d.v===6){d.qb=[];d.qa=0;d.np=[];d.v=7;}if(d.v===7){d.ne=levelNeed(d.lv||1);d.v=8;}if(d.v===8){d.mt=d.mt||0;d.v=9;}if(d.v===9){d.rb=d.rb||0;d.bv=d.bv==null?BGM_VOL:d.bv;d.sv=d.sv==null?SE_VOL:d.sv;d.v=10;}if(d.v!==SAVE_VERSION)return null;d.rb=Math.max(0,Math.round(d.rb||0));d.g=Math.max(0,Math.round(d.g||0));d.mt=Math.max(0,Math.round(d.mt||0));d.bk=Math.max(0,Math.round(d.bk||0));d.ne=levelNeed(d.lv||1);d.lf=Math.max(0,Math.min(RAR.length-1,Math.round(d.lf||0)));d.bv=Math.max(0,Math.min(1,Number(d.bv==null?BGM_VOL:d.bv)));d.sv=Math.max(0,Math.min(1,Number(d.sv==null?SE_VOL:d.sv)));d.ls=MAPS[d.ls]?d.ls:'town';d.iv=Array.isArray(d.iv)?d.iv:[];d.jw=Array.isArray(d.jw)?d.jw:[];d.qu=Array.isArray(d.qu)?d.qu:[];d.qb=Array.isArray(d.qb)?d.qb:[];d.np=Array.isArray(d.np)?d.np:[];d.bx=Array.isArray(d.bx)?d.bx:[];d.ru=Array.isArray(d.ru)&&d.ru.length?d.ru:BASIC_RUNES.slice();d.ss=Array.isArray(d.ss)?d.ss:[];return d;}
 function applySaveCore(d){P.name=(d.n||'Player').slice(0,16);localStorage.setItem('amc_player_name',P.name);P.lv=d.lv||1;P.rebirth=d.rb||0;P.exp=d.ex||0;P.need=levelNeed(P.lv);P.sp=d.sp||0;P.gem=d.g||0;P.material=d.mt||0;P.bank=d.bk||0;P.lootMin=d.lf||0;BGM_VOL=d.bv;SE_VOL=d.sv;saveAudioPrefs();P.base={...BASE_STATS,...(d.b||{})};P.hpPot=d.hpp||0;P.mpPot=d.mpp||0;P.fame=d.fa||0;P.fameLv=d.fl||1;P.lastTown=d.ls||'town';}
 function applySaveInventory(d){P.inv=(d.iv||[]).map(unpackItem).filter(Boolean).slice(0,INV_MAX);for(const k of EQKEYS)P.equip[k]=unpackItem(d.eq&&d.eq[k]);P.jewels=(d.jw||[]).map(j=>({jewel:true,tier:j[0]||0,type:j[1]||0,name:JRAR[j[0]||0]+JTYPES[j[1]||0].n,col:JTYPES[j[1]||0].col}));P.boxes=(d.bx||[]).map(b=>b[0]?{eliteBox:true,key:b[1],name:b[3],lv:b[4]||0}:{box:true,npc:b[2],name:b[3],lv:b[4]||0});}
-function applySaveProgress(d){P.quests=(d.qu||[]).map(unpackQuest).filter(Boolean);P.questBoard=(d.qb||[]).map(unpackQuest).filter(Boolean);P.questBoardAt=d.qa||0;P.runes=new Set(d.ru&&d.ru.length?d.ru:BASIC_RUNES);P.spellsSeen=new Set(d.ss||[]);if(!P.spellsSeen.size)unlockBasicSpells();else P.spellsSeen.add('\u30ea\u30b6\u30ec\u30af\u30b7\u30e7\u30f3');for(const s of d.np||[]){const n=npcs[s[0]];if(n){n.affLv=Math.max(1,Math.min(5,s[1]||1));n.aff=Math.max(0,Math.min(100,s[2]||0));n.done=s[3]||0;n.q=unpackQuest(s[4]);n.offers=(s[5]||[]).map(unpackQuest).filter(Boolean);n.offer=null;}}}
-function closeSaveUi(){P.downT=0;P.menu=false;P.saveMenu=false;P.debugMenu=false;P.shop=null;P.mlist=null;P.talkNpc=null;}
+function applySaveProgress(d){P.quests=(d.qu||[]).map(unpackQuest).filter(Boolean);P.questBoard=(d.qb||[]).map(unpackQuest).filter(Boolean);P.questBoardAt=d.qa||0;P.runes=new Set(d.ru&&d.ru.length?d.ru:BASIC_RUNES);P.spellsSeen=new Set(d.ss||[]);if(!P.spellsSeen.size)unlockBasicSpells();else{P.spellsSeen.add('\u30ea\u30b6\u30ec\u30af\u30b7\u30e7\u30f3');P.spellsSeen.add('テレポート');}for(const s of d.np||[]){const n=npcs[s[0]];if(n){n.affLv=Math.max(1,Math.min(5,s[1]||1));n.aff=Math.max(0,Math.min(100,s[2]||0));n.done=s[3]||0;n.q=unpackQuest(s[4]);n.offers=(s[5]||[]).map(unpackQuest).filter(Boolean);n.offer=null;}}}
+function closeSaveUi(){P.downT=0;P.menu=false;P.saveMenu=false;P.debugMenu=false;P.teleportMenu=false;P.shop=null;P.mlist=null;P.talkNpc=null;}
 function restoreSaveVitals(d){P.hp=Math.max(1,Math.min(P.maxhp,d.hp||P.maxhp));P.mp=Math.max(0,Math.min(P.maxmp,d.mp||P.maxmp));}
 function applySave(d,quiet){d=migrateSave(d);if(!d)throw new Error('bad save');applySaveCore(d);applySaveInventory(d);applySaveProgress(d);recompute();restoreSaveVitals(d);closeSaveUi();const sp=townSpawn();switchMap(P.lastTown,sp.x,sp.y);restoreSaveVitals(d);if(!quiet){flash('Loaded');se('ui');}}
 function bytesToB64(u){let bin='',step=0x8000;for(let i=0;i<u.length;i+=step)bin+=String.fromCharCode.apply(null,u.subarray(i,i+step));return btoa(bin);}
@@ -540,7 +541,7 @@ const P={name:(localStorage.getItem('amc_player_name')||'Player').slice(0,16),na
  shop:null,shopStock:[],smithSel:null,facLock:false,mapLockT:0,rerollMul:1,parryT:0,tpCD:0,
  hpPot:1,mpPot:1,jewels:[],quests:[],questBoard:null,questBoardAt:0,jewelSel:null,socketSel:null,talkNpc:null,mlist:null,
  runes:new Set(),boxes:[],spellsSeen:new Set(),lastTown:'town',fame:0,fameLv:1,invTab:'equip',invScroll:0,
- casting:false,castBackspace:false,menu:false,saveMenu:false,debugMenu:false,channels:[],kana:'',pend:'',invuln:0,downT:0,downMap:'',downX:0,downY:0};
+ casting:false,castBackspace:false,menu:false,saveMenu:false,debugMenu:false,teleportMenu:false,channels:[],kana:'',pend:'',invuln:0,downT:0,downMap:'',downX:0,downY:0};
 recompute();P.hp=P.maxhp;P.mp=P.maxmp;P.inv.push(genItem(1,false,'R'),genItem(1,false,'R'));
 let enemies=[],demons=[],shots=[],eshots=[],floats=[],fx=[],parts=[],zones=[],funnels=[],pending=[],enemyRespawns=[],dummy=null,msg='',msgT=0,shake=0,boss=null,bossCD=3,bigCD=0,demonCD=75,clickAreas=[],tipAreas=[],mouseX=0,mouseY=0,shopResetAt=performance.now()+600000,lastAutoSave=performance.now(),autoSaveRunning=false,saveBusyT=0,saveOkT=0,saveErrT=0,marketRows=[],marketMine=null,marketBusy=false,marketMsg='',marketSel=null,marketPrice='',marketListings=[],tradeTarget='',tradeItem=null,tradeGem='',tradeIncoming=null,tradePending=null,tradeEscrow=null,mpDmgSkip=null,loopErrT=0;const held={},buffs=new Map(),bosses=new Map(),bossTimers=new Map();
 const MP_MAX=4,MP_URL='https://bbpdphmztyzznxyphprf.supabase.co',MP_KEY='sb_publishable_T6awXv8PgWgF_e9LKhFzBQ_AcS00gRe',MP_ICE=[{urls:'stun:stun.l.google.com:19302'}];
@@ -700,6 +701,7 @@ function drawPondTiles(){for(const p of MAP.ponds){ctx.save();ctx.beginPath();ct
   ctx.restore();ctx.strokeStyle=MAP.gpond;ctx.globalAlpha=0.65;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,p.rx,p.ry,0,0,7);ctx.stroke();ctx.globalAlpha=1;}}
 if(!window.AMC_MAPS)throw new Error('maps.js is not loaded');
 const MAPS=window.AMC_MAPS({WORLD_W,WORLD_H,genDecos});
+const TELEPORT_TOWNS=['town','windmere','goldhahn','univel','rowendil','miraLake','acrossPort','graubachCity','eisenroar','wallguard','lastHold'];
 let MAP=MAPS.town,MAPID='town';
 const TUTOR_X=WORLD_W/2-300,TUTOR_Y=WORLD_H/2+190;
 function townSpawn(){return{x:TUTOR_X,y:TUTOR_Y+82};}
@@ -773,7 +775,7 @@ let npcs=NPC_DEFS.map((d,idx)=>({...d,idx,map:d.home,x:d.fixed?TUTOR_X:WORLD_W/2
 const NPC_RUNE=['アルティメット','クインタプル','エクストリーム','インフィニティ','ギガンティック','ショットガン','インスタントリー'];
 const BASIC_RUNES=['パワー','エコ','ワイド','レンズ','ロング','ダブル','レイト','ジフィ','バフ','タイム','オール','セーバー','ピアース','ホーミング','アフリクト','ロト'];
 BASIC_RUNES.forEach(n=>P.runes.add(n));
-function unlockBasicSpells(){['火','水','風','土'].forEach(el=>{const s=SPELLS.find(x=>x.el===el&&!x.big);if(s)P.spellsSeen.add(s.name);});P.spellsSeen.add('リコール');P.spellsSeen.add('リザレクション');}
+function unlockBasicSpells(){['火','水','風','土'].forEach(el=>{const s=SPELLS.find(x=>x.el===el&&!x.big);if(s)P.spellsSeen.add(s.name);});P.spellsSeen.add('リコール');P.spellsSeen.add('テレポート');P.spellsSeen.add('リザレクション');}
 unlockBasicSpells();
 const NPC_CALL=['みら','がろ','てぃな','ふぇん','こう','りる','おると'];
 const NPC_REACT=['ナイス！','やるねぇ！','うわ、すごい！','お見事！','いいぞ！','カッコいい！','ふぉっふぉ、見事じゃ'];
@@ -986,12 +988,13 @@ function rewardDemonKill(d){if(!d||d.rewarded)return;d.rewarded=true;se('elite')
 function mpApplyDemonState(s){demons=(s.list||[]).filter(d=>d.active).map(d=>({...d,el:'無',def:18,spd:.65,exp:expByHp(d.maxhp||d.hp||1500,0.8),mpRemote:true,burn:null,slow:0,stun:0,spell:SPELLS.find(x=>x.name===d.spell)||null}));}
 function mpApplyDemonGone(m){const d=demons.find(x=>x.id===m.id);if(d&&m.killed)rewardDemonKill(d);if(d&&!m.killed&&d.map===MAPID)flash('魔人は姿を消した…');demons=demons.filter(x=>x.id!==m.id);}
 function switchMap(id,x,y){for(const en of enemies)if(en.eliteRec)en.eliteRec.hp=en.hp;MAP=MAPS[id];MAPID=id;dummy=(id==='town')?makeDummy():null;
- if(MAP.town){P.lastTown=id;for(const n of npcs){n.map=id;if(n.fixed){n.x=TUTOR_X;n.y=TUTOR_Y;}else{n.x=WORLD_W/2+(Math.random()*700-350);n.y=WORLD_H/2+(Math.random()*460-230);}n.talk=false;n.reactT=0;}}P.x=x;P.y=y;enemies=[];shots=[];eshots=[];parts=[];floats=[];fx=[];zones=[];funnels=[];pending=[];enemyRespawns=[];passers=[];boss=bosses.get(id)||null;if(!bossTimers.has(id))bossTimers.set(id,MAP.boss?3:1e9);bossCD=bossTimers.get(id);P.mapLockT=1;P.invuln=1.2;P.casting=false;P.castBackspace=false;P.channels=[];P.kana='';P.pend='';if(!MAP.town)for(let i=0;i<5;i++)spawnEnemy();playBgmForMap();flash(MAP.name+' へ移動');}
+ if(MAP.town){P.lastTown=id;for(const n of npcs){n.map=id;if(n.fixed){n.x=TUTOR_X;n.y=TUTOR_Y;}else{n.x=WORLD_W/2+(Math.random()*700-350);n.y=WORLD_H/2+(Math.random()*460-230);}n.talk=false;n.reactT=0;}}P.x=x;P.y=y;enemies=[];shots=[];eshots=[];parts=[];floats=[];fx=[];zones=[];funnels=[];pending=[];enemyRespawns=[];passers=[];boss=bosses.get(id)||null;if(!bossTimers.has(id))bossTimers.set(id,MAP.boss?3:1e9);bossCD=bossTimers.get(id);P.mapLockT=1;P.invuln=1.2;P.casting=false;P.castBackspace=false;P.channels=[];P.kana='';P.pend='';P.teleportMenu=false;if(!MAP.town)for(let i=0;i<5;i++)spawnEnemy();playBgmForMap();flash(MAP.name+' へ移動');}
 
 function castTime(s,modOrRunes){const m=modOrRunes&&modOrRunes.castMul!==undefined?modOrRunes:buildMod(modOrRunes||[]);const rn=Array.isArray(modOrRunes)?modOrRunes.length:(m._n||0);return((s.big?1.6:0.3+s.cost*0.025)+rn*0.15)*castMult()*m.castMul;}
 addEventListener('keydown',e=>{audio();
  if(P.downT>0){e.preventDefault();return;}
  if(P.talkNpc){if(e.key==='Escape'||e.key==='f'||e.key==='F'){e.preventDefault();P.talkNpc=null;se('ui');}return;}
+ if(P.teleportMenu){if(e.key==='Escape'||e.code==='Space'||e.key==='f'||e.key==='F'||['w','a','s','d','W','A','S','D'].includes(e.key)){e.preventDefault();P.teleportMenu=false;se('ui');return;}return;}
  if(P.shop){if(P.shop==='market'){if(/^[0-9]$/.test(e.key)){e.preventDefault();marketPrice=(marketPrice+e.key).replace(/^0+(?=\d)/,'').slice(0,9);return;}if(e.key==='Backspace'){e.preventDefault();marketPrice=marketPrice.slice(0,-1);return;}}if(e.key==='Escape'||e.key==='i'||e.key==='I'){e.preventDefault();P.shop=null;tradeIncoming=null;se('ui');}return;}
  if(P.mlist){if(e.key==='Escape'||e.code==='Space'||e.key==='f'||e.key==='F'||['w','a','s','d','W','A','S','D'].includes(e.key)){e.preventDefault();P.mlist=null;se('ui');return;}return;}
  if(P.saveMenu){if(e.key==='Escape'){e.preventDefault();P.saveMenu=false;se('ui');}return;}
@@ -1006,7 +1009,7 @@ addEventListener('keydown',e=>{audio();
   if(e.key==='Backspace'){P.castBackspace=true;if(P.pend)P.pend=P.pend.slice(0,-1);else P.kana=P.kana.slice(0,-1);e.preventDefault();return;}
   if(e.key==='Escape'){P.casting=false;P.castBackspace=false;P.kana='';P.pend='';e.preventDefault();return;}
   return;}
- if(e.key==='Escape'){e.preventDefault();P.saveMenu=true;P.menu=false;P.debugMenu=false;P.shop=null;P.mlist=null;P.talkNpc=null;se('ui');return;}
+ if(e.key==='Escape'){e.preventDefault();P.saveMenu=true;P.menu=false;P.debugMenu=false;P.teleportMenu=false;P.shop=null;P.mlist=null;P.talkNpc=null;se('ui');return;}
  if(e.code==='Space'){e.preventDefault();P.casting=true;P.castBackspace=false;P.kana='';P.pend='';se('castStart');return;}
  if(e.key==='1'){usePot('hp');return;}if(e.key==='2'){usePot('mp');return;}
  if(e.key==='f'||e.key==='F'){if(P.talkNpc){P.talkNpc=null;se('ui');return;}const m=nearMerchant();if(m){buyMerchant(m);return;}if(dummy&&Math.hypot(P.x-dummy.x,P.y-dummy.y)<dummy.r+P.r+40){dummy.dmg=0;flash('案山子の累計ダメージをリセット');se('ui');return;}const n=nearNpc();if(n){P.talkNpc=n;se('ui');}return;}
@@ -1016,7 +1019,7 @@ addEventListener('keydown',e=>{audio();
 addEventListener('keyup',e=>{held[e.key.length===1?e.key.toLowerCase():e.key]=false;});
 cv.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect();mouseX=(e.clientX-r.left)*(W/r.width);mouseY=(e.clientY-r.top)*(H/r.height);});
 cv.addEventListener('wheel',e=>{if(P.menu){e.preventDefault();P.invScroll=Math.max(0,P.invScroll+(e.deltaY>0?1:-1));}},{passive:false});
-cv.addEventListener('mousedown',e=>{if(!P.menu&&!P.saveMenu&&!P.debugMenu&&!P.shop&&!P.mlist&&!P.talkNpc)return;const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)*(W/r.width),my=(e.clientY-r.top)*(H/r.height);
+cv.addEventListener('mousedown',e=>{if(!P.menu&&!P.saveMenu&&!P.debugMenu&&!P.teleportMenu&&!P.shop&&!P.mlist&&!P.talkNpc)return;const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)*(W/r.width),my=(e.clientY-r.top)*(H/r.height);
  for(const a of clickAreas)if(mx>=a.x&&mx<=a.x+a.w&&my>=a.y&&my<=a.y+a.h){se('ui');a.fn();break;}});
 function flash(t){msg=t;msgT=1.8;}
 
@@ -1076,6 +1079,7 @@ function tryCast(){finalize();
  P.casting=false;P.castBackspace=false;P.kana='';P.pend='';}
 function spellContext(s,runes,mod,cost,aim,tgt){const m=mod||buildMod(runes||[]),eff=getBuffs(),big=!!s.big;if(aim===undefined)aim=Math.atan2(P.face.y,P.face.x);const mpTgt=tgt||{x:P.x+Math.cos(aim)*220,y:P.y+Math.sin(aim)*220},dexRange=rangeMul(),rPow=big?1+(m.powMul-1)*2:m.powMul,rRad=(big?1+(m.radiusMul-1)*2:m.radiusMul)*dexRange,buffPow=big?1+eff.pow*3:1+eff.pow,critEx=big?Math.min(1.5,eff.crit*3):eff.crit,mpBonus=big?1+Math.min(0.6,(cost||0)*0.008):1,base=magicAtk()*s.power*buffPow*rPow*mpBonus*(m.comboMul||1)*(1+playerAffix(s.el+'%')/100),bd=m.buffDurMul,ba=m.buffAmtMul,burn=s.burn?s.burn*(1+eff.burn*(big?3:1))*m.burnMul:0,splash=(s.splash||0)*m.splashMul*dexRange;return{s,runes,m,cost,aim,tgt,mpTgt,eff,big,bd,ba,dexRange,rRad,critEx,base,burn,splash};}
 function castUtilitySpell(c){const s=c.s;if(s.kind==='return'){mpSendSpell(s,c.m,c.cost,c.aim,c.mpTgt,0,1);const t=MAPS[P.lastTown]?P.lastTown:'town',sp=townSpawn();burst(P.x,P.y,s.color,24,6);switchMap(t,sp.x,sp.y);flash('\u30ea\u30b3\u30fc\u30eb\uff1a'+MAPS[t].name+'\u3078\u5e30\u9084');return true;}
+ if(s.kind==='teleport'){burst(P.x,P.y,s.color,24,6);spawnFx({x:P.x,y:P.y,r:8,maxr:96,col:s.color,life:.65,el:s.el,area:true,spark:true,seed:performance.now()%97});P.teleportMenu=true;flash('テレポート先を選択');return true;}
  if(s.kind==='resurrect'){mpSendSpell(s,c.m,c.cost,c.aim,c.mpTgt,0,1);burst(P.x,P.y,s.color,22,5);spawnFx({x:P.x,y:P.y,r:8,maxr:90,col:s.color,life:.65,el:s.el,area:true,spark:true,seed:performance.now()%97});flash('\u30ea\u30b6\u30ec\u30af\u30b7\u30e7\u30f3');return true;}
  if(s.kind==='heal'){mpSendSpell(s,c.m,c.cost,c.aim,c.mpTgt,0,1);const amt=Math.round(P.maxhp*s.heal);P.hp=Math.min(P.maxhp,P.hp+amt);spawnFloat({x:P.x,y:P.y-20,txt:'+'+fmt(amt),col:s.color,life:1});burst(P.x,P.y,s.color,14,3);spawnFx({x:P.x,y:P.y,r:8,maxr:48,col:s.color,life:.5});addBuff(s,c.bd,c.ba);flash(s.name);return true;}
  if(s.kind==='buff'){mpSendSpell(s,c.m,c.cost,c.aim,c.mpTgt,0,1);addBuff(s,c.bd,c.ba);burst(P.x,P.y,s.color,16,4);spawnFx({x:P.x,y:P.y,r:10,maxr:48,col:s.color,life:.5});flash(s.name+'\uff01');return true;}return false;}
@@ -1170,7 +1174,7 @@ function updateGlobalSystems(dt){
 }
 function updateDownState(dt){if(P.downT<=0)return false;P.downT-=dt;if(P.downT<=0)finishDeath();if(msgT>0)msgT-=dt;return true;}
 function updatePlayerWorld(dt){
- const uiOpen=P.menu||P.saveMenu||P.debugMenu||P.shop||P.mlist||P.talkNpc;
+ const uiOpen=P.menu||P.saveMenu||P.debugMenu||P.teleportMenu||P.shop||P.mlist||P.talkNpc;
  const eff=getBuffs();
  if(!uiOpen)for(let qi=P.channels.length-1;qi>=0;qi--){const c=P.channels[qi];c.t-=dt;if(c.t<=0){P.channels.splice(qi,1);fireSpell(c.spell,c.runes,c.mod,c.cost,c.aim,{x:c.tx,y:c.ty});if(c.spell.big){P.expMP=0;P.expT=0;}else{P.expMP=Math.min(P.maxmp,P.expMP+c.cost);P.expT=EXP_DUR;}}}
  if(!uiOpen&&!P.casting){let mx=0,my=0;if(held['w'])my-=1;if(held['s'])my+=1;if(held['a'])mx-=1;if(held['d'])mx+=1;
@@ -1323,7 +1327,7 @@ function drawMinimap(){const mw=150,mh=Math.round(mw*WORLD_H/WORLD_W),mx=W-mw-14
   for(const d of offDemons){ctx.fillStyle='#d05aff';ctx.fillText('魔人：'+((MAPS[d.map]&&MAPS[d.map].name)||d.map)+' 残'+Math.ceil(d.life||0)+'s',W-14,infoY);infoY+=12;}ctx.textAlign='left';}
  if(wtip){const T=WTYPES[wtip.type],bw=210,bx=mx-bw-8,by=my+8,L=['天候：'+wtip.type,T.note,'EXP×'+T.expMul+' / gem×'+T.gemMul,'ドロップ×'+T.dropMul+(T.spawnAdd?' / 敵+'+T.spawnAdd:''),'残り '+Math.floor(wtip.t/60)+':'+String(Math.floor(wtip.t%60)).padStart(2,'0')];
   ctx.fillStyle='rgba(10,12,8,.95)';ctx.strokeStyle=T.col;ctx.lineWidth=2;ctx.fillRect(bx,by,bw,L.length*16+10);ctx.strokeRect(bx,by,bw,L.length*16+10);ctx.font='11px system-ui';for(let i=0;i<L.length;i++){ctx.fillStyle=i===0?T.col:'#dfe6e0';ctx.fillText(L[i],bx+8,by+18+i*16);}}}
-function drawHUD(){if(!P.menu&&!P.saveMenu&&!P.debugMenu&&!P.shop&&!P.mlist&&!P.talkNpc)tipAreas=[];ctx.fillStyle='#15110c';ctx.fillRect(0,FIELD_H,W,H-FIELD_H);ctx.fillStyle='#caa64b';ctx.fillRect(0,FIELD_H,W,2);
+function drawHUD(){if(!P.menu&&!P.saveMenu&&!P.debugMenu&&!P.teleportMenu&&!P.shop&&!P.mlist&&!P.talkNpc)tipAreas=[];ctx.fillStyle='#15110c';ctx.fillRect(0,FIELD_H,W,H-FIELD_H);ctx.fillStyle='#caa64b';ctx.fillRect(0,FIELD_H,W,2);
  bar(26,FIELD_H+30,330,22,P.hp/P.maxhp,'#d23b3b');drawMP(W-356,FIELD_H+30,330,22);
  {const y=FIELD_H+18,x1=W-168,x2=W-116;ctx.textAlign='center';ctx.font='bold 12px system-ui';ctx.fillStyle=P.spellCombo?'#ffe08a':'#6f736f';ctx.fillText('S+'+P.spellCombo,x1,y);ctx.fillStyle=P.elCombo?'#9fe8ff':'#6f736f';ctx.fillText('E+'+P.elCombo,x2,y);tipAreas.push({x:x1-20,y:y-14,w:40,h:18,it:{combo:'spell'}});tipAreas.push({x:x2-20,y:y-14,w:40,h:18,it:{combo:'element'}});}
  if(bigCD>0){const cx=W-356+13,cy=FIELD_H+30-15,r=11;ctx.fillStyle='rgba(0,0,0,.6)';ctx.beginPath();ctx.arc(cx,cy,r+2,0,7);ctx.fill();ctx.strokeStyle='#3a3450';ctx.lineWidth=4;ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.stroke();ctx.strokeStyle='#b48cff';ctx.beginPath();ctx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+7*(bigCD/10));ctx.stroke();ctx.fillStyle='#e8d8ff';ctx.font='bold 9px system-ui';ctx.textAlign='center';ctx.fillText(Math.ceil(bigCD),cx,cy+3);ctx.fillStyle='#b48cff';ctx.font='8px system-ui';ctx.fillText('大魔法CT',cx+34,cy+3);ctx.textAlign='left';}
@@ -1513,7 +1517,7 @@ function drawShop(){const {x0,y0,w,h}=drawShopFrame();
  if(msgT>0){ctx.textAlign='center';ctx.globalAlpha=Math.min(1,msgT);ctx.fillStyle='#ffe08a';ctx.font='bold 15px system-ui';ctx.fillText(msg,W/2,y0+h-16);ctx.globalAlpha=1;ctx.textAlign='left';}renderTips();}
 const BLAB={pow:'威',crit:'会',burn:'焼',def:'防',regen:'再',mpregen:'M回',spd:'速'};
 function buffDesc(s){if(!s.buffs||!s.buffs.length)return '-';return s.buffs.map(([k,a])=>(BLAB[k]||k)+'+'+(a<1?Math.round(a*100)+'%':a)).join(',');}
-const KINDLAB={bolt:'弾',impact:'着弾爆発',pierce:'貫通',self:'自周囲',meteo:'着弾AoE',front:'前方',fan:'扇形',zone:'設置',aura:'追従周囲',multi:'多段',funnel:'ファンネル',buff:'バフ',heal:'回復',return:'帰還',resurrect:'蘇生'};
+const KINDLAB={bolt:'弾',impact:'着弾爆発',pierce:'貫通',self:'自周囲',meteo:'着弾AoE',front:'前方',fan:'扇形',zone:'設置',aura:'追従周囲',multi:'多段',funnel:'ファンネル',buff:'バフ',heal:'回復',return:'帰還',teleport:'町転移',resurrect:'蘇生'};
 const RUNE_CATS=[['威力',5],['節約',5],['範囲',5],['収束',5],['飛距離',5],['発動回数',4],['遅延',5],['迅速',5],['バフ量',5],['バフ時間',5],['全体バフ',5],['分裂',3],['変質',4],['確率',4]];
 const RUNE_INFO={'パワー':'威1.3 / MP1.5','エコ':'MP0.9','ギャンブル':'MP0.5-3 威/範/距0.1-3','エコー':'MP2 発動×2','ダブル':'威0.7 MP1.5 発動×2','トリプル':'威0.6 MP2 発動×3','ワイド':'範囲1.5','ヒュージ':'範囲2 MP1.5','ロング':'飛距離1.5','レンジド':'飛距離2 MP1.5','ピアース':'貫通 威1.2','ホーミング':'追尾 威1.3','スプリット':'3方向各0.7','レイト':'詠唱2 威1.5 MP1.2','ディレイ':'詠唱3 威2 MP1.5','タイム':'バフ継続2 威0.5 MP1.5','エクステンド':'バフ継続1.5 威0.5','アフリクト':'状態異常蓄積1.8'};
 function drawMagicList(){clickAreas=[];tipAreas=[];ctx.fillStyle='rgba(6,10,8,.95)';ctx.fillRect(0,0,W,H);
@@ -1535,6 +1539,16 @@ function drawMagicList(){clickAreas=[];tipAreas=[];ctx.fillStyle='rgba(6,10,8,.9
   for(const[cat,cnt]of RUNE_CATS){place(16);ctx.fillStyle='#caa64b';ctx.font='bold 11px system-ui';ctx.fillText('【'+cat+'】',bx,by);by+=13;
    for(let k=0;k<cnt;k++){const r=RUNES[idx++];if(!r)continue;const unl=P.runes.has(r.name);place(12);ctx.font='9px system-ui';ctx.fillStyle=unl?'#cfd6e0':'#55504a';ctx.fillText(unl?('・'+r.name+'（'+r.read[0]+'）'):'・未知のルーン',bx,by);if(unl)tipAreas.push({x:bx-2,y:by-9,w:colW-12,h:12,it:{rune:r}});by+=11;}by+=4;}}
  if(msgT>0){ctx.textAlign='center';ctx.globalAlpha=Math.min(1,msgT);ctx.fillStyle='#ffe08a';ctx.font='bold 15px system-ui';ctx.fillText(msg,W/2,y0+h-8);ctx.globalAlpha=1;ctx.textAlign='left';}renderTips();}
+function teleportToTown(id){if(!MAPS[id]||!MAPS[id].town){se('error');return;}const sp={x:WORLD_W/2,y:WORLD_H/2+90};burst(P.x,P.y,'#b48cff',24,6);switchMap(id,sp.x,sp.y);burst(P.x,P.y,'#b48cff',28,6);flash('テレポート：'+MAPS[id].name);se('teleport');}
+function drawTeleportMenu(){clickAreas=[];tipAreas=[];ctx.fillStyle='rgba(5,6,12,.92)';ctx.fillRect(0,0,W,H);
+ const x0=178,y0=76,w=544,h=428;ctx.fillStyle='rgba(18,16,28,.98)';ctx.strokeStyle='#b48cff';ctx.lineWidth=2;ctx.fillRect(x0,y0,w,h);ctx.strokeRect(x0,y0,w,h);
+ ctx.textAlign='left';ctx.fillStyle='#d9c8ff';ctx.font='bold 20px system-ui';ctx.fillText('テレポート',x0+24,y0+38);ctx.fillStyle='#8a86a0';ctx.font='12px system-ui';ctx.fillText('主要な町を選択 / Esc・Space・移動・Fで閉じる',x0+24,y0+60);
+ ctx.fillStyle='#332838';ctx.strokeStyle='#d8a0d8';ctx.lineWidth=2;ctx.fillRect(x0+w-52,y0+16,30,26);ctx.strokeRect(x0+w-52,y0+16,30,26);ctx.fillStyle='#ffe0ff';ctx.font='bold 16px system-ui';ctx.textAlign='center';ctx.fillText('×',x0+w-37,y0+35);clickAreas.push({x:x0+w-52,y:y0+16,w:30,h:26,fn:()=>{P.teleportMenu=false;}});
+ const cols=2,bw=230,bh=38,gapX=28,gapY=14,startX=x0+28,startY=y0+92;for(let i=0;i<TELEPORT_TOWNS.length;i++){const id=TELEPORT_TOWNS[i],m=MAPS[id];if(!m)continue;const bx=startX+(i%cols)*(bw+gapX),by=startY+Math.floor(i/cols)*(bh+gapY),here=id===MAPID;
+  ctx.fillStyle=here?'#4b3d62':'#27243a';ctx.strokeStyle=here?'#ffe08a':'#b48cff';ctx.lineWidth=1.5;ctx.fillRect(bx,by,bw,bh);ctx.strokeRect(bx,by,bw,bh);
+  ctx.fillStyle=here?'#ffe08a':'#efe8ff';ctx.font='bold 13px system-ui';ctx.textAlign='left';ctx.fillText((here?'現在地 ':'')+m.name,bx+12,by+16);ctx.fillStyle='#9fa0b8';ctx.font='10px system-ui';ctx.fillText(id+' / 主要町',bx+12,by+31);
+  clickAreas.push({x:bx,y:by,w:bw,h:bh,fn:()=>teleportToTown(id)});}
+ if(msgT>0){ctx.textAlign='center';ctx.globalAlpha=Math.min(1,msgT);ctx.fillStyle='#ffe08a';ctx.font='bold 15px system-ui';ctx.fillText(msg,W/2,y0+h-18);ctx.globalAlpha=1;ctx.textAlign='left';}}
 function drawTooltip(it){let title,col,lines=[];if(it.stat){title=it.stat;col='#ffe08a';lines.push('上昇: '+(STAT_HELP[it.stat]||[]).join(' / '));lines.push('現在値 '+effStat(it.stat)+'（基礎 '+P.base[it.stat]+'）');}
  else if(it.combo){const n=it.combo==='spell'?P.spellCombo:P.elCombo,tot=Math.min(5,P.spellCombo+P.elCombo);title=it.combo==='spell'?'スペル連携':'属性連携';col=it.combo==='spell'?'#ffe08a':'#9fe8ff';lines.push('この連携 '+n+'回分 / 合計 +'+(tot*10)+'% 火力（最大+50%）');lines.push(it.combo==='spell'?'違う魔法を続けると+10%。同じ魔法で戻る。':'違う属性を続けると+10%。同じ属性で戻る。');lines.push('個人管理。他プレイヤーには付与されない。');}
  else if(it.rune){const r=it.rune;title=r.name+'（'+r.read[0]+'）';col='#caa64b';lines.push('効果: '+(r.info||'-'));lines.push('呪文の前に続けて唱える（MPは乗算）');
@@ -1575,7 +1589,7 @@ function render(){const cx=P.x-W/2,cy=P.y-FIELD_H/2,sx=shake>0?(Math.random()-.5
  for(const es of eshots){ctx.shadowColor=es.col;ctx.shadowBlur=8;drawEffectBall(es);ctx.shadowBlur=0;}
  for(const sh of shots){ctx.shadowColor=sh.color;ctx.shadowBlur=8;drawEffectBall(sh);ctx.shadowBlur=0;}
  drawRemotePlayers();drawMage();for(const f of floats){ctx.globalAlpha=Math.min(1,f.life*1.4);ctx.fillStyle=f.rainbow?rainbow(f.x-38,f.x+38):f.col;ctx.font='bold '+(f.size||14)+'px system-ui';ctx.textAlign='center';ctx.fillText(f.txt,f.x,f.y);ctx.globalAlpha=1;}
- ctx.restore();drawBuffs();drawPlayerList();drawMinimap();drawHUD();if(P.menu)drawPanel();if(P.shop)drawShop();if(P.mlist)drawMagicList();if(P.talkNpc)drawTalk();if(P.saveMenu)drawSaveMenu();if(P.debugMenu)drawDebugMenu();renderTips();}
+ ctx.restore();drawBuffs();drawPlayerList();drawMinimap();drawHUD();if(P.menu)drawPanel();if(P.shop)drawShop();if(P.mlist)drawMagicList();if(P.talkNpc)drawTalk();if(P.saveMenu)drawSaveMenu();if(P.debugMenu)drawDebugMenu();if(P.teleportMenu)drawTeleportMenu();renderTips();}
 function drawWeatherFx(){const tm=performance.now()/1000;for(const w of weathers){if(w.map!==MAPID)continue;const c=WTYPES[w.type].col;
   const g=ctx.createRadialGradient(w.x,w.y,w.r*0.2,w.x,w.y,w.r);g.addColorStop(0,c+'33');g.addColorStop(1,c+'00');ctx.fillStyle=g;ctx.beginPath();ctx.arc(w.x,w.y,w.r,0,7);ctx.fill();
   ctx.strokeStyle=c+'88';ctx.lineWidth=2;ctx.stroke();
