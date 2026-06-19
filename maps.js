@@ -121,6 +121,9 @@ window.AMC_MAPS=function AMC_MAPS(ctx){
  };
  const out={};
  for(let i=0;i<A.length;i++){const [id,name,mlv,theme,kind,seed,count,enemies,bossDef,fac]=A[i],t=THEME[theme]||THEME.plains,town=kind==='town';out[id]={name,mlv,town,ground:t.ground,gpond:t.gpond,deco:t.deco,ponds:t.ponds.map(p=>({...p})),decos:genDecos(seed,count),enemies:(enemies||[]).slice(),boss:!!bossDef,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:bossDef||null,portals:[]};if(town)out[id].facilities=facilities(fac||'small');}
- for(const id in LINKS)if(out[id]){for(const [side,to] of LINKS[id])if(out[to])out[id].portals.push(portal(side,to,out[to].name));spreadPortals(out[id].portals);}
+ for(const id in LINKS)if(out[id])for(const [side,to] of LINKS[id])if(out[to])out[id].portals.push(portal(side,to,out[to].name));
+ for(const id in out)spreadPortals(out[id].portals);
+ for(const id in out)for(const p of out[id].portals){const back=(out[p.to].portals||[]).find(q=>q.to===id);if(!back)continue;
+  if(back.x<100){p.tx=130;p.ty=back.y;}else if(back.x>WORLD_W-100){p.tx=WORLD_W-130;p.ty=back.y;}else if(back.y<100){p.tx=back.x;p.ty=130;}else{p.tx=back.x;p.ty=WORLD_H-130;}}
  return out;
 };
