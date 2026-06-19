@@ -316,6 +316,14 @@ const ET={
 const ETK=Object.keys(ET);
 // ===== ステータス・装備・インベントリ =====
 const STN=['DEX','AGI','INT','PIE','VIT','LUK'];
+const STAT_HELP={
+ DEX:['移動速度','攻撃範囲','クリティカルダメージ'],
+ AGI:['詠唱速度','移動速度','回避率'],
+ INT:['MP量','魔法の攻撃力','経験値獲得量'],
+ PIE:['魔法攻撃力','MPの自動回復量','HPの自動回復量'],
+ VIT:['HP量','防御力','HP自動回復量'],
+ LUK:['クリティカル率','回避率','アイテムドロップ率']
+};
 const EQKEYS=['武器','頭','胴','脚','装飾1','装飾2'];
 const SLOTBASE={'武器':['ロッド','ワンド','スタッフ'],'頭':['サークレット','帽子','兜'],'胴':['ローブ','チュニック','鎧'],'脚':['ブーツ','グリーヴ'],'装飾':['指輪','護符','ペンダント']};
 const RAR=[{k:'C',n:'コモン',col:'#b8c0c8',m:1,ns:1,w:46},{k:'U',n:'アンコモン',col:'#6fe07a',m:1.6,ns:1,w:28},{k:'R',n:'レア',col:'#5ab0ff',m:2.3,ns:2,w:16},{k:'E',n:'エピック',col:'#c08aff',m:3.2,ns:2,w:8},{k:'L',n:'レジェンダリ',col:'#ffcf5a',m:4.5,ns:3,w:2},{k:'M',n:'ミシカル',col:'#ff4d8d',m:6.5,ns:4,w:0.5},
@@ -1368,7 +1376,7 @@ function drawPanel(){clickAreas=[];tipAreas=[];ctx.fillStyle='rgba(6,10,8,.92)';
 
  let lx=lt.x+pad,ly=lt.y+48,bodyW=lt.w-pad*2;ctx.textAlign='left';ctx.fillStyle='#ffe08a';ctx.font='bold 12px system-ui';
  fitText('Lv.'+P.lv+'  EXP '+fmt(P.exp)+'/'+fmt(P.need),lx,ly,bodyW-154);fitText('未割当P:'+P.sp,lx+bodyW-150,ly,66);fitText('◆'+fmt(P.gem)+' ●'+fmt(P.material||0),lx+bodyW-84,ly,84);ly+=24;
- ctx.font='12px system-ui';for(const s of STN){ctx.fillStyle='#cfd6e0';ctx.fillText(s,lx,ly);ctx.fillStyle='#fff';fitText(effStat(s)+' (基礎'+P.base[s]+')',lx+58,ly,bodyW-102);
+ ctx.font='12px system-ui';for(const s of STN){ctx.fillStyle='#cfd6e0';ctx.fillText(s,lx,ly);ctx.fillStyle='#fff';fitText(effStat(s)+' (基礎'+P.base[s]+')',lx+58,ly,bodyW-102);tipAreas.push({x:lx-4,y:ly-15,w:bodyW-28,h:20,it:{stat:s}});
   if(P.sp>0){const bx=lt.x+lt.w-pad-22,by=ly-14;ctx.fillStyle='#2a6e3a';ctx.fillRect(bx,by,18,18);ctx.strokeStyle='#6fe07a';ctx.lineWidth=1;ctx.strokeRect(bx,by,18,18);ctx.fillStyle='#dfffe0';ctx.textAlign='center';ctx.fillText('+',bx+9,by+14);ctx.textAlign='left';clickAreas.push({x:bx,y:by,w:18,h:18,fn:()=>{if(P.sp>0){P.base[s]+=5;P.sp--;recompute();}}});}ly+=22;}
 
  let rx=rt.x+pad,ry=rt.y+48,eqW=rt.w-pad*2;ctx.textAlign='left';
@@ -1505,7 +1513,8 @@ function drawMagicList(){clickAreas=[];tipAreas=[];ctx.fillStyle='rgba(6,10,8,.9
   for(const[cat,cnt]of RUNE_CATS){place(16);ctx.fillStyle='#caa64b';ctx.font='bold 11px system-ui';ctx.fillText('【'+cat+'】',bx,by);by+=13;
    for(let k=0;k<cnt;k++){const r=RUNES[idx++];if(!r)continue;const unl=P.runes.has(r.name);place(12);ctx.font='9px system-ui';ctx.fillStyle=unl?'#cfd6e0':'#55504a';ctx.fillText(unl?('・'+r.name+'（'+r.read[0]+'）'):'・未知のルーン',bx,by);if(unl)tipAreas.push({x:bx-2,y:by-9,w:colW-12,h:12,it:{rune:r}});by+=11;}by+=4;}}
  if(msgT>0){ctx.textAlign='center';ctx.globalAlpha=Math.min(1,msgT);ctx.fillStyle='#ffe08a';ctx.font='bold 15px system-ui';ctx.fillText(msg,W/2,y0+h-8);ctx.globalAlpha=1;ctx.textAlign='left';}renderTips();}
-function drawTooltip(it){let title,col,lines=[];if(it.combo){const n=it.combo==='spell'?P.spellCombo:P.elCombo,tot=Math.min(5,P.spellCombo+P.elCombo);title=it.combo==='spell'?'スペル連携':'属性連携';col=it.combo==='spell'?'#ffe08a':'#9fe8ff';lines.push('この連携 '+n+'回分 / 合計 +'+(tot*10)+'% 火力（最大+50%）');lines.push(it.combo==='spell'?'違う魔法を続けると+10%。同じ魔法で戻る。':'違う属性を続けると+10%。同じ属性で戻る。');lines.push('個人管理。他プレイヤーには付与されない。');}
+function drawTooltip(it){let title,col,lines=[];if(it.stat){title=it.stat;col='#ffe08a';lines.push('上昇: '+(STAT_HELP[it.stat]||[]).join(' / '));lines.push('現在値 '+effStat(it.stat)+'（基礎 '+P.base[it.stat]+'）');}
+ else if(it.combo){const n=it.combo==='spell'?P.spellCombo:P.elCombo,tot=Math.min(5,P.spellCombo+P.elCombo);title=it.combo==='spell'?'スペル連携':'属性連携';col=it.combo==='spell'?'#ffe08a':'#9fe8ff';lines.push('この連携 '+n+'回分 / 合計 +'+(tot*10)+'% 火力（最大+50%）');lines.push(it.combo==='spell'?'違う魔法を続けると+10%。同じ魔法で戻る。':'違う属性を続けると+10%。同じ属性で戻る。');lines.push('個人管理。他プレイヤーには付与されない。');}
  else if(it.rune){const r=it.rune;title=r.name+'（'+r.read[0]+'）';col='#caa64b';lines.push('効果: '+(r.info||'-'));lines.push('呪文の前に続けて唱える（MPは乗算）');
  }else if(it.spell){const s=it.spell,ct=((s.big?1.6:0.3+s.cost*0.025))*castMult();title=s.name+'（'+s.read[0]+'）';col=s.color||'#cfd6e0';
   lines.push('属性 '+s.el+' ／ '+(s.big?'大魔法':'小魔法')+' ／ 種別 '+(KINDLAB[s.kind]||s.kind));
