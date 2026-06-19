@@ -1,53 +1,19 @@
 // Enemy definitions are separated from index.html so they can be edited by hand.
 // ET contains monster data. ENEMY_RANK contains rank multipliers and sync settings.
-window.AMC_ENEMIES={
- ET:{
- // 草原
- slime: {jp:'マナスライム',el:'水',at:'melee', hp:60, def:5, atk:9, spd:0.50,r:15,col:'#3aa0ff',exp:16,windup:2.2,recover:1.3},
- sprite:{jp:'ホーンラビット',el:'風',at:'melee',hp:40,def:5,atk:8,spd:1.05,r:11,col:'#bdf06a',exp:18,windup:1.3,recover:1.0},
- // 深緑の森
- boar:  {jp:'マナウルフ',  el:'土',at:'charge',hp:120,def:9, atk:20,spd:0.70,r:17,col:'#b07a4a',exp:42,windup:1.1,recover:1.3,dash:12},
- hornet:{jp:'ゴブリンアーチャー',el:'風',at:'ranged',hp:70,def:7,atk:14,spd:0.85,r:12,col:'#e6b531',exp:38,windup:1.3,recover:1.1,range:320,shotSpd:5.2,burst:3},
- fungus:{jp:'ゴブリンメイジ',el:'土',at:'ranged',hp:90,def:9,atk:13,spd:0.45,r:15,col:'#8a9a5a',exp:40,windup:1.6,recover:1.3,range:280,shotSpd:3.6},
- // 紅蓮の火山
- wisp:  {jp:'ウィル・オ・ウィスプ',el:'火',at:'ranged',hp:80,def:8,atk:16,spd:0.70,r:13,col:'#ff8a4a',exp:48,windup:1.2,recover:1.1,range:320,shotSpd:4.6},
- salaman:{jp:'サラマンダー',el:'火',at:'melee',hp:150,def:11,atk:22,spd:0.80,r:16,col:'#ff5a2a',exp:56,windup:1.5,recover:1.2},
- magma: {jp:'フレイムスライム',el:'火',at:'charge',hp:170,def:13,atk:26,spd:0.72,r:18,col:'#ff3a1a',exp:60,windup:1.1,recover:1.4,dash:12},
- // 蒼氷の洞窟
- frost: {jp:'ケルピー',el:'水',at:'charge',hp:200,def:14,atk:28,spd:0.74,r:18,col:'#7fe0ff',exp:74,windup:1.2,recover:1.4,dash:11},
- icewisp:{jp:'ウンディーネ',el:'水',at:'ranged',hp:130,def:12,atk:24,spd:0.72,r:13,col:'#bfefff',exp:70,windup:1.3,recover:1.1,range:340,shotSpd:5.0,burst:3},
- yeti:  {jp:'フェンリル',el:'水',at:'melee',hp:260,def:16,atk:30,spd:0.62,r:20,col:'#cfe8f0',exp:80,windup:1.7,recover:1.3},
- // 忘却の遺跡
- wraith:{jp:'スピリット',el:'無',at:'ranged',hp:170,def:16,atk:30,spd:0.82,r:14,col:'#9a7adf',exp:96,windup:1.4,recover:1.0,range:360,shotSpd:5.6,burst:3},
- sentry:{jp:'ホブゴブリン',el:'無',at:'melee',hp:330,def:20,atk:34,spd:0.60,r:20,col:'#8a8f9a',exp:104,windup:1.8,recover:1.4},
- phantom:{jp:'ナイトメア',el:'無',at:'charge',hp:240,def:17,atk:36,spd:0.92,r:16,col:'#b0a0d0',exp:100,windup:1.0,recover:1.3,dash:14},
- // 灼熱の砂漠
- scarab:{jp:'ロックスライム',el:'土',at:'charge',hp:300,def:20,atk:40,spd:0.78,r:17,col:'#c8a060',exp:120,windup:1.1,recover:1.3,dash:13},
- mirage:{jp:'ノーム',el:'火',at:'ranged',hp:220,def:18,atk:38,spd:0.80,r:13,col:'#ffb060',exp:118,windup:1.3,recover:1.0,range:360,shotSpd:5.4,burst:3},
- sandw: {jp:'サイクロプス',el:'土',at:'melee',hp:420,def:24,atk:44,spd:0.60,r:22,col:'#b89050',exp:140,windup:1.7,recover:1.3},
- // 雷鳴の天空
- griffon:{jp:'グリフォン',el:'風',at:'charge',hp:360,def:22,atk:48,spd:1.00,r:18,col:'#dfe8a0',exp:150,windup:0.9,recover:1.2,dash:16},
- thunder:{jp:'サンダーバード',el:'風',at:'ranged',hp:300,def:20,atk:46,spd:0.85,r:14,col:'#ffe14a',exp:148,windup:1.2,recover:1.0,range:380,shotSpd:6.2,burst:3},
- cloud: {jp:'ペガサス',el:'水',at:'melee',hp:480,def:26,atk:50,spd:0.62,r:20,col:'#cfe0f0',exp:160,windup:1.6,recover:1.3},
- // 虚無の深淵
- shade: {jp:'アンブラ',el:'無',at:'melee',hp:560,def:30,atk:58,spd:0.70,r:18,col:'#7a708a',exp:200,windup:1.5,recover:1.2},
- abyssal:{jp:'ルクス',el:'無',at:'ranged',hp:440,def:28,atk:56,spd:0.80,r:14,col:'#9a6aa0',exp:196,windup:1.3,recover:1.0,range:400,shotSpd:6.6,burst:4},
- devour:{jp:'ケルベロス',el:'無',at:'charge',hp:520,def:30,atk:64,spd:0.95,r:18,col:'#a04a6a',exp:210,windup:1.0,recover:1.3,dash:17},
- // 終焉の玉座
- revenant:{jp:'オーガロード',el:'無',at:'melee',hp:900,def:38,atk:88,spd:0.78,r:20,col:'#6a5a7a',exp:320,windup:1.4,recover:1.2},
- doomeye:{jp:'ドレイク',el:'無',at:'ranged',hp:760,def:36,atk:84,spd:0.78,r:15,col:'#b04a9a',exp:316,windup:1.2,recover:0.9,range:420,shotSpd:7.0,burst:5},
- // 風の谷（森・北分岐）
- mantis:{jp:'マナディア',el:'風',at:'melee',hp:90,def:8,atk:18,spd:1.15,r:13,col:'#9ee06a',exp:46,windup:0.9,recover:0.9,mv:'weave'},
- pixie: {jp:'シルフ',el:'風',at:'ranged',hp:60,def:7,atk:15,spd:1.05,r:11,col:'#c0ffd0',exp:44,windup:1.0,recover:1.0,range:300,shotSpd:5.0,burst:2,mv:'circle'},
- // 水晶谷（洞窟・北分岐）
- crystalan:{jp:'ジェムスライム',el:'水',at:'charge',hp:240,def:16,atk:30,spd:0.85,r:17,col:'#aef0ff',exp:82,windup:1.0,recover:1.3,dash:13,mv:'burst'},
- prism: {jp:'プリズムバード',el:'水',at:'ranged',hp:160,def:14,atk:26,spd:0.7,r:13,col:'#dffaff',exp:80,windup:1.2,recover:1.0,range:360,shotSpd:5.6,burst:4,mv:'circle'},
-},
- ENEMY_RANK:{
- normal:{hpMul:1,atkMul:1,scale:1,expRate:0.5,sync:false},
- rare:{hpMul:4,atkMul:1.8,scale:1.35,expRate:0.7,sync:false,announce:true},
- elite:{hpMul:50,atkMul:3,scale:3,expRate:0.8,sync:true,announce:true},
- boss:{hpMul:1,atkMul:1,scale:1,expRate:0.7,sync:true,announce:true},
- demon:{hpMul:50,atkMul:3,scale:1,expRate:0.8,sync:true,announce:true,caster:true}
-}
-};
+window.AMC_ENEMIES=(function(){
+ function scale(lv){return Math.pow(Math.max(1,lv),1.55);}
+ function mob(jp,lv,el,at,asset,opt){opt=opt||{};const hp=opt.hp||Math.round(42+scale(lv)*18),atk=opt.atk||Math.round(7+lv*1.65),def=opt.def||Math.round(4+lv*.55),spd=opt.spd==null?Math.max(.42,Math.min(1.12,.62+lv*.003)):opt.spd,r=opt.r||Math.max(11,Math.min(24,12+lv/12));const e={jp,asset:asset||jp,el,at,hp,def,atk,spd,r,col:opt.col||'#b8c8d8',exp:Math.round(hp*.5),windup:opt.windup||(at==='charge'?1.05:at==='ranged'?1.35:1.55),recover:opt.recover||1.2};if(at==='ranged'){e.range=opt.range||Math.round(280+lv*2.4);e.shotSpd=opt.shotSpd||Math.min(7.2,4.2+lv*.025);e.burst=opt.burst||1;}if(at==='charge')e.dash=opt.dash||Math.min(17,10+lv*.06);if(opt.mv)e.mv=opt.mv;return e;}
+ const ET={
+  slime:mob('マナスライム',1,'水','melee','マナスライム',{col:'#3aa0ff'}),hornRabbit:mob('ホーンラビット',2,'風','melee','ホーンラビット',{spd:1.05,col:'#d8e8b0'}),manaBunny:mob('マナうさぎ',3,'風','melee','ホーンラビット',{spd:1.08,col:'#dff7ff'}),manaWolf:mob('マナウルフ',6,'土','charge','マナウルフ',{col:'#b07a4a'}),manaHawk:mob('マナホーク',11,'風','ranged','マナホーク',{col:'#dfe8a0',burst:2}),manaBear:mob('マナベア',32,'土','melee','マナベア',{col:'#b89060',r:21}),
+  goblin:mob('ゴブリン',5,'土','melee','ゴブリン',{col:'#7ab060'}),goblinArcher:mob('ゴブリンアーチャー',6,'風','ranged','ゴブリンアーチャー',{col:'#e6b531',burst:2}),goblinMage:mob('ゴブリンメイジ',8,'火','ranged','ゴブリンメイジ',{col:'#c070ff',burst:2}),hobgoblin:mob('ホブゴブリン',20,'土','melee','ホブゴブリン',{col:'#8a8f9a',r:20}),goblinRider:mob('ゴブリンライダー',19,'風','charge','ゴブリンライダー',{col:'#8fd070'}),
+  mandrake:mob('マンドレイク',11,'土','ranged','マナディア',{col:'#a6d070'}),manaFlower:mob('マナフラワー',12,'水','ranged','シルフ',{col:'#ff9ed0'}),myconid:mob('マイコニド',13,'土','ranged','ノーム',{col:'#b89a70'}),scarab:mob('スカラベ',14,'土','charge','ロックスライム',{col:'#c8a060'}),pudding:mob('プリン',13,'水','melee','エリクサースライム',{col:'#d0c070'}),gnome:mob('ノーム',15,'土','ranged','ノーム',{col:'#d8b070',burst:2}),aquaJelly:mob('アクアジェリー',14,'水','melee','アクアスライム',{col:'#8fd8ff'}),manaFish:mob('マナフィッシュ',15,'水','charge','ケルピー',{col:'#7fd0e8'}),mudGolem:mob('マッドゴーレム',16,'土','melee','ロックスライム',{col:'#8a6f48',r:22}),
+  killerBee:mob('キラービー',20,'風','charge','マナホーク',{col:'#ffe04a'}),sylph:mob('シルフ',20,'風','ranged','シルフ',{col:'#c0ffd0',burst:2,mv:'circle'}),prism:mob('プリズムバード',20,'水','ranged','プリズムバード',{col:'#dffaff',burst:4,mv:'circle'}),saberCat:mob('サーベルキャット',22,'風','charge','サーベルキャット',{col:'#d9c090'}),harpy:mob('ハーピー',23,'風','ranged','ハーピー',{col:'#d0d8ff',burst:2}),giantSpider:mob('ジャイアントスパイダー',23,'土','melee','コカトリス',{col:'#6f6080'}),merman:mob('マーマン',24,'水','melee','ケルピー',{col:'#6fc8e0'}),kelpie:mob('ケルピー',24,'水','charge','ケルピー',{col:'#7fe0ff'}),lizardman:mob('リザードマン',25,'水','melee','サラマンダー',{col:'#7cc080'}),wisplace:mob('ウィスプレイス',26,'無','ranged','ウィル・オ・ウィスプ',{col:'#b9a8ff',burst:3}),poltergeist:mob('ポルターガイスト',26,'無','ranged','スピリット',{col:'#a890d8',burst:3}),stoneGolem:mob('ストーンゴーレム',28,'土','melee','ロックスライム',{col:'#9a927f',r:23}),cockatrice:mob('コカトリス',28,'風','charge','コカトリス',{col:'#c8b070'}),tanuki:mob('化け狸',29,'無','ranged','ホーンラビット',{col:'#a87850',burst:2}),gemSlime:mob('ジェムスライム',24,'水','charge','ジェムスライム',{col:'#aef0ff'}),
+  drake:mob('ドレイク',30,'火','ranged','ドレイク',{col:'#d07858',burst:3}),wyvern:mob('ワイバーン',31,'風','charge','ワイバーン',{col:'#9fd0c8'}),succubus:mob('サキュバス',33,'無','ranged','アンブラ',{col:'#d078d8',burst:3}),alraune:mob('アルラウネ',33,'土','ranged','シルフ',{col:'#80c070',burst:2}),yokaiFox:mob('妖狐',34,'火','charge','フェンリル',{col:'#e8b060'}),darkElf:mob('ダークエルフ',35,'無','ranged','ゴブリンメイジ',{col:'#b078d8',burst:3}),elderDrake:mob('エルダードレイク',36,'火','ranged','ドレイク',{col:'#ff8060',burst:4,r:22}),mirage:mob('ミラージュ',34,'無','ranged','ノーム',{col:'#d0c0ff',burst:3,mv:'weave'}),nineTail:mob('九尾',74,'火','ranged','フェンリル',{col:'#e8c070',burst:5,r:24}),
+  seaSerpent:mob('シーサーペント',44,'水','charge','リンドヴルム',{col:'#5ac0d0',r:23}),giantTurtle:mob('ジャイアントタートル',44,'水','melee','ロックスライム',{col:'#70a878',spd:.45,r:24}),frostDragon:mob('フロストドラゴン',45,'水','ranged','フロストドラゴン',{col:'#bfefff',burst:4,r:24}),lindwurm:mob('リンドヴルム',46,'無','charge','リンドヴルム',{col:'#b0a0d0',r:24}),troll:mob('トロル',44,'土','melee','トロル',{col:'#8fa060',r:24}),cyclops:mob('サイクロプス',45,'土','melee','サイクロプス',{col:'#b89050',r:24}),ogre:mob('オーガ',46,'土','melee','オーガ',{col:'#c09070',r:24}),earthDragon:mob('アースドラゴン',48,'土','ranged','アースドラゴン',{col:'#e0c060',burst:4,r:24}),ironGolem:mob('アイアンゴーレム',49,'土','melee','ロックスライム',{col:'#b8b8b8',r:24}),sandWorm:mob('サンドワーム',49,'土','charge','サイクロプス',{col:'#d0b070',r:24}),
+  griffon:mob('グリフォン',52,'風','charge','グリフォン',{col:'#dfe8a0',spd:1.0}),thunder:mob('サンダーバード',53,'風','ranged','サンダーバード',{col:'#ffe14a',burst:3}),cerberus:mob('ケルベロス',54,'火','charge','ケルベロス',{col:'#a04a6a',r:23}),siren:mob('セイレーン',55,'水','ranged','ウンディーネ',{col:'#8fd8ff',burst:3}),pegasus:mob('ペガサス',55,'風','charge','ペガサス',{col:'#cfe0f0'}),jinn:mob('ジン',56,'風','ranged','ルクス',{col:'#bfe8ff',burst:4}),unicorn:mob('ユニコーン',56,'水','ranged','ユニコーン',{col:'#f0e8ff',burst:3}),vampire:mob('ヴァンパイア',58,'無','ranged','ナイトメア',{col:'#d080b0',burst:4}),nightmare:mob('ナイトメア',58,'無','charge','ナイトメア',{col:'#b0a0d0'}),sentry:mob('セントリー',60,'無','ranged','ホブゴブリン',{col:'#a8b0b8',burst:3}),phantom:mob('幻影',60,'無','charge','スピリット',{col:'#b0a0d0'}),guardian:mob('ガーディアン',62,'無','melee','ロックスライム',{col:'#a8b0b8',r:24}),
+  crystalGolem:mob('クリスタルゴーレム',62,'水','melee','ジェムスライム',{col:'#aef0ff',r:24}),gemKing:mob('ジェムキング',64,'水','ranged','ジェムスライム',{col:'#ffd27a',burst:4,r:24}),fenrir:mob('フェンリル',64,'水','charge','フェンリル',{col:'#cfe8f0'}),hydra:mob('ヒュドラ',66,'水','ranged','リンドヴルム',{col:'#7fd0a0',burst:5,r:24}),phoenix:mob('フェニックス',68,'火','ranged','フェニックス',{col:'#ffb050',burst:5}),sentryCore:mob('セントリー・コア',76,'無','ranged','ルクス',{col:'#bcd0ff',burst:4}),lich:mob('リッチ',76,'無','ranged','アンブラ',{col:'#b08cff',burst:5}),ancientDragon:mob('エンシェントドラゴン',80,'無','ranged','エンシェントドラゴン',{col:'#ff2d6d',burst:5,r:25}),titanGolem:mob('タイタンゴーレム',80,'土','melee','ロックスライム',{col:'#c0b090',r:26}),
+  prismWraith:mob('プリズム・レイス',84,'無','ranged','プリズムバード',{col:'#dffaff',burst:5}),progenitorVampire:mob('真祖ヴァンパイア',86,'無','ranged','ナイトメア',{col:'#ff80b0',burst:5}),manaAnomaly:mob('マナ・アノマリー',88,'無','ranged','ルクス',{col:'#bdf0ff',burst:5}),arcWarden:mob('アーク・ウォーデン',88,'無','melee','ルクス',{col:'#bcd0ff',r:25}),voidSpirit:mob('ヴォイド・スピリット',92,'無','ranged','アンブラ',{col:'#9a7adf',burst:5}),ancientLich:mob('エンシェント・リッチ',93,'無','ranged','アンブラ',{col:'#c090ff',burst:6}),calamityDragon:mob('厄災竜カラミティ',95,'火','ranged','エンシェントドラゴン',{col:'#ff4060',burst:6,r:26}),behemoth:mob('ベヒモス',95,'土','charge','オーガロード',{col:'#b89070',r:26}),arcGuardian:mob('アーク・ガーディアン',97,'無','ranged','ルクス',{col:'#d0e0ff',burst:6,r:26})
+ };
+ Object.assign(ET,{sprite:ET.hornRabbit,boar:ET.manaWolf,hornet:ET.goblinArcher,fungus:ET.goblinMage,wisp:mob('ウィル・オ・ウィスプ',16,'火','ranged','ウィル・オ・ウィスプ',{col:'#ff8a4a',burst:3}),salaman:mob('サラマンダー',16,'火','melee','サラマンダー',{col:'#ff5a2a'}),magma:mob('フレイムスライム',17,'火','charge','フレイムスライム',{col:'#ff3a1a'}),babyDragon:mob('ベビードラゴン',9,'火','ranged','ベビードラゴン',{col:'#e8a060',burst:2}),mantis:mob('マナディア',14,'風','melee','マナディア',{col:'#9ee06a',spd:1.1}),pixie:ET.sylph,frost:ET.kelpie,icewisp:mob('ウンディーネ',24,'水','ranged','ウンディーネ',{col:'#bfefff',burst:3}),crystalan:ET.gemSlime,wraith:mob('スピリット',32,'無','ranged','スピリット',{col:'#9a7adf',burst:3}),shade:mob('アンブラ',56,'無','melee','アンブラ',{col:'#7a708a'}),abyssal:mob('ルクス',56,'無','ranged','ルクス',{col:'#9a6aa0',burst:4}),devour:ET.cerberus,revenant:mob('オーガロード',72,'無','melee','オーガロード',{col:'#6a5a7a',r:24}),doomeye:ET.drake,cloud:ET.pegasus,yeti:ET.fenrir,stormDragon:mob('ストームドラゴン',46,'風','ranged','ストームドラゴン',{col:'#9fe8d0',burst:4,r:24})});
+ return {ET,ENEMY_RANK:{normal:{hpMul:1,atkMul:1,scale:1,expRate:0.5,sync:false},rare:{hpMul:4,atkMul:1.8,scale:1.35,expRate:0.7,sync:false,announce:true},elite:{hpMul:50,atkMul:3,scale:3,expRate:0.8,sync:true,announce:true},boss:{hpMul:1,atkMul:1,scale:1,expRate:0.7,sync:true,announce:true},demon:{hpMul:50,atkMul:3,scale:1,expRate:0.8,sync:true,announce:true,caster:true}}};
+})();
