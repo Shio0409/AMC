@@ -121,6 +121,20 @@ window.AMC_MAPS=function AMC_MAPS(ctx){
  };
  const out={};
  for(let i=0;i<A.length;i++){const [id,name,mlv,theme,kind,seed,count,enemies,bossDef,fac]=A[i],t=THEME[theme]||THEME.plains,town=kind==='town';out[id]={name,mlv,town,ground:t.ground,gpond:t.gpond,deco:t.deco,ponds:t.ponds.map(p=>({...p})),decos:genDecos(seed,count),enemies:(enemies||[]).slice(),boss:!!bossDef,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:bossDef||null,portals:[]};if(town)out[id].facilities=facilities(fac||'small');}
+ const STONES={
+  field:[{id:'field:flare-chain',x:540,y:520,spell:'フレアチェイン'},{id:'field:mist-veil',x:1380,y:880,spell:'ミストヴェール'}],
+  royalPlain:[{id:'royalPlain:flare-seal',x:620,y:470,spell:'フレアシール'},{id:'royalPlain:air-raid',x:1510,y:970,spell:'エアレイド'}],
+  oldRoyalRoad:[{id:'oldRoyalRoad:ripple-spear',x:520,y:910,spell:'リップルスピア'},{id:'oldRoyalRoad:lightning-run',x:1430,y:520,spell:'ライトニングラン'}],
+  undergrow:[{id:'undergrow:ice-circle',x:690,y:660,spell:'アイスサークル'},{id:'undergrow:earth-bind',x:1320,y:900,spell:'アースバインド'}],
+  blackRoad:[{id:'blackRoad:scarlet-ray',x:500,y:560,spell:'スカーレットレイ'},{id:'blackRoad:tempest-pierce',x:1500,y:860,spell:'テンペストピアス'}],
+  mirrorLake:[{id:'mirrorLake:frost-ray',x:620,y:540,spell:'フロストレイ'},{id:'mirrorLake:heal-totem',x:1420,y:960,spell:'ヒールトーテム'}],
+  fogPromenade:[{id:'fogPromenade:lightning-ray',x:520,y:900,spell:'ライトニングレイ'},{id:'fogPromenade:mana-totem',x:1520,y:520,spell:'マナトーテム'}],
+  sootyRoad:[{id:'sootyRoad:blood-ray',x:650,y:820,spell:'ブラッドレイ'},{id:'sootyRoad:starflare-rain',x:1460,y:620,spell:'スターフレアレイン'}],
+  deepvein:[{id:'deepvein:granite-cannon',x:580,y:570,spell:'グラナイトキャノン'},{id:'deepvein:rock-totem',x:1490,y:900,spell:'ロックトーテム'}],
+  greyFrontier:[{id:'greyFrontier:summon-wolf',x:520,y:640,spell:'サモンウルフ'},{id:'greyFrontier:mana-orbit',x:1440,y:840,spell:'マナオービット'}],
+  oblivionOuter:[{id:'oblivionOuter:calamity-rain',x:620,y:900,spell:'カラミティレイン'},{id:'oblivionOuter:mana-burst',x:1510,y:560,spell:'マナバースト'}]
+ };
+ for(const id in STONES)if(out[id])out[id].stones=STONES[id].map(s=>({...s}));
  for(const id in LINKS)if(out[id])for(const [side,to] of LINKS[id])if(out[to])out[id].portals.push(portal(side,to,out[to].name));
  for(const id in out)spreadPortals(out[id].portals);
  for(const id in out)for(const p of out[id].portals){const back=(out[p.to].portals||[]).find(q=>q.to===id);if(!back)continue;
