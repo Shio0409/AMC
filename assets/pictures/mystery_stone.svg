@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="128" viewBox="0 0 96 128">
+  <defs>
+    <linearGradient id="stone" x1="18" y1="6" x2="78" y2="122" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#b8b2aa"/>
+      <stop offset=".45" stop-color="#736f6b"/>
+      <stop offset="1" stop-color="#3f3f42"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="48" y1="28" x2="48" y2="98" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#e9ddff"/>
+      <stop offset="1" stop-color="#8f6cff"/>
+    </linearGradient>
+  </defs>
+  <path d="M18 118 12 36 30 10 63 5 83 28 78 119Z" fill="#2f3033" opacity=".45"/>
+  <path d="M20 116 16 38 32 14 61 9 78 30 74 116Z" fill="url(#stone)" stroke="#202225" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M28 104 25 42 37 24 59 19 69 35 66 104Z" fill="#1d2024" opacity=".28"/>
+  <path d="M32 48h30M30 62h34M34 76h25" stroke="#d8d0ff" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+  <path d="M47 31 38 59h16l-7 32 18-42H50Z" fill="url(#glow)" opacity=".9"/>
+  <path d="M16 117h64l8 8H8Z" fill="#252628"/>
+</svg>
