@@ -64,7 +64,7 @@ va:'ゔぁ',vi:'ゔぃ',ve:'ゔぇ',vo:'ゔぉ',vye:'ゔぇ',she:'しぇ',sye:'�
 fye:'ふぇ',kye:'きぇ',gye:'ぎぇ',nye:'にぇ',hye:'ひぇ',bye:'びぇ',pye:'ぴぇ',mye:'みぇ',rye:'りぇ',qye:'くぇ',
 tsa:'つぁ',tsi:'つぃ',tse:'つぇ',tso:'つぉ',kwa:'くぁ',kwi:'くぃ',kwe:'くぇ',kwo:'くぉ',gwa:'ぐぁ',gwi:'ぐぃ',gwe:'ぐぇ',gwo:'ぐぉ',
 fya:'ふゃ',fyu:'ふゅ',fyo:'ふょ',wha:'うぁ',ye:'いぇ',xwa:'ゎ',xka:'ヵ',ca:'か',ci:'し',cu:'く',co:'こ',qa:'くぁ',qi:'くぃ',qu:'く',qe:'くぇ',qo:'くぉ'};
-const dn=k=>k.replace(/ー/g,'');const VOW='aiueo';
+const VOW='aiueo';
 function flush(){let ch=true;while(ch){ch=false;if(!P.pend.length)break;const c=P.pend[0];
  if(!VOW.includes(c)&&!'nxl'.includes(c)&&P.pend[1]===c){P.kana+='っ';P.pend=P.pend.slice(1);ch=true;continue;}
  if(c==='n'&&P.pend.length>=2){const n2=P.pend[1];if(n2==="'"){P.kana+='ん';P.pend=P.pend.slice(2);ch=true;continue;}if(!'aiueoyn'.includes(n2)){P.kana+='ん';P.pend=P.pend.slice(1);ch=true;continue;}}
@@ -348,8 +348,6 @@ function enemyIsElite(en){return enemyRank(en)==='elite';}
 function enemyShouldSync(en){const r=enemyRank(en);return !!(ENEMY_RANK[r]&&ENEMY_RANK[r].sync);}
 // ===== ステータス・装備・インベントリ =====
 const STN=['DEX','AGI','INT','PIE','VIT','LUK'],BASE_STATS={DEX:6,AGI:6,INT:12,PIE:8,VIT:10,LUK:5};
-function entityStats(e){if(e===P)return Object.fromEntries(STN.map(k=>[k,effStat(k)]));return {...BASE_STATS,...((e&&e.stats)||{})};}
-function statOf(e,k){return entityStats(e)[k]||0;}
 const STAT_HELP={
  DEX:['移動速度','攻撃範囲','クリティカルダメージ'],
  AGI:['詠唱速度','移動速度','回避率'],
@@ -385,10 +383,7 @@ function statText(k,v){v=Math.round(v);return k+(v>=0?'+':'')+v;}
 function itemAffixVal(it,v){return Math.round(v);}
 function itemJewelAffixVal(it,v){return Math.round(v);}
 function itemAffixTotal(it,k){return itemAffixVal(it,(it.affixes&&it.affixes[k])||0)+itemJewelAffixVal(it,(it.jewelAffixes&&it.jewelAffixes[k])||0);}
-function affixStr(it){const a=Object.entries(it.affixes||{}),j=Object.entries(it.jewelAffixes||{});const e=[...a.map(x=>[x[0],itemAffixVal(it,x[1])]),...j.map(x=>[x[0],itemJewelAffixVal(it,x[1])])];if(!e.length)return '';return ' {'+e.map(([k,v])=>(AFFIXMAP[k]?AFFIXMAP[k].n:k)+'+'+v+'%').join(' ')+'}';}
-function statStr(it){return '('+[...Object.entries(it.stats||{}),...Object.entries(it.negativeStats||{})].map(([k,v])=>statText(k,itemStatVal(it,v))).join(' ')+')'+affixStr(it);}
 function itemNameLabel(it){return it.name+((it.plus||0)>0?' +'+it.plus:'');}
-function itemLabel(it){return itemNameLabel(it)+' '+statStr(it);}
 function itemValue(it){const af=Object.values(it.affixes||{}).reduce((a,v)=>a+v,0)+Object.values(it.jewelAffixes||{}).reduce((a,v)=>a+v,0);return Math.round((it.rar.m*10+af*0.6)*(1+(it.lv||1)*0.15)*(1+0.12*(it.plus||0)));}
 function playerAffix(key){let s=0;for(const k of EQKEYS){const it=P.equip[k];if(it)s+=itemAffixTotal(it,key);}return s;}
 function effStat(n){let v=P.base[n]*2;for(const k of EQKEYS){const it=P.equip[k];if(it&&it.stats[n])v+=itemStatVal(it,it.stats[n]);if(it&&it.negativeStats&&it.negativeStats[n])v+=itemStatVal(it,it.negativeStats[n]);}
@@ -442,8 +437,6 @@ function idbPutValue(key,val){return idbOpen().then(db=>new Promise((res,rej)=>{
 function idbGetValue(key){return idbOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction(SAVE_STORE,'readonly'),req=tx.objectStore(SAVE_STORE).get(key);req.onsuccess=()=>{const v=req.result;db.close();res(v||null);};req.onerror=()=>{const e=req.error;db.close();rej(e);};}));}
 function saveToIndexedDb(auto){saveBusyT=1.2;return idbPutValue(SAVE_KEY,encSave(packSave())).then(()=>{markSaveUi(true);if(!auto){flash('IndexedDBに保存しました');se('ui');}return true;}).catch(e=>{markSaveUi(false);if(!auto){flash('IndexedDB保存失敗');se('error');}return false;});}
 function loadFromIndexedDb(quiet){return idbGetValue(SAVE_KEY).then(s=>{if(!s){if(!quiet){flash('IndexedDBセーブがありません');se('error');}return false;}try{applySave(decSave(s),quiet);return true;}catch(e){if(!quiet){flash('IndexedDBロード失敗');se('error');}return false;}}).catch(e=>{if(!quiet){flash('IndexedDBロード失敗');se('error');}return false;});}
-function writeSaveCookieChunk(s,i,n){if(i<0)document.cookie=SAVE_COOKIE+'='+n+'; max-age=31536000; path=/; SameSite=Lax';else if(i<n)document.cookie=SAVE_COOKIE+'_'+i+'='+encodeURIComponent(s.slice(i*3000,(i+1)*3000))+'; max-age=31536000; path=/; SameSite=Lax';else document.cookie=SAVE_COOKIE+'_'+i+'=; max-age=0; path=/; SameSite=Lax';}
-function saveToCookie(auto){try{const s=encSave(packSave()),n=Math.ceil(s.length/3000);writeSaveCookieChunk(s,-1,n);for(let i=0;i<n;i++)writeSaveCookieChunk(s,i,n);for(let i=n;i<12;i++)writeSaveCookieChunk(s,i,n);markSaveUi(true);if(!auto){flash('Cookieに保存しました');se('ui');}return true;}catch(e){markSaveUi(false);if(!auto){flash('Cookie保存失敗');se('error');}return false;}}
 function scheduleAutoSave(){if(autoSaveRunning)return;autoSaveRunning=true;saveToIndexedDb(true).finally(()=>{autoSaveRunning=false;});}
 function loadFromCookie(quiet){const ck=Object.fromEntries(document.cookie.split('; ').filter(Boolean).map(x=>{const i=x.indexOf('=');return[i<0?x:x.slice(0,i),i<0?'':x.slice(i+1)];}));let s='';if(ck[SAVE_COOKIE]&&/^\d+$/.test(ck[SAVE_COOKIE])){for(let i=0;i<Number(ck[SAVE_COOKIE]);i++)s+=decodeURIComponent(ck[SAVE_COOKIE+'_'+i]||'');}else if(ck[SAVE_COOKIE])s=decodeURIComponent(ck[SAVE_COOKIE]);if(!s){if(!quiet){flash('Cookieセーブがありません');se('error');}return false;}try{applySave(decSave(s),quiet);return true;}catch(e){if(!quiet){flash('Cookieロード失敗');se('error');}return false;}}
 function importCookieSave(){if(loadFromCookie(false))saveToIndexedDb(true);}
@@ -552,7 +545,6 @@ function marketDeliver(row){if(!row)return;const price=Math.max(1,Math.round(row
 function tradeEquipList(){return P.inv.filter(it=>it&&it.rar&&!it.jewel&&!it.box&&!it.eliteBox&&!it.demonCorpse);}
 function tradeGemNum(){return Math.max(0,Math.min(P.gem,Math.round(Number(tradeGem)||0)));}
 function tradeOfferData(item,gem){return{item:item?packItem(item):null,gem:Math.max(0,Math.round(gem||0))};}
-function tradeValid(o){if(!o)return false;if((o.gem||0)>P.gem)return false;if(o.item){const it=tradeEquipList().find(x=>JSON.stringify(packItem(x))===JSON.stringify(o.item));return !!it;}return (o.gem||0)>0;}
 function tradeRemove(o){if(!o)return true;if((o.gem||0)>P.gem)return false;if(o.item){const key=JSON.stringify(o.item),it=tradeEquipList().find(x=>JSON.stringify(packItem(x))===key),i=P.inv.indexOf(it);if(i<0)return false;P.inv.splice(i,1);}P.gem-=o.gem||0;return true;}
 function tradeAdd(o){if(!o)return;if(o.gem)P.gem+=o.gem;const it=o.item&&unpackItem(o.item);if(it&&P.inv.length<INV_MAX)P.inv.push(it);}
 function tradeSendOffer(){if(!MP.enabled||!tradeTarget){flash('トレード相手を選択してください');se('error');return;}const offer=tradeOfferData(tradeItem,tradeGemNum());if(!offer.item&&!offer.gem){flash('gemか装備を提示してください');se('error');return;}const id='tr'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);tradePending={id,to:tradeTarget,offer};mpSend({type:'tradeOffer',to:tradeTarget,id,offer,name:P.name||'Player'});flash('トレード申請を送りました');se('ui');}
@@ -579,7 +571,6 @@ function materialPromoteCost(it){const ri=Math.max(0,RAR.indexOf(it.rar));return
 function materialPromoteChance(it){return 1;}
 function addRarityBonus(it,oldR,newR){const lv=it.lv||P.lv,statN=Math.max(1,(newR.ns||1)-(oldR.ns||0));it.stats=it.stats||{};for(let i=0;i<statN;i++){const k=STN[Math.floor(Math.random()*STN.length)];it.stats[k]=(it.stats[k]||0)+Math.max(1,Math.round((1+lv*0.18)*newR.m*(0.5+Math.random()*0.6)*0.2));}
  const need=Math.max(0,rarAffixTarget(newR)-Object.keys(it.affixes||{}).length);it.affixes=it.affixes||{};const pool=AFFIXES.filter(a=>!it.affixes[a.k]);for(let i=0;i<need&&pool.length;i++){const a=pool.splice(Math.floor(Math.random()*pool.length),1)[0];it.affixes[a.k]=(it.affixes[a.k]||0)+Math.max(1,Math.round(a.base*newR.m*(0.7+Math.random()*0.6)));}}
-function canPromoteRarity(it){const ri=RAR.indexOf(it&&it.rar);return !!it&&ri>=0&&ri<RAR.length-1&&(it.plus||0)>=10;}
 function applyPromoteRarity(it,next,old){if((it.name||'').startsWith(old.n+'\u306e'))it.name=next.n+'\u306e'+it.name.slice((old.n+'\u306e').length);it.rar=next;it.col=next.col;it.plus=0;addRarityBonus(it,old,next);recompute();}
 function promoteRarity(it){if(!it)return;const ri=RAR.indexOf(it.rar),next=RAR[ri+1];if(ri<0||!next){flash('\u3053\u308c\u4ee5\u4e0a\u30ec\u30a2\u5ea6\u3092\u4e0a\u3052\u3089\u308c\u307e\u305b\u3093');se('error');return;}if((it.plus||0)<10){flash('\u30ec\u30a2\u5ea6\u6607\u683c\u306b\u306f+10\u4ee5\u4e0a\u306e\u5f37\u5316\u304c\u5fc5\u8981');se('error');return;}const cost=materialPromoteCost(it);if((P.material||0)<cost){flash('\u30de\u30c6\u30ea\u30a2\u30eb\u4e0d\u8db3\uff08\u5fc5\u8981\u25cf'+fmt(cost)+'\uff09');se('error');return;}P.material-=cost;const old=it.rar;applyPromoteRarity(it,next,old);flash('\u30ec\u30a2\u5ea6\u6607\u683c\u6210\u529f\uff01 '+next.n+' / \u5f37\u5316\u5024+0');dropSE(next);se('enhance');}
 
@@ -778,7 +769,6 @@ const PLAYER_BASE='assets/player/';
 const PLAYER_SPRITES={front:'front.png',back:'back.png',right:'right.png'};
 const PLAYER_CACHE={};
 function playerImg(dir){const name=PLAYER_SPRITES[dir]||PLAYER_SPRITES.front;if(!PLAYER_CACHE[name]){const img=new Image();img.src=PLAYER_BASE+name;PLAYER_CACHE[name]=img;}return PLAYER_CACHE[name];}
-function playerDir(){if(Math.abs(P.face.x)>Math.abs(P.face.y))return P.face.x<0?'left':'right';return P.face.y<0?'back':'front';}
 function faceDir(face){if(!face)return'front';if(Math.abs(face.x)>Math.abs(face.y))return face.x<0?'left':'right';return face.y<0?'back':'front';}
 function drawPlayerAt(x,y,face,alpha,label,hp,maxhp,typing,speech){const dir=faceDir(face),img=playerImg(dir==='left'?'right':dir),h=75,w=img&&img.naturalWidth?h*(img.naturalWidth/img.naturalHeight):h;
  if(!(img&&img.complete&&img.naturalWidth))return false;ctx.save();ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=8;ctx.globalAlpha=alpha===undefined?1:alpha;
@@ -1255,8 +1245,6 @@ function spawnBoss(id){const m=MAPS[id||MAPID];if(!m||!m.bossDef)return null;con
   hp,maxhp:hp,def:mega?60:14+Math.floor((lv-1)/2),atk:mega?d.atk:Math.round(d.atk*(1+0.04*(lv-1))),
   spd:mega?0.55:0.45,exp:expByHp(hp,0.7),state:'move',t:1.6,burn:null,bt:0,slow:0,stun:0,shots:0,fireT:0,tx:0,ty:0,trad:0,cvx:0,cvy:0,aim:0,fan:0.55};
  bosses.set(id||MAPID,b);if((id||MAPID)===MAPID){boss=b;flash(mega?'☠ 最強の敵 出現：'+d.jp+'（Lv.'+lv+'）':'強敵 出現：'+d.jp+'（'+d.el+'・Lv.'+lv+'）');}return b;}
-function bossPattern(b){const t=bossTarget(b)||{x:P.x,y:P.y},p=Math.floor(Math.random()*3),ang=Math.atan2(t.y-b.y,t.x-b.x);
- if(p===0){b.state='slam';b.t=1.2;b.tx=t.x;b.ty=t.y;b.trad=130;}else if(p===1){b.state='barrage_t';b.t=1.0;b.aim=ang;b.fan=0.55;}else{b.state='charge_t';b.t=0.85;b.aim=ang;}}
 function playerTarget(x,y,map){let best={id:null,x:P.x,y:P.y,r:P.r,d:map===MAPID?Math.hypot(P.x-x,P.y-y):1e9};if(map===MAPID)for(const sm of summons){const d=Math.hypot(sm.x-x,sm.y-y);if(d<best.d)best={summon:sm,x:sm.x,y:sm.y,r:sm.r,d};}if(MP.enabled&&MP.isHost)for(const [id,p]of MP.players){if(p.map!==map||p.down)continue;const d=Math.hypot(p.x-x,p.y-y);if(d<best.d)best={id,x:p.x,y:p.y,r:P.r,d};}return best.d<1e9?best:null;}
 function hitPlayerTarget(t,dmg){if(!t)return;if(t.summon){t.summon.hp-=dmg;burst(t.summon.x,t.summon.y,t.summon.color,8,3);return;}if(t.id)mpSendHurt(t.id,dmg);else hurtPlayer(dmg);}
 function bossTarget(b){return playerTarget(b.x,b.y,b.map||MAPID)||{id:null,x:P.x,y:P.y,r:P.r,d:Math.hypot(P.x-b.x,P.y-b.y)};}
@@ -1491,18 +1479,6 @@ function drawSaveStatus(){if(saveBusyT<=0&&saveOkT<=0&&saveErrT<=0)return;const 
  ctx.fillStyle=err?'#5a2424':'#1f3a36';ctx.fillRect(x+8,y+6,20,20);ctx.fillStyle='#dfffe0';ctx.fillRect(x+11,y+9,14,5);ctx.fillStyle='#84d0ff';ctx.fillRect(x+13,y+17,10,7);
  const cx=x+42,cy=y+16,r=8,a=performance.now()/130;ctx.strokeStyle=err?'#ff7a7a':(ok?'#78e087':'#9fe8ff');ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,cy,r,a,a+(busy?4.8:6.2));ctx.stroke();
  ctx.fillStyle=err?'#ffb0b0':(ok?'#dfffe0':'#dff7ff');ctx.font='bold 11px system-ui';ctx.textAlign='left';ctx.fillText(err?'SAVE NG':(busy?'SAVING':'SAVED'),x+56,y+20);ctx.restore();}
-function drawBestiary(){clickAreas=[];tipAreas=[];ctx.fillStyle='rgba(4,8,8,.93)';ctx.fillRect(0,0,W,H);
- const x=30,y=18,w=840,h=570;ctx.fillStyle='rgba(18,18,16,.98)';ctx.strokeStyle='#d8d0ff';ctx.lineWidth=2;ctx.fillRect(x,y,w,h);ctx.strokeRect(x,y,w,h);
- ctx.textAlign='left';ctx.fillStyle='#d8d0ff';ctx.font='bold 20px system-ui';ctx.fillText('モンスター図鑑',x+22,y+34);ctx.fillStyle='#8a9690';ctx.font='11px system-ui';ctx.fillText('討伐数で段階開示: 1名前 / 10出現地 / 30ステータス / 100ドロップ / 300全情報',x+22,y+56);
- const entries=bestiaryEntries(),lx=x+22,ly=y+82,lw=270,row=18;let shown=0;for(const e of entries){if(e.c<=0&&shown>36)break;const yy=ly+shown*row;if(yy>y+h-28)break;const sel=P.bestSel===e.id,known=e.c>0;ctx.fillStyle=sel?'rgba(216,208,255,.16)':'rgba(0,0,0,0)';ctx.fillRect(lx-4,yy-13,lw,16);ctx.fillStyle=known?'#cfd6e0':'#555';ctx.font='11px system-ui';ctx.fillText((sel?'▶':'・')+(known?e.d.name:'未遭遇')+'  '+e.c, lx, yy);clickAreas.push({x:lx-4,y:yy-13,w:lw,h:16,fn:()=>{P.bestSel=e.id;}});shown++;}
- const cur=entries.find(e=>e.id===P.bestSel&&e.c>0)||entries.find(e=>e.c>0),rx=x+330,ry=y+86;if(cur){const c=cur.c,d=cur.d;ctx.fillStyle='#ffe08a';ctx.font='bold 18px system-ui';ctx.fillText(d.name,rx,ry);ctx.fillStyle='#cfd6e0';ctx.font='12px system-ui';ctx.fillText('討伐数 '+c+' / 300',rx+210,ry);ry+=32;
-  const barW=330;ctx.fillStyle='#2a2436';ctx.fillRect(rx,ry-14,barW,10);ctx.fillStyle='#b48cff';ctx.fillRect(rx,ry-14,barW*Math.min(1,c/300),10);ctx.strokeStyle='#d8d0ff';ctx.strokeRect(rx,ry-14,barW,10);ry+=22;
-  const fit=(t,max)=>{t=String(t);if(ctx.measureText(t).width<=max)return t;while(t.length>1&&ctx.measureText(t+'...').width>max)t=t.slice(0,-1);return t+'...';};
-  const line=(label,val,need)=>{ctx.fillStyle=reveal(c,need)?'#dfe6e0':'#666';ctx.font='bold 12px system-ui';ctx.fillText(label,rx,ry);ctx.font='12px system-ui';ctx.fillText(fit(reveal(c,need)?val:'???（'+need+'体で開示）',360),rx+110,ry);ry+=22;};
-  line('分類',d.kind,1);line('出現地域',d.areas.length?d.areas.join(' / '):'不明',10);line('属性 / Lv',d.el+' / '+(d.lv||'可変'),30);line('HP / 攻撃',((d.hp||'可変')+' / '+(d.atk||'可変')),30);line('説明',d.desc||d.note,100);line('ドロップ',d.drops.join(' / '),100);line('行動メモ',d.note,300);
-  const nx=[1,10,30,100,300].find(n=>n>c);ctx.fillStyle='#8a9690';ctx.font='11px system-ui';ctx.fillText(c>=300?'全情報開示済み':'次の開示まで '+Math.max(1,nx-c)+' 体',rx,ry+10);
- }else{ctx.fillStyle='#778';ctx.font='13px system-ui';ctx.fillText('まだモンスターを討伐していません',rx,ry);}
- const bx=x+w-78,by=y+h-42;ctx.fillStyle='#243044';ctx.strokeStyle='#9fe8ff';ctx.lineWidth=2;ctx.fillRect(bx,by,56,28);ctx.strokeRect(bx,by,56,28);ctx.fillStyle='#dff7ff';ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillText('戻る',bx+28,by+19);clickAreas.push({x:bx,y:by,w:56,h:28,fn:()=>{P.bestiaryMenu=false;se('ui');}});}
 function bestiaryFilteredEntries(){const f=P.bestFilter||'seen',all=bestiaryEntries();return all.filter(e=>f==='all'||(f==='seen'?e.c>0:(f==='complete'?e.c>=300:e.c<=0)));}
 function drawBestiary(){clickAreas=[];tipAreas=[];ctx.fillStyle='rgba(4,8,8,.93)';ctx.fillRect(0,0,W,H);
  const x=30,y=18,w=840,h=570;ctx.fillStyle='rgba(18,18,16,.98)';ctx.strokeStyle='#d8d0ff';ctx.lineWidth=2;ctx.fillRect(x,y,w,h);ctx.strokeRect(x,y,w,h);
@@ -1702,7 +1678,6 @@ const BLAB={pow:'威',crit:'会',burn:'焼',def:'防',regen:'再',mpregen:'M回'
 function buffDesc(s){if(!s.buffs||!s.buffs.length)return '-';return s.buffs.map(([k,a])=>(BLAB[k]||k)+'+'+(a<1?Math.round(a*100)+'%':a)).join(',');}
 const KINDLAB={bolt:'弾',impact:'着弾爆発',pierce:'貫通',self:'自周囲',meteo:'着弾AoE',front:'前方',fan:'扇形',zone:'設置',aura:'追従周囲',multi:'多段',funnel:'ファンネル',ray:'レイ',totem:'トーテム',summon:'召喚',rain:'降雨',orbit:'周回弾',mix:'混合',buff:'バフ',heal:'回復',return:'帰還',teleport:'町転移',resurrect:'蘇生'};
 const RUNE_CATS=[['威力',5],['節約',5],['範囲',5],['収束',5],['飛距離',5],['発動回数',4],['遅延',5],['迅速',5],['バフ量',5],['バフ時間',5],['全体バフ',5],['分裂',3],['変質',4],['確率',4],['持続時間',5],['マナ禁術',5],['ブラッド禁術',5],['特殊',2]];
-const RUNE_INFO={'パワー':'威1.3 / MP1.5','エコ':'MP0.9','ギャンブル':'MP0.5-3 威/範/距0.1-3','エコー':'MP2 発動×2','ダブル':'威0.7 MP1.5 発動×2','トリプル':'威0.6 MP2 発動×3','ワイド':'範囲1.5','ヒュージ':'範囲2 MP1.5','ロング':'飛距離1.5','レンジド':'飛距離2 MP1.5','ピアース':'貫通 威1.2','ホーミング':'追尾 威1.3','スプリット':'3方向各0.7','レイト':'詠唱2 威1.5 MP1.2','ディレイ':'詠唱3 威2 MP1.5','タイム':'バフ継続2 威0.5 MP1.5','エクステンド':'バフ継続1.5 威0.5','アフリクト':'状態異常蓄積1.8'};
 function drawMagicList(){clickAreas=[];tipAreas=[];ctx.fillStyle='rgba(6,10,8,.95)';ctx.fillRect(0,0,W,H);
  const x0=30,y0=16,w=840,h=572;ctx.fillStyle='rgba(20,18,14,.98)';ctx.strokeStyle='#caa64b';ctx.lineWidth=2;ctx.fillRect(x0,y0,w,h);ctx.strokeRect(x0,y0,w,h);
  ctx.textAlign='left';ctx.fillStyle='#d9c98f';ctx.font='bold 16px system-ui';ctx.fillText('魔法・ルーン一覧',x0+18,y0+26);ctx.fillStyle='#8a9690';ctx.font='12px system-ui';ctx.fillText('Esc / Space / 移動 / F で閉じる',x0+w-220,y0+26);
