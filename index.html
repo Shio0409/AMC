@@ -97,7 +97,7 @@ const SPELLS=[
  // ===== 火：大魔法4 =====
 
  S('フレアチェイン',['ふれあちぇいん'],23,'multi',{el:'火',power:1.15,speed:6.4,r:34,tickDmg:0.26,rate:0.1,dur:1.4,burn:6,color:'#ff7a3a'},[['pow',0.12,16]]),
- S('炎紋印',['えんもんいん'],24,'zone',{el:'火',power:1.05,radius:126,offset:132,tickDmg:0.34,rate:0.35,dur:5.2,burn:8,color:'#ff5a36'},[['burn',0.26,18]]),
+ S('フレアシール',['ふれあしーる'],24,'zone',{el:'火',power:1.05,radius:126,offset:132,tickDmg:0.34,rate:0.35,dur:5.2,burn:8,color:'#ff5a36'},[['burn',0.26,18]]),
  S('スカーレットレイ',['すかーれっとれい'],25,'pierce',{el:'火',power:1.45,speed:11,r:5,burn:9,color:'#ff4060'},[['crit',0.16,14]]), S('ヴォルカノ',['ゔぉるかの'],46,'impact',{el:'火',power:2.2,speed:6,r:12,splash:180,burn:18,big:true,color:'#ff4a1a'},[]),
  S('フレアノヴァ',['ふれあのゔぁ'],48,'self',{el:'火',power:2.0,radius:206,burn:14,big:true,color:'#ff5230'},[]),
  S('メテオ',['めてお'],50,'meteo',{el:'火',power:1.7,radius:200,burn:22,big:true,color:'#ff2a10'},[]),
@@ -127,7 +127,7 @@ const SPELLS=[
 
  S('ミストヴェール',['みすとぴ゙ぇーる'],23,'buff',{el:'水',color:'#9fe8ff'},[['def',0.18,22],['regen',0.05,22]]),
  S('リップルスピア',['りっぷるすぴあ'],24,'pierce',{el:'水',power:1.35,speed:9.4,r:6,slow:3,color:'#5ab0ff'},[['def',0.10,18]]),
- S('氷晶陣',['ひょうしょうじん'],25,'zone',{el:'水',power:1.05,radius:128,offset:128,tickDmg:0.32,rate:0.35,dur:5.5,slow:4,color:'#bfefff'},[['def',0.14,18]]), S('アイシクル',['あいしくる'],44,'impact',{el:'水',power:2.2,speed:7,r:12,splash:170,slow:4,big:true,color:'#bfefff'},[]),
+ S('アイスサークル',['あいすさーくる'],25,'zone',{el:'水',power:1.05,radius:128,offset:128,tickDmg:0.32,rate:0.35,dur:5.5,slow:4,color:'#bfefff'},[['def',0.14,18]]), S('アイシクル',['あいしくる'],44,'impact',{el:'水',power:2.2,speed:7,r:12,splash:170,slow:4,big:true,color:'#bfefff'},[]),
  S('タイダルウェーブ',['たいだるうぇーぶ'],46,'meteo',{el:'水',power:1.6,radius:210,slow:3,big:true,color:'#2aa0ff'},[]),
  S('メイルシュトローム',['めいるしゅとろーむ'],50,'zone',{el:'水',power:2.0,radius:210,offset:150,tickDmg:0.5,rate:0.3,dur:4,slow:4,big:true,color:'#2aa0ff'},[]),
  S('ダイアモンドダスト',['だいあもんどだすと'],50,'self',{el:'水',power:1.9,radius:196,slow:4,big:true,color:'#bfefff'},[]),
@@ -155,7 +155,7 @@ const SPELLS=[
  // ===== 風：大魔法4 =====
 
  S('エアレイド',['えあれいど'],23,'funnel',{el:'風',power:1.05,count:5,boltDmg:0.36,speed:11,rate:0.36,dur:5.5,color:'#9af0dd'},[['crit',0.10,16]]),
- S('雷走り',['かみなりばしり'],24,'multi',{el:'風',power:1.2,speed:8.4,r:30,tickDmg:0.24,rate:0.08,dur:1.25,color:'#ffe14a'},[['crit',0.12,14]]),
+ S('ライトニングラン',['らいとにんぐらん'],24,'multi',{el:'風',power:1.2,speed:8.4,r:30,tickDmg:0.24,rate:0.08,dur:1.25,color:'#ffe14a'},[['crit',0.12,14]]),
  S('テンペストピアス',['てんぺすとぴあす'],25,'pierce',{el:'風',power:1.5,speed:12,r:5,color:'#7fe6cf'},[['crit',0.14,14]]), S('サンダーランス',['さんだーらんす'],46,'pierce',{el:'風',power:2.4,speed:9,r:9,big:true,color:'#ffe14a'},[]),
  S('ストーム',['すとーむ'],46,'meteo',{el:'風',power:1.6,radius:210,big:true,color:'#5fe0c8'},[]),
  S('ライトニング',['らいとにんぐ'],48,'meteo',{el:'風',power:1.9,radius:178,big:true,color:'#ffe14a'},[]),
@@ -184,7 +184,7 @@ const SPELLS=[
  // ===== 土：大魔法4 =====
 
  S('アースバインド',['あーすばいんど'],23,'zone',{el:'土',power:0.95,radius:132,offset:118,tickDmg:0.28,rate:0.4,dur:6,slow:5,color:'#9a7a3a'},[['def',0.16,20]]),
- S('玄岩砲',['げんがんほう'],24,'impact',{el:'土',power:1.85,speed:4.8,r:14,splash:104,color:'#b58a4a'},[['def',0.12,16]]),
+ S('グラナイトキャノン',['ぐらないときゃのん'],24,'impact',{el:'土',power:1.85,speed:4.8,r:14,splash:104,color:'#b58a4a'},[['def',0.12,16]]),
  S('ルーンシェル',['るーんしぇる'],25,'buff',{el:'土',color:'#d0b070'},[['def',0.30,18],['regen',0.04,18]]), S('ジャベリン',['じゃべりん'],46,'pierce',{el:'土',power:2.4,speed:8,r:9,big:true,color:'#d0b070'},[]),
  S('ガイア',['がいあ'],48,'self',{el:'土',power:2.0,radius:212,big:true,color:'#9a7a3a'},[]),
  S('グランドインパクト',['ぐらんどいんぱくと'],50,'impact',{el:'土',power:2.3,speed:5.5,r:13,splash:180,big:true,color:'#b58a4a'},[]),
@@ -197,21 +197,21 @@ const SPELLS=[
  S('ライトニングレイ',['らいとにんぐれい'],27,'ray',{"el":"風","power":1.32,"len":360,"width":24,"dur":3,"tickDmg":0.25,"rate":0.14,"color":"#d8ff5a"},[["crit",0.12,12]]),
  S('クリスタルレイ',['くりすたるれい'],27,'ray',{"el":"土","power":1.45,"len":300,"width":34,"dur":3.6,"tickDmg":0.22,"rate":0.18,"slow":3,"color":"#d0b070"},[["def",0.1,14]]),
  S('ブラッドレイ',['ぶらっどれい'],18,'ray',{"el":"火","power":1.85,"len":300,"width":30,"dur":3.2,"tickDmg":0.3,"rate":0.16,"burn":8,"hpDrain":0.18,"hpDrainDur":6,"color":"#ff4060"},[["pow",0.1,10]]),
- S('火霊トーテム',['かれいとーてむ'],24,'totem',{"el":"火","power":1,"radius":58,"totem":"shot","dur":12,"rate":0.65,"tickDmg":0.62,"speed":6.7,"hp":110,"burn":5,"color":"#ff7a38"},[["pow",0.08,12]]),
- S('岩弾トーテム',['がんだんとーてむ'],25,'totem',{"el":"土","power":1,"radius":62,"totem":"shot","dur":14,"rate":0.85,"tickDmg":0.7,"speed":5.4,"hp":150,"slow":2,"color":"#b58a4a"},[["def",0.1,14]]),
- S('癒しのトーテム',['いやしのとーてむ'],22,'totem',{"el":"水","power":0.4,"radius":92,"totem":"heal","dur":12,"heal":0.035,"mp":0,"hp":120,"color":"#9fe8ff"},[["regen",0.03,12]]),
+ S('フレイムトーテム',['ふれいむとーてむ'],24,'totem',{"el":"火","power":1,"radius":58,"totem":"shot","dur":12,"rate":0.65,"tickDmg":0.62,"speed":6.7,"hp":110,"burn":5,"color":"#ff7a38"},[["pow",0.08,12]]),
+ S('ロックトーテム',['ろっくとーてむ'],25,'totem',{"el":"土","power":1,"radius":62,"totem":"shot","dur":14,"rate":0.85,"tickDmg":0.7,"speed":5.4,"hp":150,"slow":2,"color":"#b58a4a"},[["def",0.1,14]]),
+ S('ヒールトーテム',['ひーるとーてむ'],22,'totem',{"el":"水","power":0.4,"radius":92,"totem":"heal","dur":12,"heal":0.035,"mp":0,"hp":120,"color":"#9fe8ff"},[["regen",0.03,12]]),
  S('マナトーテム',['まなとーてむ'],24,'totem',{"el":"風","power":0.4,"radius":92,"totem":"heal","dur":12,"heal":0.012,"mp":0.045,"hp":105,"color":"#b48cff"},[["mpregen",0.08,12]]),
  S('サモンウルフ',['さもんうるふ'],26,'summon',{"el":"火","power":1,"mode":"melee","asset":"ManaWolf","hp":150,"r":18,"dur":18,"range":40,"spd":0.9,"tickDmg":0.42,"rate":0.65,"color":"#ff7a38"},[["pow",0.06,14]]),
  S('サモンピクシー',['さもんぴくしー'],28,'summon',{"el":"風","power":1,"mode":"ranged","asset":"ManaBat","hp":95,"r":15,"dur":18,"range":170,"spd":0.75,"tickDmg":0.36,"rate":0.72,"color":"#b48cff"},[["crit",0.08,14]]),
  S('サモンゴーレム',['さもんごーれむ'],30,'summon',{"el":"土","power":1,"mode":"melee","asset":"RockGolem","hp":260,"r":22,"dur":20,"range":46,"spd":0.45,"tickDmg":0.5,"rate":0.9,"color":"#b58a4a"},[["def",0.12,16]]),
- S('星火雨',['せいかう'],28,'rain',{"el":"火","power":1.2,"radius":140,"dur":4.5,"rate":0.24,"tickDmg":0.52,"splash":42,"burn":5,"color":"#ff9a3a"},[["pow",0.08,14]]),
- S('氷柱雨',['つららあめ'],28,'rain',{"el":"水","power":1.15,"radius":145,"dur":4.8,"rate":0.28,"tickDmg":0.46,"splash":44,"slow":4,"color":"#8fdcff"},[["def",0.06,14]]),
- S('雷雨',['らいう'],29,'rain',{"el":"風","power":1.18,"radius":155,"dur":4.2,"rate":0.22,"tickDmg":0.48,"splash":38,"color":"#eaff6a"},[["crit",0.1,14]]),
- S('石礫雨',['いしつぶてあめ'],27,'rain',{"el":"土","power":1.14,"radius":135,"dur":5.2,"rate":0.32,"tickDmg":0.48,"splash":46,"slow":2,"color":"#caa46a"},[["def",0.08,14]]),
- S('魔力環',['まりょくかん'],23,'orbit',{"el":"特殊","power":1,"count":4,"dist":62,"r":8,"dur":8,"spin":2.4,"tickDmg":0.24,"color":"#c08aff"},[["mpregen",0.05,12]]),
+ S('スターフレアレイン',['すたーふれあれいん'],28,'rain',{"el":"火","power":1.2,"radius":140,"dur":4.5,"rate":0.24,"tickDmg":0.52,"splash":42,"burn":5,"color":"#ff9a3a"},[["pow",0.08,14]]),
+ S('アイススピアレイン',['あいすすぴあれいん'],28,'rain',{"el":"水","power":1.15,"radius":145,"dur":4.8,"rate":0.28,"tickDmg":0.46,"splash":44,"slow":4,"color":"#8fdcff"},[["def",0.06,14]]),
+ S('サンダーレイン',['さんだーれいん'],29,'rain',{"el":"風","power":1.18,"radius":155,"dur":4.2,"rate":0.22,"tickDmg":0.48,"splash":38,"color":"#eaff6a"},[["crit",0.1,14]]),
+ S('ロックレイン',['ろっくれいん'],27,'rain',{"el":"土","power":1.14,"radius":135,"dur":5.2,"rate":0.32,"tickDmg":0.48,"splash":46,"slow":2,"color":"#caa46a"},[["def",0.08,14]]),
+ S('マナオービット',['まなおーびっと'],23,'orbit',{"el":"特殊","power":1,"count":4,"dist":62,"r":8,"dur":8,"spin":2.4,"tickDmg":0.24,"color":"#c08aff"},[["mpregen",0.05,12]]),
  S('マナバースト',['まなばーすと'],0,'mix',{"el":"特殊","power":1.55,"mpPct":0.45,"radius":155,"color":"#8ad8ff"},[["pow",0.08,12]]),
- S('蒸気爆裂',['じょうきばくれつ'],30,'mix',{"el":"水","power":1.75,"radius":150,"burn":4,"slow":3,"color":"#bfefff"},[["pow",0.08,12],["def",0.06,12]]),
- S('滅火雨',['めっかう'],16,'rain',{"el":"火","power":1.65,"radius":155,"dur":5,"rate":0.22,"tickDmg":0.58,"splash":48,"burn":8,"hpDrain":0.24,"hpDrainDur":8,"color":"#ff305a"},[["pow",0.12,10]]),
+ S('スチームバースト',['すちーむばーすと'],30,'mix',{"el":"水","power":1.75,"radius":150,"burn":4,"slow":3,"color":"#bfefff"},[["pow",0.08,12],["def",0.06,12]]),
+ S('カラミティレイン',['からみてぃれいん'],16,'rain',{"el":"火","power":1.65,"radius":155,"dur":5,"rate":0.22,"tickDmg":0.58,"splash":48,"burn":8,"hpDrain":0.24,"hpDrainDur":8,"color":"#ff305a"},[["pow",0.12,10]]),
 ];
 const SPELL_N={};SPELLS.forEach(s=>s.read.forEach(r=>SPELL_N[r]=s));
 const GROUPED={};SPELLS.forEach(s=>{(GROUPED[s.el]=GROUPED[s.el]||[]).push(s.read[0]);});
@@ -296,17 +296,31 @@ const RUNES=[
  {name:'チャンス',read:['ちゃんす'],info:'MP0.1〜5 / 威力範囲詠唱0.5〜2.5',f:m=>{m.mpMul*=0.1+Math.random()*4.9;m.powMul*=0.5+Math.random()*2;m.radiusMul*=0.5+Math.random()*2;m.castMul*=0.5+Math.random()*2;}},
  {name:'ギャンブル',read:['ぎゃんぶる'],info:'MP0.1〜5 / 威力範囲詠唱0.5〜2.5',f:m=>{m.mpMul*=0.1+Math.random()*4.9;m.powMul*=0.5+Math.random()*2;m.radiusMul*=0.5+Math.random()*2;m.castMul*=0.5+Math.random()*2;}},
 
- {name:'持続',read:['じぞく'],info:'継続時間1.6 / MP1.35',f:m=>{m.durMul*=1.6;m.mpMul*=1.35;}},
- {name:'禁呪',read:['きんじゅ'],info:'威力1.8 / 範囲1.2 / 発動後HP・MP減少',f:m=>{m.powMul*=1.8;m.radiusMul*=1.2;m.splashMul*=1.2;m.mpMul*=0.85;m.forbidden={hp:0.16,mp:0.20,dur:8};}},
- {name:'沈黙',read:['ちんもく'],info:'威力1.7 / 発動後5秒詠唱不可',f:m=>{m.powMul*=1.7;m.mpMul*=0.85;m.silence=5;}},
- {name:'混乱',read:['こんらん'],info:'威力1.5 / 発動後7秒入力非表示',f:m=>{m.powMul*=1.5;m.mpMul*=0.9;m.confuse=7;}},
+ {name:'デュレーション',read:['でゅれーしょん'],info:'duration x1.25 / MP x1.15',f:m=>{m.durMul*=1.25;m.mpMul*=1.15;}},
+ {name:'エクステンド',read:['えくすてんど'],info:'duration x1.4 / MP x1.25',f:m=>{m.durMul*=1.4;m.mpMul*=1.25;}},
+ {name:'サステイン',read:['さすていん'],info:'duration x1.6 / MP x1.35',f:m=>{m.durMul*=1.6;m.mpMul*=1.35;}},
+ {name:'パーシスト',read:['ぱーしすと'],info:'duration x1.85 / MP x1.5',f:m=>{m.durMul*=1.85;m.mpMul*=1.5;}},
+ {name:'エタニティ',read:['えたにてぃ'],info:'duration x2.15 / MP x1.7',f:m=>{m.durMul*=2.15;m.mpMul*=1.7;}},
+ {name:'マナバーン',read:['まなばーん'],info:'power x1.25 / drain MP 5s',f:m=>{m.powMul*=1.25;addRuneDrain(m,'mp',0.10,5);}},
+ {name:'マナサージ',read:['まなさーじ'],info:'power x1.4 / drain MP 7s',f:m=>{m.powMul*=1.4;addRuneDrain(m,'mp',0.16,7);}},
+ {name:'マナオーバー',read:['まなおーばー'],info:'power x1.55 / drain MP 9s',f:m=>{m.powMul*=1.55;m.radiusMul*=1.08;m.splashMul*=1.08;addRuneDrain(m,'mp',0.24,9);}},
+ {name:'マナブレイズ',read:['まなぶれいず'],info:'power x1.75 / drain MP 11s',f:m=>{m.powMul*=1.75;m.radiusMul*=1.12;m.splashMul*=1.12;addRuneDrain(m,'mp',0.34,11);}},
+ {name:'マナイクリプス',read:['まないくりぷす'],info:'power x2.0 / drain MP 13s',f:m=>{m.powMul*=2;m.radiusMul*=1.18;m.splashMul*=1.18;addRuneDrain(m,'mp',0.48,13);}},
+ {name:'ブラッドブースト',read:['ぶらっどぶーすと'],info:'power x1.3 / drain HP 5s',f:m=>{m.powMul*=1.3;addRuneDrain(m,'hp',0.08,5);}},
+ {name:'ブラッドサージ',read:['ぶらっどさーじ'],info:'power x1.48 / drain HP 7s',f:m=>{m.powMul*=1.48;addRuneDrain(m,'hp',0.13,7);}},
+ {name:'ブラッドオーバー',read:['ぶらっどおーばー'],info:'power x1.65 / drain HP 9s',f:m=>{m.powMul*=1.65;m.radiusMul*=1.08;m.splashMul*=1.08;addRuneDrain(m,'hp',0.20,9);}},
+ {name:'ブラッドブレイズ',read:['ぶらっどぶれいず'],info:'power x1.85 / drain HP 11s',f:m=>{m.powMul*=1.85;m.radiusMul*=1.12;m.splashMul*=1.12;addRuneDrain(m,'hp',0.29,11);}},
+ {name:'ブラッドイクリプス',read:['ぶらっどいくりぷす'],info:'power x2.1 / drain HP 13s',f:m=>{m.powMul*=2.1;m.radiusMul*=1.18;m.splashMul*=1.18;addRuneDrain(m,'hp',0.40,13);}},
+ {name:'サイレント',read:['さいれんと'],info:'power x1.7 / silence 5s',f:m=>{m.powMul*=1.7;m.mpMul*=0.85;m.silence=5;}},
+ {name:'コンヒューズ',read:['こんひゅーず'],info:'power x1.5 / confuse 7s',f:m=>{m.powMul*=1.5;m.mpMul*=0.9;m.confuse=7;}},
 ];
 const RUNE_N=[];RUNES.forEach(r=>r.read.forEach(rd=>RUNE_N.push([rd,r])));RUNE_N.sort((a,b)=>b[0].length-a[0].length);
 function segment(nk){let i=0,runes=[],seen=new Set();while(i<nk.length){let best=null,bl=0;
  for(const[rd,obj]of RUNE_N)if(rd.length>bl&&nk.startsWith(rd,i)&&P.runes.has(obj.name)){best=obj;bl=rd.length;}
  if(best&&i+bl<nk.length){if(!seen.has(best.name)){runes.push(best);seen.add(best.name);}i+=bl;continue;}break;}
  const rest=nk.slice(i);return{runes,spell:SPELL_N[rest]||null,rest};}
-function buildMod(runes){const m={powMul:1,mpMul:1,radiusMul:1,splashMul:1,sizeMul:1,distMul:1,castMul:1,buffDurMul:1,buffAmtMul:1,speedMul:1,durMul:1,burnMul:1,repeatMul:1,split:1,pierce:false,homing:false,forbidden:null,silence:0,confuse:0};for(const r of runes)r.f(m);return m;}
+function addRuneDrain(m,kind,amount,dur){m.drainKinds=m.drainKinds||{hp:{amount:0,dur:0},mp:{amount:0,dur:0}};const d=m.drainKinds[kind];if(d){d.amount+=amount;d.dur+=dur;}}
+function buildMod(runes){const m={powMul:1,mpMul:1,radiusMul:1,splashMul:1,sizeMul:1,distMul:1,castMul:1,buffDurMul:1,buffAmtMul:1,speedMul:1,durMul:1,burnMul:1,repeatMul:1,split:1,pierce:false,homing:false,drainKinds:{hp:{amount:0,dur:0},mp:{amount:0,dur:0}},silence:0,confuse:0};for(const r of runes)r.f(m);return m;}
 function incCost(s,runes){const m=runes.mpMul!==undefined?runes:buildMod(runes);return Math.max(1,Math.round(s.mpPct?P.mp*s.mpPct*m.mpMul:s.cost*m.mpMul));}
 
 const CYCLE=['火','風','土','水'];
@@ -830,24 +844,24 @@ const RUNE_SHOPS={
  rowendil:['フォースフル','リデュース','コンセントレート'],timber:['エターナル','マスター','チャンス'],hunterHideout:['ゴッドリー','ファイナリー','ギャンブル'],greenhollow:['ショットガン','スローモーション','エフェクティブ'],
  miraLake:['リサイクル','エクステンディド','トリプル'],ripple:['アマウント','フォーエバー','スプリット'],resortTown:['パワフル','ヒュージ','ラピッド'],
  acrossPort:['クアドラプル','マスター','ダイス'],dockside:['スナイプ','ブレッシング','マイン'],saltFlat:['フォースフル','エターナル','チャンス'],
- graubachCity:['アルティメット','エクストリーム','ギャンブル','持続'],ashCommon:['インスタントリー','クインタプル','ショットガン'],
- eisenroar:['ギガンティック','コンセントレート','ゴッドリー'],deepvein:['ディスタンス','フォーエバー','ファイナリー'],freepick:['トレメンダス','スローモーション','エフェクティブ'],
+ graubachCity:['アルティメット','エクストリーム','ギャンブル','デュレーション','マナバーン'],ashCommon:['インスタントリー','クインタプル','ショットガン','エクステンド','マナサージ'],
+ eisenroar:['ギガンティック','コンセントレート','ゴッドリー','サステイン','ブラッドブースト'],deepvein:['ディスタンス','フォーエバー','ファイナリー','マナオーバー','ブラッドサージ'],freepick:['トレメンダス','スローモーション','エフェクティブ','ブラッドオーバー'],
  wallguard:['アルティメット','クインタプル','エクストリーム'],garrison:['ギガンティック','ショットガン','インスタントリー'],pioneerVillages:['フォースフル','ゴッドリー','ギャンブル'],liberta:['フルパワー','ファイナリー','チャンス'],
- lastHold:['アルティメット','エクストリーム','インフィニティ','禁呪'],exileCamp:['クインタプル','ショットガン','ギャンブル','沈黙'],ruinedSankt:['ギガンティック','インスタントリー','ゴッドリー','混乱']
+ lastHold:['アルティメット','エクストリーム','インフィニティ','エタニティ','マナイクリプス','ブラッドイクリプス'],exileCamp:['クインタプル','ショットガン','ギャンブル','パーシスト','ブラッドブレイズ','サイレント'],ruinedSankt:['ギガンティック','インスタントリー','ゴッドリー','マナブレイズ','コンヒューズ']
 };
 const STONE_SPELLS={
  town:['スパーク','アイス','スタティック','クラック','フレアバレット','アクアアロー','エアショット','ストーンバレット'],windmere:['ファイアアロー','チャージフレア','ウィンドニードル','サンダースピア','テイルウィンド','ヘイスト'],mabel:['バブル','スプラッシュ','マッドショット','バリア','ヒール','アクアシールド'],fenceEnd:['ボム','ロック'],
- goldhahn:['フレアチェイン','イグニッション','フレイムファン','アイスファン','ウィンドエッジ','アースブレス','ロックバリケード','ストーンエッジ','フレイムランス','アイススピア','サンダーボルト','ストーンスキン'],stillrow:['炎紋印','スカーレットレイ','オーバーヒート','ボルダー','ストーンオーラ','マナスプリング','サンドブラスト'],
+ goldhahn:['フレアチェイン','イグニッション','フレイムファン','アイスファン','ウィンドエッジ','アースブレス','ロックバリケード','ストーンエッジ','フレイムランス','アイススピア','サンダーボルト','ストーンスキン'],stillrow:['フレアシール','スカーレットレイ','オーバーヒート','ボルダー','ストーンオーラ','マナスプリング','サンドブラスト'],
  univel:['ブレイズ','ウィンドカッター','ガスト','ロックランス','アースニードル'],ceres:['ヒートウェーブ','ハイドロビーム','プラズマボール'],
  rowendil:['ファイアウォール','フリーズ','ウィンドブラスト','トルネード'],timber:['アイスバリケード','サンダーファン'],hunterHideout:['サイクロン','クエイク'],greenhollow:['バースト','グランドスパイク'],
- miraLake:['ミストヴェール','リップルスピア','ヒーリングレイン','アクアランス','アイシクルレイン'],ripple:['氷晶陣','ブリザード','フロストオーラ'],resortTown:['ライトニングロッド','ストームオーラ'],
- acrossPort:['ライトニング','サンダーランス','メテオシャワー'],dockside:['エアレイド','雷走り','ゲイルブレス','ゲイルファンネル'],saltFlat:['テンペストピアス','アクアファンネル','タイダルウェーブ'],
+ miraLake:['ミストヴェール','リップルスピア','ヒーリングレイン','アクアランス','アイシクルレイン'],ripple:['アイスサークル','ブリザード','フロストオーラ'],resortTown:['ライトニングロッド','ストームオーラ'],
+ acrossPort:['ライトニング','サンダーランス','メテオシャワー'],dockside:['エアレイド','ライトニングラン','ゲイルブレス','ゲイルファンネル'],saltFlat:['テンペストピアス','アクアファンネル','タイダルウェーブ'],
  graubachCity:['エクスプロード','ヘルファイア','アイシクル'],ashCommon:['フレイムファンネル','フロストショット'],
- eisenroar:['ガイア','ジャベリン','アイアンウォール'],deepvein:['アースバインド','玄岩砲','ロックファンネル','グラビティ'],freepick:['ルーンシェル','グランドインパクト','アースクエイク'],
+ eisenroar:['ガイア','ジャベリン','アイアンウォール'],deepvein:['アースバインド','グラナイトキャノン','ロックファンネル','グラビティ'],freepick:['ルーンシェル','グランドインパクト','アースクエイク'],
  wallguard:['ストーム','ダイアモンドダスト','ヴォルカノ'],garrison:['サラマンダー','メイルシュトローム'],pioneerVillages:['テンペスト','フレアノヴァ'],liberta:['インフェルノ','ラグナロク'],
  lastHold:['メテオ','ダイアモンドダスト','ガイア'],exileCamp:['アースクエイク','テンペスト'],ruinedSankt:['グランドインパクト','ラグナロク']
 };
-const EXTRA_STONE_SPELLS=["フロストレイ","ライトニングレイ","クリスタルレイ","ブラッドレイ","火霊トーテム","岩弾トーテム","癒しのトーテム","マナトーテム","サモンウルフ","サモンピクシー","サモンゴーレム","星火雨","氷柱雨","雷雨","石礫雨","魔力環","マナバースト","蒸気爆裂","滅火雨"];
+const EXTRA_STONE_SPELLS=["フロストレイ","ライトニングレイ","クリスタルレイ","ブラッドレイ","フレイムトーテム","ロックトーテム","ヒールトーテム","マナトーテム","サモンウルフ","サモンピクシー","サモンゴーレム","スターフレアレイン","アイススピアレイン","サンダーレイン","ロックレイン","マナオービット","マナバースト","スチームバースト","カラミティレイン"];
 function shopRunes(){return(RUNE_SHOPS[MAPID]||['パワフル','セーブ','ヒュージ']).map(runeObj).filter(Boolean);}
 function stoneSpells(){return([...(STONE_SPELLS[MAPID]||[]),...EXTRA_STONE_SPELLS]).map(n=>SPELLS.find(s=>s.name===n)).filter(Boolean);}
 function buyRune(n){if(P.runes.has(n)){flash('習得済みです');se('error');return;}const cost=runePrice(n);if(P.gem<cost){flash('gem不足（必要◆'+fmt(cost)+'）');se('error');return;}P.gem-=cost;learnRune(n,'購入: ');}
@@ -1185,7 +1199,7 @@ function castMultiSpell(c){const s=c.s,m=c.m;spawnZone({x:P.x,y:P.y,vx:Math.cos(
 function castFunnelSpell(c,rep){const s=c.s,n=s.count||3;for(let k=0;k<n;k++)funnels.push({ang:k/n*6.283+rep,dist:s.dist||72,spin:s.spin||2.2,x:P.x,y:P.y,el:s.el,color:s.color,dmg:c.base*(s.boltDmg||0.5)*0.5,speed:s.speed||7,fireT:0.2,rate:s.rate||0.5,life:(s.dur||6)});burst(P.x,P.y,s.color,14,4);}
 function castProjectileSpell(c){const s=c.s,m=c.m,n=m.split,spread=0.3,pierce=(s.kind==='pierce')||m.pierce,each=n>1?c.base/n:c.base;for(let j=0;j<n;j++){const a=c.aim+(j-(n-1)/2)*spread;spawnProjectile({x:P.x,y:P.y,vx:Math.cos(a)*s.speed*m.speedMul,vy:Math.sin(a)*s.speed*m.speedMul,r:(s.r||7)*m.sizeMul,el:s.el,color:s.color,dmg:each,critEx:c.critEx,splash:c.splash,burn:c.burn,slow:s.slow||0,durMul:c.bd,pierce,homing:m.homing,life:1.8*m.distMul*c.dexRange,hit:new Set()});}burst(P.x+Math.cos(c.aim)*14,P.y+Math.sin(c.aim)*14,s.color,5,3);if(c.big)shake=Math.max(shake,18);}
 function resolveSpellAction(c,rep){const k=c.s.kind;if(k==='self'||k==='meteo'||k==='mix')castAreaSpell(c);else if(k==='front'||k==='fan')castFrontSpell(c);else if(k==='zone')castZoneSpell(c);else if(k==='aura')castAuraSpell(c);else if(k==='multi')castMultiSpell(c);else if(k==='funnel')castFunnelSpell(c,rep);else if(k==='ray')castRaySpell(c);else if(k==='totem')castTotemSpell(c);else if(k==='summon')castSummonSpell(c);else if(k==='rain')castRainSpell(c);else if(k==='orbit')castOrbitSpell(c);else castProjectileSpell(c);}
-function finishSpellCast(c){if(c.big){buffs.clear();flash(c.s.name+'\uff1a\u30d0\u30d5\u89e3\u9664');}else addBuff(c.s,c.bd,c.ba);if(c.s.hpDrain)drains.push({life:c.s.hpDrainDur||6,hp:P.maxhp*c.s.hpDrain/(c.s.hpDrainDur||6),mp:0});if(c.m.forbidden)drains.push({life:c.m.forbidden.dur||8,hp:P.maxhp*(c.m.forbidden.hp||0)/(c.m.forbidden.dur||8),mp:P.maxmp*(c.m.forbidden.mp||0)/(c.m.forbidden.dur||8)});if(c.m.silence)P.silenceT=Math.max(P.silenceT||0,c.m.silence);if(c.m.confuse)P.confuseT=Math.max(P.confuseT||0,c.m.confuse);}
+function finishSpellCast(c){if(c.big){buffs.clear();flash(c.s.name+'\uff1a\u30d0\u30d5\u89e3\u9664');}else addBuff(c.s,c.bd,c.ba);if(c.s.hpDrain)drains.push({life:c.s.hpDrainDur||6,hp:P.maxhp*c.s.hpDrain/(c.s.hpDrainDur||6),mp:0});if(c.m.drainKinds){const hd=c.m.drainKinds.hp,md=c.m.drainKinds.mp;if(hd&&hd.amount>0&&hd.dur>0)drains.push({life:hd.dur,hp:P.maxhp*hd.amount/hd.dur,mp:0});if(md&&md.amount>0&&md.dur>0)drains.push({life:md.dur,hp:0,mp:P.maxmp*md.amount/md.dur});}if(c.m.silence)P.silenceT=Math.max(P.silenceT||0,c.m.silence);if(c.m.confuse)P.confuseT=Math.max(P.confuseT||0,c.m.confuse);}
 function fireSpell(s,runes,mod,cost,aim,tgt){const c=spellContext(s,runes,mod,cost,aim,tgt);se(c.big?'big':'cast');if(c.big)shake=Math.max(shake,18);if(castUtilitySpell(c))return;mpSendSpell(s,c.m,c.cost,c.aim,c.mpTgt,c.base,c.rRad);resolveSpellAction(c,0);for(let r=1;r<c.m.repeatMul;r++)pending.push({t:0.1*r,fn:()=>resolveSpellAction(c,r)});finishSpellCast(c);}
 
 
@@ -1667,7 +1681,7 @@ function drawShop(){const {x0,y0,w,h}=drawShopFrame();
 const BLAB={pow:'威',crit:'会',burn:'焼',def:'防',regen:'再',mpregen:'M回',spd:'速'};
 function buffDesc(s){if(!s.buffs||!s.buffs.length)return '-';return s.buffs.map(([k,a])=>(BLAB[k]||k)+'+'+(a<1?Math.round(a*100)+'%':a)).join(',');}
 const KINDLAB={bolt:'弾',impact:'着弾爆発',pierce:'貫通',self:'自周囲',meteo:'着弾AoE',front:'前方',fan:'扇形',zone:'設置',aura:'追従周囲',multi:'多段',funnel:'ファンネル',ray:'レイ',totem:'トーテム',summon:'召喚',rain:'降雨',orbit:'周回弾',mix:'混合',buff:'バフ',heal:'回復',return:'帰還',teleport:'町転移',resurrect:'蘇生'};
-const RUNE_CATS=[['威力',5],['節約',5],['範囲',5],['収束',5],['飛距離',5],['発動回数',4],['遅延',5],['迅速',5],['バフ量',5],['バフ時間',5],['全体バフ',5],['分裂',3],['変質',4],['確率',4],['禁呪',4]];
+const RUNE_CATS=[['威力',5],['節約',5],['範囲',5],['収束',5],['飛距離',5],['発動回数',4],['遅延',5],['迅速',5],['バフ量',5],['バフ時間',5],['全体バフ',5],['分裂',3],['変質',4],['確率',4],['持続時間',5],['マナ禁術',5],['ブラッド禁術',5],['特殊',2]];
 const RUNE_INFO={'パワー':'威1.3 / MP1.5','エコ':'MP0.9','ギャンブル':'MP0.5-3 威/範/距0.1-3','エコー':'MP2 発動×2','ダブル':'威0.7 MP1.5 発動×2','トリプル':'威0.6 MP2 発動×3','ワイド':'範囲1.5','ヒュージ':'範囲2 MP1.5','ロング':'飛距離1.5','レンジド':'飛距離2 MP1.5','ピアース':'貫通 威1.2','ホーミング':'追尾 威1.3','スプリット':'3方向各0.7','レイト':'詠唱2 威1.5 MP1.2','ディレイ':'詠唱3 威2 MP1.5','タイム':'バフ継続2 威0.5 MP1.5','エクステンド':'バフ継続1.5 威0.5','アフリクト':'状態異常蓄積1.8'};
 function drawMagicList(){clickAreas=[];tipAreas=[];ctx.fillStyle='rgba(6,10,8,.95)';ctx.fillRect(0,0,W,H);
  const x0=30,y0=16,w=840,h=572;ctx.fillStyle='rgba(20,18,14,.98)';ctx.strokeStyle='#caa64b';ctx.lineWidth=2;ctx.fillRect(x0,y0,w,h);ctx.strokeRect(x0,y0,w,h);
