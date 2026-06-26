@@ -33,7 +33,7 @@ window.AMC_MAPS=function AMC_MAPS(ctx){
   watchtower:[['n','oldForest']],
 
   ceres:[['w','eastRoad'],['e','univel']],
-  univel:[['w','ceres'],['n','oldRoyalRoad'],['s','royalPlain'],['e','miraLake']],
+  univel:[['w','ceres'],['n','oldRoyalRoad'],['s','royalPlain'],['e','miraLake'],['s','macroJail']],
   royalPlain:[['n','univel'],['s','goldhahn'],['e','sewer']],
   oldRoyalRoad:[['s','univel'],['n','blackRoad'],['e','undergrow']],
   sewer:[['w','royalPlain'],['e','undergrow']],
@@ -117,7 +117,8 @@ window.AMC_MAPS=function AMC_MAPS(ctx){
   recordCore:[['n','oblivionRuins'],['s','starshipWreck']],
   starshipWreck:[['n','recordCore'],['s','finalSector']],
   finalSector:[['n','starshipWreck'],['s','postGameSector']],
-  postGameSector:[['n','finalSector']]
+  postGameSector:[['n','finalSector']],
+  macroJail:[['n','univel']]
  };
  const out={};
  for(let i=0;i<A.length;i++){const [id,name,mlv,theme,kind,seed,count,enemies,bossDef,fac]=A[i],t=THEME[theme]||THEME.plains,town=kind==='town';out[id]={name,mlv,town,ground:t.ground,gpond:t.gpond,deco:t.deco,ponds:t.ponds.map(p=>({...p})),decos:genDecos(seed,count),enemies:(enemies||[]).slice(),boss:!!bossDef,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:bossDef||null,portals:[]};if(town)out[id].facilities=facilities(fac||'small');}
