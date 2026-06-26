@@ -432,7 +432,7 @@ const SETS=[
 ];
 const SETMAP={};SETS.forEach(s=>SETMAP[s.id]=s);
 const SET_AFFIX_NAME={'magic%':'魔法威力','hp%':'最大HP','mp%':'最大MP','def%':'防御軽減','crit%':'会心率','dodge%':'回避率','range%':'攻撃範囲','castSpeed%':'詠唱速度','move%':'移動速度','mpCost%':'MP消費','mpRegen%':'MP回復','heal%':'回復効果','drop%':'ドロップ率','gem%':'gem獲得','exp%':'経験値','bossDmg%':'ボス特効','burn%':'火傷強化','slow%':'鈍足強化','dot%':'継続ダメージ','dotDur%':'継続時間','summonAtk%':'召喚/設置攻撃','summonDur%':'召喚/設置時間','buffDur%':'バフ時間','火%':'火属性','水%':'水属性','風%':'風属性','土%':'土属性','無%':'無属性'};
-function rollSetLabel(rar){const ri=RAR.indexOf(rar),p=Math.min(0.28,0.04+Math.max(0,ri)*0.025);return Math.random()<p?SETS[(Math.random()*SETS.length)|0].id:null;}
+function rollSetLabel(rar){const ri=RAR.indexOf(rar),p=Math.min(0.84,(0.04+Math.max(0,ri)*0.025)*3);return Math.random()<p?SETS[(Math.random()*SETS.length)|0].id:null;}
 function setCounts(){const c={};for(const k of EQKEYS){const it=P.equip[k];if(it&&it.set)c[it.set]=(c[it.set]||0)+1;}return c;}
 function setAffixes(){const out={},c=setCounts();for(const id in c){const s=SETMAP[id];if(!s)continue;for(const n of [2,3,4,5])if(c[id]>=n&&s.b[n])for(const k in s.b[n])out[k]=(out[k]||0)+s.b[n][k];}return out;}
 function setEffectLines(id,count){const s=SETMAP[id],lines=[];if(!s)return lines;for(const n of [2,3,4,5]){const b=s.b[n];if(!b)continue;const on=count>=n?'有効':'未発動';lines.push(n+'個 '+on+'：'+Object.entries(b).map(([k,v])=>(SET_AFFIX_NAME[k]||k)+(v>=0?'+':'')+v+'%').join(' / '));}return lines;}
@@ -945,13 +945,52 @@ const TOWN_NPC_DATA={
  ruinedSankt:[['ザンク','人間','廃区案内人','冗談で怖さを和らげる','古い礼服','#b8b0c8',1],['クレア','光精族','瓦礫の花守','明るい祈り手','白い花飾り','#ffe8b0',3],['メル','小人族','拾得物係','宝探し好き','大きな袋','#d8c090',6]]
 };
 const NPC_RUNE_POOL=['アルティメット','クインタプル','エクストリーム','インフィニティ','ギガンティック','ショットガン','インスタントリー','セーバー','ピアース','ホーミング','アフリクト','ロック','リユース','コンバージ','ストレッチ','ターキー'];
-function townNpcLines(d){const town=(MAPS[d.home]&&MAPS[d.home].name)||d.home;return[
- [town+'へようこそ。私は'+d.role+'の'+d.name+'です。',d.race+'ですが、ここではみんな気楽に声をかけてくれます。'],
- ['今日は'+d.look+'を整えてきました。冒険者さんに会う日は少し気合いが入ります。',d.trait+'と言われます。困ったら遠慮なくどうぞ。'],
- [town+'の空気は好きです。忙しい日でも、誰かが笑っているので。','あなたの旅の話も、いつか聞かせてください。'],
- ['依頼は無理のないものを選んでください。急ぐ旅ほど休憩が大事です。','この町で覚えた小さなコツが、外の道で役に立つこともあります。'],
- ['もうすっかり顔なじみですね。来てくれると町が少し明るくなります。','あなたなら大丈夫。そう思えるくらいには、見てきましたから。']
-];}
+function npcHashText(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h>>>0;}
+function npcPick(a,h,n){return a[(h+(n||0))%a.length];}
+function townNpcLines(d){const town=(MAPS[d.home]&&MAPS[d.home].name)||d.home,h=npcHashText(d.name+d.home+d.role),soft=['ね','よ','さ','かな','です'],tag=npcPick(soft,h,1);
+ const open=[
+  d.name+'です。'+town+'では'+d.role+'をしながら、旅人の足音を覚えています。',
+  town+'の'+d.role+'、'+d.name+'。'+d.look+'が目印なら、たぶん私です。',
+  'おや、見ない顔。私は'+d.name+'、'+d.race+'の'+d.role+'です。怖がらなくて平気ですよ。',
+  d.name+'と呼んでください。'+d.role+'の仕事で、'+town+'の小さな変化を毎日見ています。'
+ ];
+ const root=[
+  'この'+d.look+'は、最初に一人前と認められた日に受け取ったものなんです。',
+  d.race+'の家では'+d.role+'を選ぶ人は少ないけれど、私はこの仕事が性に合っていて。',
+  d.name+'は昔、別の町にいました。でも'+town+'で声をかけられた朝のことが忘れられなくて、居つきました。',
+  d.trait+'なんて言われますが、本当は失敗を減らしたくて少し丁寧にしているだけです。'
+ ];
+ const daily=[
+  '朝は'+d.look+'を直してから始めます。そうすると、一日の歯車がちゃんと噛み合う気がして。',
+  d.role+'の仕事は派手じゃないけど、誰かが無事に帰る理由のひとつにはなれます。',
+  town+'には、'+d.name+'だけが勝手に名前をつけている近道があります。雨の日は石畳の匂いまで変わるんです。',
+  '癖ですか？ '+d.trait+'ところかな。でも、それで誰かが少し安心するなら悪くないでしょう。'
+ ];
+ const trust=[
+  'あなたが来ると、'+d.role+'の手を止めても怒られない理由ができます。'+d.name+'としては少し助かってます。',
+  '依頼なら急ぎません。けれど、'+d.name+'はあなたの足音を聞くと、少し肩の力が抜けるんです。',
+  d.name+'は外の話を聞くと胸がざわつきます。怖いだけじゃなくて、ちゃんと憧れも混じっていて。',
+  '無茶はしないでください。帰ってきた時に'+d.name+'も「おかえり」と言いたいので。'
+ ];
+ const close=[
+  '最初は旅人さんでしたけど、今は'+d.name+'の知り合いです。いえ、もう友人と言っていい'+tag+'。',
+  town+'で困ったら'+d.name+'の名前を出してください。大げさじゃなく、少しは話が早くなります。',
+  d.look+'を見るたび、あなたと話した日を思い出すようになりました。変ですね、でも嬉しい。',
+  'いつかあなたの旅の終点にも寄らせてください。私は'+d.role+'ですが、聞き役としてなら自信があります。'
+ ];
+ const extra=[
+  '今日は'+town+'の風が少し軽いです。'+d.name+'の勘では、いい知らせが先に歩いてきます。',
+  'あなたの魔法、'+town+'の子どもたちが真似していました。'+d.role+'目線で安全な形に直しておきました。',
+  d.name+'の苦手なもの？ 沈黙です。だから、こうして話しかけてくれるのはありがたいです。',
+  'この辺りで迷ったら、'+d.role+'の勘を頼ってください。外れたら'+d.look+'を揺らして笑います。'
+ ];
+ return[
+  [npcPick(open,h,0),npcPick(extra,h,1)],
+  [npcPick(root,h,2),npcPick(daily,h,3)],
+  [npcPick(daily,h,4),npcPick(trust,h,5)],
+  [npcPick(trust,h,6),npcPick(extra,h,7)],
+  [npcPick(close,h,8),npcPick(close,h,9)]
+ ];}
 function npcHomePos(home,slot){const p=[[WORLD_W/2-250,WORLD_H/2-95],[WORLD_W/2+245,WORLD_H/2-88],[WORLD_W/2-180,WORLD_H/2+138],[WORLD_W/2+190,WORLD_H/2+132]][slot%4];return{x:p[0],y:p[1]};}
 const TOWN_NPC_DEFS=Object.entries(TOWN_NPC_DATA).flatMap(([home,list])=>list.map((a,slot)=>{const d={home,slot,name:a[0],race:a[1],role:a[2],trait:a[3],look:a[4],col:a[5],sprite:a[6],rune:NPC_RUNE_POOL[(slot+home.length)%NPC_RUNE_POOL.length]};d.dl=townNpcLines(d);return d;}));
 let npcs=NPC_DEFS.filter(d=>d.tutorial).concat(TOWN_NPC_DEFS).map((d,idx)=>{const p=d.fixed?{x:TUTOR_X,y:TUTOR_Y}:npcHomePos(d.home,d.slot||0);return{...d,idx,map:d.home,x:p.x,y:p.y,wAng:Math.random()*7,st:0,li:0,talk:false,tt:0,moveT:8+Math.random()*20,aff:0,done:0,q:null,offer:null};});
