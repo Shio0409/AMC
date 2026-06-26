@@ -100,7 +100,7 @@ const SPELLS=[
 
  S('フレアチェイン',['ふれあちぇいん'],23,'multi',{el:'火',power:1.15,speed:6.4,r:34,tickDmg:0.26,rate:0.1,dur:1.4,burn:6,color:'#ff7a3a'},[['pow',0.12,16]]),
  S('フレアシール',['ふれあしーる'],24,'zone',{el:'火',power:1.05,radius:126,offset:132,tickDmg:0.34,rate:0.35,dur:5.2,burn:8,color:'#ff5a36'},[['burn',0.26,18]]),
- S('スカーレットレイ',['すかーれっとれい'],25,'pierce',{el:'火',power:1.45,speed:11,r:5,burn:9,color:'#ff4060'},[['crit',0.16,14]]), S('ヴォルカノ',['ゔぉるかの'],46,'impact',{el:'火',power:2.2,speed:6,r:12,splash:180,burn:18,big:true,color:'#ff4a1a'},[]),
+S('スカーレットレイ',['すかーれっとれい'],25,'pierce',{el:'火',power:1.45,speed:11,r:5,burn:9,color:'#ff4060'},[['crit',0.16,14]]), S('ヴォルカン',['ゔぉるかん'],46,'impact',{el:'火',power:2.2,speed:6,r:12,splash:180,burn:18,big:true,color:'#ff4a1a'},[]),
  S('フレアノヴァ',['ふれあのゔぁ'],48,'self',{el:'火',power:2.0,radius:206,burn:14,big:true,color:'#ff5230'},[]),
  S('メテオ',['めてお'],50,'meteo',{el:'火',power:1.7,radius:200,burn:22,big:true,color:'#ff2a10'},[]),
  S('ラグナロク',['らぐなろく'],52,'meteo',{el:'火',power:2.1,radius:230,burn:26,big:true,color:'#ff3a1a'},[]),
@@ -214,7 +214,157 @@ const SPELLS=[
  S('マナバースト',['まなばーすと'],0,'mix',{"el":"特殊","power":1.55,"mpPct":0.45,"radius":155,"color":"#8ad8ff"},[["pow",0.08,12]]),
  S('スチームバースト',['すちーむばーすと'],30,'mix',{"el":"水","power":1.75,"radius":150,"burn":4,"slow":3,"color":"#bfefff"},[["pow",0.08,12],["def",0.06,12]]),
  S('カラミティレイン',['からみてぃれいん'],16,'rain',{"el":"火","power":1.65,"radius":155,"dur":5,"rate":0.22,"tickDmg":0.58,"splash":48,"burn":8,"hpDrain":0.24,"hpDrainDur":8,"color":"#ff305a"},[["pow",0.12,10]]),
+ // ===== 表追加スペル =====
+ S("パイロコア",["ぱいろこあ"],0,"impact",{el:"火",color:"#ff7a36",speed:5.8,r:9,splash:70,power:1},[]),
+ S("テンペストコア",["てんぺすとこあ"],0,"impact",{el:"風",color:"#46e0c0",speed:5.8,r:9,splash:70,power:1},[]),
+ S("タイドコア",["たいどこあ"],0,"impact",{el:"水",color:"#36a8ff",speed:5.8,r:9,splash:70,power:1},[]),
+ S("シルフボルト",["しるふぼると"],0,"pierce",{el:"風",color:"#46e0c0",speed:8.8,r:6,power:1},[]),
+ S("ストーンボルト",["すとーんぼると"],0,"pierce",{el:"土",color:"#caa46a",speed:8.8,r:6,power:1},[]),
+ S("スカーレットソーン",["すかーれっとそーん"],0,"pierce",{el:"火",color:"#ff7a36",speed:8.8,r:6,power:1},[]),
+ S("フロストスティング",["ふろすとすてぃんぐ"],0,"pierce",{el:"水",color:"#36a8ff",speed:8.8,r:6,power:1},[]),
+ S("イグニスランサー",["いぐにすらんさー"],0,"pierce",{el:"火",color:"#ff7a36",speed:8.8,r:6,power:1},[]),
+ S("ブレイズスティング",["ぶれいずすてぃんぐ"],0,"pierce",{el:"火",color:"#ff7a36",speed:8.8,r:6,power:1},[]),
+ S("グラナイトスティング",["ぐらないとすてぃんぐ"],0,"pierce",{el:"土",color:"#caa46a",speed:8.8,r:6,power:1},[]),
+ S("ブレイズスライス",["ぶれいずすらいす"],0,"multi",{el:"火",color:"#ff7a36",speed:6.2,r:34,tickDmg:0.23,rate:0.12,dur:1.3,power:1},[]),
+ S("タイドスライサー",["たいどすらいさー"],0,"multi",{el:"水",color:"#36a8ff",speed:6.2,r:34,tickDmg:0.23,rate:0.12,dur:1.3,power:1},[]),
+ S("イグニスブレード",["いぐにすぶれーど"],0,"multi",{el:"火",color:"#ff7a36",speed:6.2,r:34,tickDmg:0.23,rate:0.12,dur:1.3,power:1},[]),
+ S("オブシディアン",["おぶしでぃあん"],0,"multi",{el:"土",color:"#caa46a",speed:6.2,r:34,tickDmg:0.23,rate:0.12,dur:1.3,power:1},[]),
+ S("フロストエッジ",["ふろすとえっじ"],0,"multi",{el:"水",color:"#36a8ff",speed:6.2,r:34,tickDmg:0.23,rate:0.12,dur:1.3,power:1},[]),
+ S("ブレイズブレス",["ぶれいずぶれす"],0,"front",{el:"火",color:"#ff7a36",radius:150,offset:64,power:1},[]),
+ S("エアバースト",["えあばーすと"],0,"self",{el:"風",color:"#46e0c0",radius:96,power:1},[]),
+ S("タイドバースト",["たいどばーすと"],0,"self",{el:"水",color:"#36a8ff",radius:96,power:1},[]),
+ S("ゼウスノヴァ",["ぜうすのゔぁ"],0,"self",{el:"風",color:"#46e0c0",radius:210,power:1,big:true},[]),
+ S("テラノヴァ",["てらのゔぁ"],0,"self",{el:"土",color:"#caa46a",radius:210,power:1,big:true},[]),
+ S("リヴァノヴァ",["りゔぁのゔぁ"],0,"self",{el:"水",color:"#36a8ff",radius:210,power:1,big:true},[]),
+ S("テンペストバースト",["てんぺすとばーすと"],0,"impact",{el:"風",color:"#46e0c0",speed:5.8,r:9,splash:94,power:1},[]),
+ S("ガイアバースト",["がいあばーすと"],0,"impact",{el:"土",color:"#caa46a",speed:5.8,r:9,splash:94,power:1},[]),
+ S("テラシェイク",["てらしぇいく"],0,"zone",{el:"土",color:"#caa46a",radius:205,offset:125,tickDmg:0.48,rate:0.32,dur:5.5,power:1,big:true},[]),
+ S("アクアオーラ",["あくあおーら"],0,"aura",{el:"水",color:"#36a8ff",radius:120,tickDmg:0.24,rate:0.36,dur:6,power:1},[]),
+ S("ランドブレイク",["らんどぶれいく"],0,"zone",{el:"土",color:"#caa46a",radius:120,offset:125,tickDmg:0.31,rate:0.4,dur:5,power:1},[]),
+ S("アイスフィールド",["あいすふぃーるど"],0,"zone",{el:"水",color:"#36a8ff",radius:120,offset:125,tickDmg:0.31,rate:0.4,dur:5,power:1},[]),
+ S("エアスクリーン",["えあすくりーん"],0,"front",{el:"風",color:"#46e0c0",radius:70,offset:64,power:1},[]),
+ S("フレイムバリケード",["ふれいむばりけーど"],0,"front",{el:"火",color:"#ff7a36",radius:70,offset:64,power:1},[]),
+ S("ストームフェンス",["すとーむふぇんす"],0,"front",{el:"風",color:"#46e0c0",radius:70,offset:64,power:1},[]),
+ S("クリスタルバリア",["くりすたるばりあ"],0,"front",{el:"水",color:"#36a8ff",radius:70,offset:64,power:1},[]),
+ S("ウィンドシールド",["うぃんどしーるど"],0,"buff",{el:"風",color:"#46e0c0"},[["def",0.24,16]]),
+ S("イグニスシェル",["いぐにすしぇる"],0,"buff",{el:"火",color:"#ff7a36"},[["def",0.24,16]]),
+ S("エアシェル",["えあしぇる"],0,"buff",{el:"風",color:"#46e0c0"},[["def",0.24,16]]),
+ S("イグニッションオーラ",["いぐにっしょんおーら"],0,"buff",{el:"火",color:"#ff7a36"},[["pow",0.16,16]]),
+ S("フレイムアクセル",["ふれいむあくせる"],0,"buff",{el:"火",color:"#ff7a36"},[["spd",0.24,16]]),
+ S("グラベルシフト",["ぐらべるしふと"],0,"buff",{el:"土",color:"#caa46a"},[["spd",0.24,16]]),
+ S("リバーシフト",["りばーしふと"],0,"buff",{el:"水",color:"#36a8ff"},[["spd",0.24,16]]),
+ S("ヒートヒール",["ひーとひーる"],0,"heal",{el:"火",color:"#ff7a36",heal:0.3,radius:0},[['regen',0.03,16]]),
+ S("ウィンドヒール",["うぃんどひーる"],0,"heal",{el:"風",color:"#46e0c0",heal:0.3,radius:0},[['regen',0.03,16]]),
+ S("ガイアヒール",["がいあひーる"],0,"heal",{el:"土",color:"#caa46a",heal:0.3,radius:0},[['regen',0.03,16]]),
+ S("ウォームレイン",["うぉーむれいん"],0,"heal",{el:"火",color:"#ff7a36",heal:0.18,radius:120},[['regen',0.03,16]]),
+ S("ヒールウィンド",["ひーるうぃんど"],0,"heal",{el:"風",color:"#46e0c0",heal:0.18,radius:120},[['regen',0.03,16]]),
+ S("ガイアブレス",["がいあぶれす"],0,"heal",{el:"土",color:"#caa46a",heal:0.18,radius:120},[['regen',0.03,16]]),
+ S("フレアビーム",["ふれあびーむ"],0,"ray",{el:"火",color:"#ff7a36",len:320,width:24,dur:3.2,tickDmg:0.23,rate:0.16,power:1},[]),
+ S("グラナイトビーム",["ぐらないとびーむ"],0,"ray",{el:"土",color:"#caa46a",len:320,width:24,dur:3.2,tickDmg:0.23,rate:0.16,power:1},[]),
+ S("ストームレイ",["すとーむれい"],0,"ray",{el:"風",color:"#46e0c0",len:320,width:30,dur:3.2,tickDmg:0.23,rate:0.16,power:1},[]),
+ S("インフェルノレイ",["いんふぇるのれい"],0,"ray",{el:"火",color:"#ff7a36",len:360,width:30,dur:3.2,tickDmg:0.28,rate:0.16,power:1},[]),
+ S("テンペストレイ",["てんぺすとれい"],0,"ray",{el:"風",color:"#46e0c0",len:360,width:30,dur:3.2,tickDmg:0.28,rate:0.16,power:1},[]),
+ S("ガイアレイ",["がいあれい"],0,"ray",{el:"土",color:"#caa46a",len:360,width:30,dur:3.2,tickDmg:0.28,rate:0.16,power:1},[]),
+ S("アクアレイ",["あくあれい"],0,"ray",{el:"水",color:"#36a8ff",len:360,width:30,dur:3.2,tickDmg:0.28,rate:0.16,power:1},[]),
+ S("ライトニングチェイン",["らいとにんぐちぇいん"],0,"multi",{el:"風",color:"#46e0c0",speed:6.2,r:34,tickDmg:0.23,rate:0.12,dur:1.3,power:1},[]),
+ S("ロックチェイン",["ろっくちぇいん"],0,"multi",{el:"土",color:"#caa46a",speed:6.2,r:34,tickDmg:0.23,rate:0.12,dur:1.3,power:1},[]),
+ S("アクアチェイン",["あくあちぇいん"],0,"multi",{el:"水",color:"#36a8ff",speed:6.2,r:34,tickDmg:0.23,rate:0.12,dur:1.3,power:1},[]),
+ S("フレイムロッド",["ふれいむろっど"],0,"zone",{el:"火",color:"#ff7a36",radius:120,offset:125,tickDmg:0.31,rate:0.4,dur:5,power:1},[]),
+ S("アースロッド",["あーすろっど"],0,"zone",{el:"土",color:"#caa46a",radius:120,offset:125,tickDmg:0.31,rate:0.4,dur:5,power:1},[]),
+ S("アクアロッド",["あくあろっど"],0,"zone",{el:"水",color:"#36a8ff",radius:120,offset:125,tickDmg:0.31,rate:0.4,dur:5,power:1},[]),
+ S("シルフトーテム",["しるふとーてむ"],0,"totem",{el:"風",color:"#46e0c0",radius:60,totem:"shot",dur:12,rate:0.7,tickDmg:0.58,speed:6,hp:120,heal:0,power:1},[]),
+ S("フレイムラン",["ふれいむらん"],0,"multi",{el:"火",color:"#ff7a36",speed:6.2,r:34,tickDmg:0.23,rate:0.12,dur:1.3,power:1},[]),
+ S("ロックラン",["ろっくらん"],0,"multi",{el:"土",color:"#caa46a",speed:6.2,r:34,tickDmg:0.23,rate:0.12,dur:1.3,power:1},[]),
+ S("アクアラン",["あくあらん"],0,"multi",{el:"水",color:"#36a8ff",speed:6.2,r:34,tickDmg:0.23,rate:0.12,dur:1.3,power:1},[]),
+ S("ストームレイン",["すとーむれいん"],0,"rain",{el:"風",color:"#46e0c0",radius:145,dur:4.6,rate:0.25,tickDmg:0.48,splash:42,power:1},[]),
+ S("ストーンレイン",["すとーんれいん"],0,"rain",{el:"土",color:"#caa46a",radius:145,dur:4.6,rate:0.25,tickDmg:0.48,splash:42,power:1},[]),
+ S("グランドボルト",["ぐらんどぼると"],0,"impact",{el:"土",color:"#caa46a",speed:5.8,r:9,splash:70,power:1},[]),
+ S("フレアフォール",["ふれあふぉーる"],0,"impact",{el:"火",color:"#ff7a36",speed:5.5,r:12,splash:175,power:1,big:true},[]),
+ S("テンペストドロップ",["てんぺすとどろっぷ"],0,"impact",{el:"風",color:"#46e0c0",speed:5.5,r:12,splash:175,power:1,big:true},[]),
+ S("ボルダーフォール",["ぼるだーふぉーる"],0,"impact",{el:"土",color:"#caa46a",speed:5.5,r:12,splash:175,power:1,big:true},[]),
+ S("アビスドロップ",["あびすどろっぷ"],0,"impact",{el:"水",color:"#36a8ff",speed:5.5,r:12,splash:175,power:1,big:true},[]),
+ S("カラミティフレア",["からみてぃふれあ"],0,"rain",{el:"火",color:"#ff7a36",radius:165,dur:5.2,rate:0.25,tickDmg:0.58,splash:52,power:1,big:true},[]),
+ S("カラミティストーム",["からみてぃすとーむ"],0,"rain",{el:"風",color:"#46e0c0",radius:165,dur:5.2,rate:0.25,tickDmg:0.58,splash:52,power:1,big:true},[]),
+ S("カラミティクエイク",["からみてぃくえいく"],0,"rain",{el:"土",color:"#caa46a",radius:165,dur:5.2,rate:0.25,tickDmg:0.58,splash:52,power:1,big:true},[]),
+ S("プロミネンス",["ぷろみねんす"],0,"meteo",{el:"火",color:"#ff7a36",radius:210,power:1,big:true},[]),
+ S("ヴォルトレイジ",["ゔぉるとれいじ"],0,"meteo",{el:"風",color:"#46e0c0",radius:210,power:1,big:true},[]),
+ S("リヴァイアサン",["りゔぁいあさん"],0,"meteo",{el:"水",color:"#36a8ff",radius:210,power:1,big:true},[]),
+ S("インベントリ",["いんべんとり"],0,"utility",{el:"特殊",color:"#b48cff"},[]),
+ S("スペル",["すぺる"],0,"utility",{el:"特殊",color:"#b48cff"},[]),
+ S("ルーン",["るーん"],0,"utility",{el:"特殊",color:"#b48cff"},[]),
 ];
+const MAGIC_TYPE_DEFS={
+ "通常魔法弾":{kind:"bolt",pow:0.5,cost:4.2},"小型魔法弾":{kind:"bolt",pow:0.42,cost:3.5},"魔法バレット":{kind:"bolt",pow:0.46,cost:3.9},"追加魔法弾":{kind:"bolt",pow:0.58,cost:4.8},"重魔法弾":{kind:"impact",pow:0.7,cost:5.8},"魔法アロー":{kind:"pierce",pow:0.5,cost:4.4},"魔法ニードル":{kind:"pierce",pow:0.48,cost:4.2},"魔法ランス":{kind:"pierce",pow:0.62,cost:5.4},"魔法スピア":{kind:"pierce",pow:0.58,cost:5},"貫通魔法":{kind:"pierce",pow:0.66,cost:5.8},"魔法斬撃":{kind:"multi",pow:0.52,cost:4.8},"魔法エッジ":{kind:"multi",pow:0.58,cost:5.2},"扇形範囲攻撃":{kind:"fan",pow:0.48,cost:5.2},"前方範囲攻撃":{kind:"front",pow:0.52,cost:5.6},"自分中心爆発範囲攻撃":{kind:"self",pow:0.48,cost:5.2},"自分中心爆発":{kind:"self",pow:0.62,cost:6.2},"自分中心大型範囲攻撃":{kind:"self",pow:0.78,cost:8.2},"敵中心爆発範囲攻撃":{kind:"impact",pow:0.54,cost:5.5},"敵中心状態攻撃":{kind:"impact",pow:0.5,cost:5.6},"大爆発":{kind:"impact",pow:0.8,cost:8.5},"継続範囲攻撃":{kind:"zone",pow:0.3,cost:5.8},"大型継続範囲攻撃":{kind:"zone",pow:0.4,cost:7.8},"敵追従継続範囲攻撃":{kind:"aura",pow:0.32,cost:6.2},"敵追従オーラ":{kind:"aura",pow:0.34,cost:6.4},"地面範囲攻撃":{kind:"zone",pow:0.52,cost:7},"壁魔法":{kind:"front",pow:0.28,cost:4.8},"バリケード":{kind:"front",pow:0.24,cost:4.6},"防御魔法":{kind:"buff",pow:0.2,cost:4.8},"防御シェル":{kind:"buff",pow:0.22,cost:5.2},"バフ魔法":{kind:"buff",pow:0.24,cost:5},"速度バフ":{kind:"buff",pow:0.22,cost:4.8},"回復魔法":{kind:"heal",pow:0.34,cost:5},"範囲回復":{kind:"heal",pow:0.28,cost:6.4},"魔法ビーム":{kind:"ray",pow:0.34,cost:6},"魔法レイ":{kind:"ray",pow:0.4,cost:6.6},"高威力レイ":{kind:"ray",pow:0.5,cost:8},"ファンネル":{kind:"funnel",pow:0.36,cost:6.4},"チェイン攻撃":{kind:"multi",pow:0.34,cost:6.6},"設置攻撃":{kind:"zone",pow:0.34,cost:6.4},"トーテム":{kind:"totem",pow:0.34,cost:6.8},"召喚":{kind:"summon",pow:0.34,cost:7.2},"突進魔法":{kind:"multi",pow:0.48,cost:6},"複数落下攻撃":{kind:"rain",pow:0.42,cost:7},"レイン攻撃":{kind:"rain",pow:0.36,cost:7.2},"単体落下攻撃":{kind:"impact",pow:0.72,cost:7.2},"大型落下攻撃":{kind:"impact",pow:0.86,cost:9.2},"最上級魔法":{kind:"meteo",pow:0.95,cost:12},"災厄魔法":{kind:"rain",pow:0.78,cost:11},"特殊大技":{kind:"meteo",pow:1,cost:12.5},"帰還魔法":{kind:"return",pow:0.05,cost:3.5},"移動魔法":{kind:"teleport",pow:0.05,cost:5.5},"蘇生魔法":{kind:"resurrect",pow:0.05,cost:7},"所持品魔法":{kind:"utility",pow:0.01,cost:0},"スペル一覧魔法":{kind:"utility",pow:0.01,cost:0},"ルーン一覧魔法":{kind:"utility",pow:0.01,cost:0}
+};
+const MAGIC_KIND_FALLBACK={bolt:'通常魔法弾',impact:'敵中心爆発範囲攻撃',pierce:'貫通魔法',self:'自分中心爆発範囲攻撃',meteo:'大型落下攻撃',front:'前方範囲攻撃',fan:'扇形範囲攻撃',zone:'継続範囲攻撃',aura:'敵追従オーラ',multi:'魔法斬撃',funnel:'ファンネル',ray:'魔法レイ',totem:'トーテム',summon:'召喚',rain:'レイン攻撃',orbit:'ファンネル',mix:'特殊大技',buff:'バフ魔法',heal:'回復魔法',return:'帰還魔法',teleport:'移動魔法',resurrect:'蘇生魔法',utility:'所持品魔法'};
+const MAGIC_TYPE_ROWS=[
+ ["通常魔法弾","ファイア","エアロ","ロック","アクア",""],
+ ["小型魔法弾","スパーク","ガスト","ペブル","アイス",""],
+ ["魔法バレット","フレアバレット","エアショット","ストーンバレット","フロストショット",""],
+ ["追加魔法弾","チャージフレア","プラズマボール","マッドショット","バブル",""],
+ ["重魔法弾","パイロコア","テンペストコア","ボルダー","タイドコア",""],
+ ["魔法アロー","ファイアアロー","シルフボルト","ストーンボルト","アクアアロー",""],
+ ["魔法ニードル","スカーレットソーン","ウィンドニードル","アースニードル","フロストスティング",""],
+ ["魔法ランス","フレイムランス","サンダーランス","ロックランス","アクアランス",""],
+ ["魔法スピア","イグニスランサー","サンダースピア","ジャベリン","アイススピア",""],
+ ["貫通魔法","ブレイズスティング","テンペストピアス","グラナイトスティング","リップルスピア",""],
+ ["魔法斬撃","ブレイズスライス","ウィンドカッター","ストーンエッジ","タイドスライサー",""],
+ ["魔法エッジ","イグニスブレード","ウィンドエッジ","オブシディアン","フロストエッジ",""],
+ ["扇形範囲攻撃","フレイムファン","サンダーファン","サンドブラスト","アイスファン",""],
+ ["前方範囲攻撃","ブレイズブレス","ゲイルブレス","アースブレス","タイダルウェーブ",""],
+ ["自分中心爆発範囲攻撃","ヒートウェーブ","ウィンドブラスト","クエイク","アイスサークル",""],
+ ["自分中心爆発","バースト","エアバースト","グランドインパクト","タイドバースト",""],
+ ["自分中心大型範囲攻撃","フレアノヴァ","ゼウスノヴァ","テラノヴァ","リヴァノヴァ",""],
+ ["敵中心爆発範囲攻撃","ボム","スタティック","クラック","スプラッシュ",""],
+ ["敵中心状態攻撃","イグニッション","ライトニング","グランドスパイク","フリーズ",""],
+ ["大爆発","エクスプロード","テンペストバースト","ガイアバースト","スチームバースト",""],
+ ["継続範囲攻撃","ブレイズ","トルネード","アースバインド","ブリザード",""],
+ ["大型継続範囲攻撃","インフェルノ","ストーム","テラシェイク","メイルシュトローム",""],
+ ["敵追従継続範囲攻撃","オーバーヒート","ストームオーラ","グラビティ","フロストオーラ",""],
+ ["敵追従オーラ","ヘルファイア","サイクロン","ストーンオーラ","アクアオーラ",""],
+ ["地面範囲攻撃","ヴォルカン","エアレイド","ランドブレイク","アイスフィールド",""],
+ ["壁魔法","ファイアウォール","エアスクリーン","アイアンウォール","アイスバリケード",""],
+ ["バリケード","フレイムバリケード","ストームフェンス","ロックバリケード","クリスタルバリア",""],
+ ["防御魔法","フレアシール","ウィンドシールド","バリア","アクアシールド",""],
+ ["防御シェル","イグニスシェル","エアシェル","ルーンシェル","ミストヴェール",""],
+ ["バフ魔法","イグニッションオーラ","ヘイスト","ストーンスキン","マナスプリング",""],
+ ["速度バフ","フレイムアクセル","テイルウィンド","グラベルシフト","リバーシフト",""],
+ ["回復魔法","ヒートヒール","ウィンドヒール","ガイアヒール","ヒール",""],
+ ["範囲回復","ウォームレイン","ヒールウィンド","ガイアブレス","ヒーリングレイン",""],
+ ["魔法ビーム","フレアビーム","ライトニングレイ","グラナイトビーム","ハイドロビーム",""],
+ ["魔法レイ","スカーレットレイ","ストームレイ","クリスタルレイ","フロストレイ",""],
+ ["高威力レイ","インフェルノレイ","テンペストレイ","ガイアレイ","アクアレイ",""],
+ ["ファンネル","フレイムファンネル","ゲイルファンネル","ロックファンネル","アクアファンネル",""],
+ ["チェイン攻撃","フレアチェイン","ライトニングチェイン","ロックチェイン","アクアチェイン",""],
+ ["設置攻撃","フレイムロッド","ライトニングロッド","アースロッド","アクアロッド",""],
+ ["トーテム","フレイムトーテム","シルフトーテム","ロックトーテム","ヒールトーテム",""],
+ ["召喚","サラマンダー","サモンウルフ","サモンゴーレム","サモンピクシー",""],
+ ["突進魔法","フレイムラン","ライトニングラン","ロックラン","アクアラン",""],
+ ["複数落下攻撃","メテオシャワー","サンダーレイン","ロックレイン","アイシクルレイン",""],
+ ["レイン攻撃","スターフレアレイン","ストームレイン","ストーンレイン","アイススピアレイン",""],
+ ["単体落下攻撃","メテオ","サンダーボルト","グランドボルト","アイシクル",""],
+ ["大型落下攻撃","フレアフォール","テンペストドロップ","ボルダーフォール","アビスドロップ",""],
+ ["最上級魔法","ラグナロク","テンペスト","アースクエイク","ダイアモンドダスト",""],
+ ["災厄魔法","カラミティフレア","カラミティストーム","カラミティクエイク","カラミティレイン",""],
+ ["特殊大技","プロミネンス","ヴォルトレイジ","ガイア","リヴァイアサン",""],
+ ["帰還魔法","","","","","リコール"],
+ ["移動魔法","","","","","テレポート"],
+ ["蘇生魔法","","","","","リザレクション"],
+ ["所持品魔法","","","","","インベントリ"],
+ ["スペル一覧魔法","","","","","スペル"],
+ ["ルーン一覧魔法","","","","","ルーン"]
+];
+const MAGIC_TYPE_BY_NAME={};MAGIC_TYPE_ROWS.forEach(r=>r.slice(1).forEach(n=>{if(n)MAGIC_TYPE_BY_NAME[n]=r[0];}));
+function spellTypeName(s){return (s.kind&&MAGIC_TYPE_DEFS[s.kind])?s.kind:(MAGIC_TYPE_BY_NAME[s.name]||MAGIC_KIND_FALLBACK[s.kind]||'通常魔法弾');}
+function spellTypeDef(s){return MAGIC_TYPE_DEFS[spellTypeName(s)]||MAGIC_TYPE_DEFS['通常魔法弾'];}
+function spellAction(s){return s.action||(spellTypeDef(s).kind)||s.kind;}
+function spellTextLen(s){return Math.max(1,[...((s.read&&s.read[0])||s.name||'')].length);}
+function spellLenBonus(s){return Math.pow(1.1,Math.min(24,spellTextLen(s)));}
+function spellBigPowerMul(s){return s.big?0.3*3:1;}
+function spellBasePower(s){const d=spellTypeDef(s);return d.pow*spellLenBonus(s)*spellBigPowerMul(s);}
+function spellBaseCost(s){if(s.mpPct)return 0;const d=spellTypeDef(s);return d.cost*spellTextLen(s)*(s.big?3:1);}
+function spellCostLabel(s){return s.mpPct?Math.round((s.mpPct||0)*100)+'%MP':Math.round(spellBaseCost(s));}
+SPELLS.forEach(s=>{const old=s.kind,type=spellTypeName(s);s.action=old;s.kind=type;s.typeDef=spellTypeDef(s);});
 const SPELL_N={};SPELLS.forEach(s=>s.read.forEach(r=>SPELL_N[r.normalize('NFC')]=s));
 const GROUPED={};SPELLS.forEach(s=>{(GROUPED[s.el]=GROUPED[s.el]||[]).push(s.read[0]);});
 const RUNES=[
@@ -323,7 +473,7 @@ function segment(nk){nk=(nk||'').normalize('NFC');let i=0,runes=[],seen=new Set(
  const rest=nk.slice(i);return{runes,spell:SPELL_N[rest]||null,rest};}
 function addRuneDrain(m,kind,amount,dur){m.drainKinds=m.drainKinds||{hp:{amount:0,dur:0},mp:{amount:0,dur:0}};const d=m.drainKinds[kind];if(d){d.amount+=amount;d.dur+=dur;}}
 function buildMod(runes){const m={powMul:1,mpMul:1,radiusMul:1,splashMul:1,sizeMul:1,distMul:1,castMul:1,buffDurMul:1,buffAmtMul:1,speedMul:1,durMul:1,burnMul:1,repeatMul:1,split:1,pierce:false,homing:false,drainKinds:{hp:{amount:0,dur:0},mp:{amount:0,dur:0}},silence:0,confuse:0};for(const r of runes)r.f(m);return m;}
-function incCost(s,runes){const m=runes.mpMul!==undefined?runes:buildMod(runes),setMul=1+playerAffix('mpCost%')/100;return Math.max(1,Math.round((s.mpPct?P.mp*s.mpPct*m.mpMul:s.cost*m.mpMul)*setMul));}
+function incCost(s,runes){const m=runes.mpMul!==undefined?runes:buildMod(runes),setMul=1+playerAffix('mpCost%')/100,base=s.mpPct?P.mp*s.mpPct:spellBaseCost(s);return Math.max(1,Math.round(base*m.mpMul*setMul));}
 
 const CYCLE=['火','風','土','水'];
 function typeMult(a,d){if(d==='無'||!d)return 1.0;const ai=CYCLE.indexOf(a),di=CYCLE.indexOf(d);if(ai<0||di<0)return 1.0;
@@ -763,15 +913,15 @@ function rewardBossKill(b){if(!b||b.rewarded)return;b.rewarded=true;recordBestia
 function rewardEliteKill(en){if(!en||en.rewarded)return;en.rewarded=true;recordBestiary(en.key,1);const gg=gainGem(Math.max(1,Math.round(en.exp*0.5)),en.x,en.y);gainMaterial(gg,en.x,en.y);P.boxes.push({eliteBox:true,key:en.key,name:ET[en.key].jp+'ボックス',lv:en.enLv});gainExp(en.exp*expMul(en.enLv)*wmul(en.x,en.y,"expMul"));flash('エリート '+ET[en.key].jp+' 撃破！');}
 function mpApplyBossState(s){const old=new Map(bosses);bosses.clear();for(const b of s.list||[]){bosses.set(b.map,Object.assign({},b,{mpRemote:true}));}for(const [id,b]of old)if(!bosses.has(id)&&b.mpRemote&&id===MAPID)rewardBossKill(b);boss=bosses.get(MAPID)||null;}
 function mpApplyEliteState(s){const old=enemies.filter(enemyIsElite);enemies=enemies.filter(e=>!enemyIsElite(e));elites=(s.list||[]).map(r=>({map:r.map,key:r.key,jp:r.jp,t:r.t,hp:r.hp,rank:'elite'}));for(const en of old){const alive=(s.list||[]).some(r=>r.active&&r.map===MAPID&&r.key===en.key);if(!alive)rewardEliteKill(en);}for(const r of s.list||[]){if(!r.active||r.map!==MAPID||!ET[r.key])continue;const rec=elites.find(e=>e.key===r.key&&e.map===r.map);spawnEliteEnemy(rec);const en=enemies.find(e=>e.eliteRec===rec);if(en){en.x=r.x;en.y=r.y;en.hp=r.hp;en.maxhp=r.maxhp||en.maxhp;en.state=r.state||en.state;en.st=r.st||0;}}}
-function mpSendSpell(s,m,cost,aim,tgt,base,radMul){if(!MP.enabled)return;mpSend(mpLocalPlayer());m=m||{};const eid=MP.peerId+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6),center=['self','aura','funnel','heal','buff'].includes(s.kind);const tx=center?P.x:(tgt?tgt.x:P.x+Math.cos(aim||0)*220),ty=center?P.y:(tgt?tgt.y:P.y+Math.sin(aim||0)*220);const msg={type:'spell',eid,from:MP.peerId,map:MAPID,spell:s.name,kind:s.kind,el:s.el,color:s.color,big:!!s.big,perfect:!!m.perfectCast,x:P.x,y:P.y,face:{x:P.face.x,y:P.face.y},aim,tx,ty,radius:(s.radius||s.splash||90)*(radMul||1),power:Math.max(1,Math.round(base||magicAtk()*Math.max(0.5,s.power||1))),cost:cost||0,buffDur:m.buffDurMul||1,buffAmt:m.buffAmtMul||1,visual:{speed:s.speed||0,r:s.r||0,splash:s.splash||0,radius:s.radius||0,burn:s.burn||0,slow:s.slow||0,dur:s.dur||0,tickDmg:s.tickDmg||0,rate:s.rate||0,count:s.count||0,dist:s.dist||0,spin:s.spin||0,boltDmg:s.boltDmg||0,offset:s.offset||0,fan:s.fan||0,sizeMul:m.sizeMul||1,speedMul:m.speedMul||1,distMul:m.distMul||1,splashMul:m.splashMul||1,burnMul:m.burnMul||1,repeatMul:m.repeatMul||1,split:m.split||1,pierce:!!m.pierce,homing:!!m.homing,radiusMul:radMul||1}};MP.seen.add(eid);mpSend(msg);mpSend(mpLocalPlayer());MP.sendT=0;}
+function mpSendSpell(s,m,cost,aim,tgt,base,radMul){if(!MP.enabled)return;mpSend(mpLocalPlayer());m=m||{};const act=spellAction(s),eid=MP.peerId+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6),center=['self','aura','funnel','heal','buff'].includes(act);const tx=center?P.x:(tgt?tgt.x:P.x+Math.cos(aim||0)*220),ty=center?P.y:(tgt?tgt.y:P.y+Math.sin(aim||0)*220);const msg={type:'spell',eid,from:MP.peerId,map:MAPID,spell:s.name,kind:s.kind,action:act,el:s.el,color:s.color,big:!!s.big,perfect:!!m.perfectCast,x:P.x,y:P.y,face:{x:P.face.x,y:P.face.y},aim,tx,ty,radius:(s.radius||s.splash||90)*(radMul||1),power:Math.max(1,Math.round(base||magicAtk()*spellBasePower(s))),cost:cost||0,buffDur:m.buffDurMul||1,buffAmt:m.buffAmtMul||1,visual:{speed:s.speed||0,r:s.r||0,splash:s.splash||0,radius:s.radius||0,burn:s.burn||0,slow:s.slow||0,dur:s.dur||0,tickDmg:s.tickDmg||0,rate:s.rate||0,count:s.count||0,dist:s.dist||0,spin:s.spin||0,boltDmg:s.boltDmg||0,offset:s.offset||0,fan:s.fan||0,sizeMul:m.sizeMul||1,speedMul:m.speedMul||1,distMul:m.distMul||1,splashMul:m.splashMul||1,burnMul:m.burnMul||1,repeatMul:m.repeatMul||1,split:m.split||1,pierce:!!m.pierce,homing:!!m.homing,radiusMul:radMul||1}};MP.seen.add(eid);mpSend(msg);mpSend(mpLocalPlayer());MP.sendT=0;}
 function mpLineDist(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,l=dx*dx+dy*dy||1,t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/l)),x=ax+dx*t,y=ay+dy*t;return Math.hypot(px-x,py-y);}
 function mpApplyDmgFx(m){if(m.map!==MAPID)return;const col=m.col||'#fff',r=m.r||14;damageFloat(m.x,m.y-r,m.dmg||0,col,m.critLv||(m.crit?1:0));burst(m.x,m.y,col,5,3);addHitFx({x:m.x,y:m.y,r,hitFxAt:0},m.el,col);}
-function mpRemoteVisual(m,s,rad,col){const v=m.visual||{},kind=m.kind,aim=m.aim||0,big=!!m.big,seed=performance.now()%97,tx=m.tx==null?m.x:m.tx,ty=m.ty==null?m.y:m.ty;burst(m.x,m.y,col,big?18:8,big?5:3);if(kind==='front'||kind==='fan'){const half=kind==='fan'?(v.fan||s.fan||0.6):0.45,cx=m.x+Math.cos(aim)*(v.offset||s.offset||rad*.45),cy=m.y+Math.sin(aim)*(v.offset||s.offset||rad*.45);if(kind==='fan')spawnFx({x:m.x,y:m.y,r:12,maxr:rad,col,life:.45,a0:aim-half,a1:aim+half,el:m.el,area:true,spark:true,seed});else spawnFx({x:cx,y:cy,r:12,maxr:rad,col,life:.45,el:m.el,area:true,spark:true,seed});for(let q=0;q<8;q++){const aa=aim-half+Math.random()*half*2;burst(m.x+Math.cos(aa)*rad*0.7,m.y+Math.sin(aa)*rad*0.7,col,2,3);}}
+function mpRemoteVisual(m,s,rad,col){const v=m.visual||{},kind=m.action||spellAction(s)||m.kind,aim=m.aim||0,big=!!m.big,seed=performance.now()%97,tx=m.tx==null?m.x:m.tx,ty=m.ty==null?m.y:m.ty;burst(m.x,m.y,col,big?18:8,big?5:3);if(kind==='front'||kind==='fan'){const half=kind==='fan'?(v.fan||s.fan||0.6):0.45,cx=m.x+Math.cos(aim)*(v.offset||s.offset||rad*.45),cy=m.y+Math.sin(aim)*(v.offset||s.offset||rad*.45);if(kind==='fan')spawnFx({x:m.x,y:m.y,r:12,maxr:rad,col,life:.45,a0:aim-half,a1:aim+half,el:m.el,area:true,spark:true,seed});else spawnFx({x:cx,y:cy,r:12,maxr:rad,col,life:.45,el:m.el,area:true,spark:true,seed});for(let q=0;q<8;q++){const aa=aim-half+Math.random()*half*2;burst(m.x+Math.cos(aa)*rad*0.7,m.y+Math.sin(aa)*rad*0.7,col,2,3);}}
  else if(kind==='bolt'||kind==='pierce'||kind==='impact'){const splash=(v.splash||s.splash||0)*(v.splashMul||1),rr=Math.max(20,splash||(v.r||s.r||8)*(v.sizeMul||1)*4),n=Math.max(1,v.split||1),spread=0.3,spd=Math.max(2,(v.speed||s.speed||7)*(v.speedMul||1)),life=Math.max(.25,Math.min(2.4,Math.hypot(tx-m.x,ty-m.y)/spd/60+.18));for(let j=0;j<n;j++){const a=aim+(j-(n-1)/2)*spread;spawnProjectile({x:m.x,y:m.y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,r:(v.r||s.r||7)*(v.sizeMul||1),el:m.el,color:col,life,visual:true,hit:new Set()});}spawnFx({x:tx,y:ty,r:8,maxr:rr,col,life:.35,el:m.el,area:true,spark:true,seed});burst(tx,ty,col,splash?14:7,splash?4:3);}
  else if(kind==='funnel'){const n=v.count||s.count||3,dist=v.dist||s.dist||72;spawnFx({x:m.x,y:m.y,r:16,maxr:dist,col,life:.55,el:m.el,area:true,spark:true,seed});for(let k=0;k<n;k++){const a=k/n*6.283+performance.now()/350;burst(m.x+Math.cos(a)*dist,m.y+Math.sin(a)*dist,col,3,3);}}
  else{const life=kind==='zone'||kind==='aura'||kind==='multi'?Math.min(6,v.dur||s.dur||4):(big?.75:.5);if(kind==='zone'||kind==='aura'||kind==='multi'){const zr=kind==='multi'?Math.max(20,(v.r||s.r||40)*(v.sizeMul||1)):rad,zx=kind==='multi'||kind==='aura'?m.x:tx,zy=kind==='multi'||kind==='aura'?m.y:ty;spawnZone({x:zx,y:zy,vx:kind==='multi'?Math.cos(aim)*(v.speed||s.speed||5):0,vy:kind==='multi'?Math.sin(aim)*(v.speed||s.speed||5):0,r:zr,el:m.el,color:col,life,total:life,visual:true,tick:1,rate:1});}spawnFx({x:tx,y:ty,r:14,maxr:rad,col,life:Math.min(life,big?.75:.5),el:m.el,area:true,spark:true,seed});burst(tx,ty,col,big?24:12,big?5:3);}if(big)shake=Math.max(shake,12);}
-function mpApplyRemoteSpell(m){const local=m.map===MAPID;if(local&&m.kind==='resurrect'&&P.downT>0){reviveHere();return;}const s=SPELLS.find(x=>x.name===m.spell)||m,rad=m.radius||90,col=m.color||'#9fe8ff';if(local&&m.perfect)perfectCastFx(m.x,m.y,col);if(local&&m.kind==='heal'){const amt=Math.round(P.maxhp*(s.heal||0.2));P.hp=Math.min(P.maxhp,P.hp+amt);spawnFloat({x:P.x,y:P.y-20,txt:'+'+fmt(amt),col:col,life:1});burst(P.x,P.y,col,12,3);spawnFx({x:P.x,y:P.y,r:8,maxr:48,col,life:.5,el:m.el,area:true,spark:true,seed:performance.now()%97});if(s.buffs&&s.buffs.length)addBuff(s,m.buffDur||1,m.buffAmt||1);return;}if(local&&m.kind==='buff'){addBuff(s,m.buffDur||1,m.buffAmt||1);burst(P.x,P.y,col,12,3);spawnFx({x:P.x,y:P.y,r:8,maxr:48,col,life:.5,el:m.el,area:true,spark:true,seed:performance.now()%97});return;}if(local){mpRemoteVisual(m,s,rad,col);if(s.buffs&&s.buffs.length)addBuff(s,m.buffDur||1,m.buffAmt||1);}
- if(!MP.isHost)return;const ts=[];const bb=bosses.get(m.map);if(bb)ts.push(bb);for(const e of enemies)if(enemyShouldSync(e)&&e.eliteRec&&e.eliteRec.map===m.map)ts.push(e);for(const d of demons)if(d.map===m.map)ts.push(d);for(const t of ts){let hit=false;if(['meteo','zone','self','aura'].includes(m.kind))hit=Math.hypot(t.x-m.tx,t.y-m.ty)<rad+t.r;else if(['front','fan'].includes(m.kind)){const d=Math.hypot(t.x-m.x,t.y-m.y),a=Math.atan2(t.y-m.y,t.x-m.x),da=Math.abs(Math.atan2(Math.sin(a-m.aim),Math.cos(a-m.aim)));hit=d<rad+t.r&&da<0.8;}else hit=mpLineDist(t.x,t.y,m.x,m.y,m.tx,m.ty)<t.r+18;if(hit){const skip=mpDmgSkip;mpDmgSkip=m.from;applyDmg(t,m.power||1,m.el,col,0,m.big?1:0.75);mpDmgSkip=skip;if(t===bb&&t.hp<=0){bosses.delete(t.map);bossTimers.set(t.map,t.mega?9999:5+Math.random()*5);}}}}
+function mpApplyRemoteSpell(m){const local=m.map===MAPID,s=SPELLS.find(x=>x.name===m.spell)||m,act=m.action||spellAction(s)||m.kind;if(local&&act==='resurrect'&&P.downT>0){reviveHere();return;}const rad=m.radius||90,col=m.color||'#9fe8ff';if(local&&m.perfect)perfectCastFx(m.x,m.y,col);if(local&&act==='heal'){const amt=Math.round(P.maxhp*(s.heal||0.2));P.hp=Math.min(P.maxhp,P.hp+amt);spawnFloat({x:P.x,y:P.y-20,txt:'+'+fmt(amt),col:col,life:1});burst(P.x,P.y,col,12,3);spawnFx({x:P.x,y:P.y,r:8,maxr:48,col,life:.5,el:m.el,area:true,spark:true,seed:performance.now()%97});if(s.buffs&&s.buffs.length)addBuff(s,m.buffDur||1,m.buffAmt||1);return;}if(local&&act==='buff'){addBuff(s,m.buffDur||1,m.buffAmt||1);burst(P.x,P.y,col,12,3);spawnFx({x:P.x,y:P.y,r:8,maxr:48,col,life:.5,el:m.el,area:true,spark:true,seed:performance.now()%97});return;}if(local){mpRemoteVisual(m,s,rad,col);if(s.buffs&&s.buffs.length)addBuff(s,m.buffDur||1,m.buffAmt||1);}
+ if(!MP.isHost)return;const ts=[];const bb=bosses.get(m.map);if(bb)ts.push(bb);for(const e of enemies)if(enemyShouldSync(e)&&e.eliteRec&&e.eliteRec.map===m.map)ts.push(e);for(const d of demons)if(d.map===m.map)ts.push(d);for(const t of ts){let hit=false;if(['meteo','zone','self','aura'].includes(act))hit=Math.hypot(t.x-m.tx,t.y-m.ty)<rad+t.r;else if(['front','fan'].includes(act)){const d=Math.hypot(t.x-m.x,t.y-m.y),a=Math.atan2(t.y-m.y,t.x-m.x),da=Math.abs(Math.atan2(Math.sin(a-m.aim),Math.cos(a-m.aim)));hit=d<rad+t.r&&da<0.8;}else hit=mpLineDist(t.x,t.y,m.x,m.y,m.tx,m.ty)<t.r+18;if(hit){const skip=mpDmgSkip;mpDmgSkip=m.from;applyDmg(t,m.power||1,m.el,col,0,m.big?1:0.75);mpDmgSkip=skip;if(t===bb&&t.hp<=0){bosses.delete(t.map);bossTimers.set(t.map,t.mega?9999:5+Math.random()*5);}}}}
 mpRestore();mpEl('mpHost').onclick=()=>mpStart('host');mpEl('mpJoin').onclick=()=>mpStart('join');
 function genDecos(seed,count){const d=[];let s=seed;const rnd=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};
  for(let i=0;i<count;i++){const x=rnd()*WORLD_W,y=rnd()*WORLD_H;if(Math.hypot(x-WORLD_W/2,y-WORLD_H/2)<150)continue;d.push({x,y,t:rnd()});}return d;}
@@ -1027,7 +1177,7 @@ const STONE_SPELLS={
  acrossPort:['ライトニング','サンダーランス','メテオシャワー'],dockside:['エアレイド','ライトニングラン','ゲイルブレス','ゲイルファンネル'],saltFlat:['テンペストピアス','アクアファンネル','タイダルウェーブ'],
  graubachCity:['エクスプロード','ヘルファイア','アイシクル'],ashCommon:['フレイムファンネル','フロストショット'],
  eisenroar:['ガイア','ジャベリン','アイアンウォール'],deepvein:['アースバインド','グラナイトキャノン','ロックファンネル','グラビティ'],freepick:['ルーンシェル','グランドインパクト','アースクエイク'],
- wallguard:['ストーム','ダイアモンドダスト','ヴォルカノ'],garrison:['サラマンダー','メイルシュトローム'],pioneerVillages:['テンペスト','フレアノヴァ'],liberta:['インフェルノ','ラグナロク'],
+ wallguard:['ストーム','ダイアモンドダスト','ヴォルカン'],garrison:['サラマンダー','メイルシュトローム'],pioneerVillages:['テンペスト','フレアノヴァ'],liberta:['インフェルノ','ラグナロク'],
  lastHold:['メテオ','ダイアモンドダスト','ガイア'],exileCamp:['アースクエイク','テンペスト'],ruinedSankt:['グランドインパクト','ラグナロク']
 };
 const EXTRA_STONE_SPELLS=["フロストレイ","ライトニングレイ","クリスタルレイ","ブラッドレイ","フレイムトーテム","ロックトーテム","ヒールトーテム","マナトーテム","サモンウルフ","サモンピクシー","サモンゴーレム","スターフレアレイン","アイススピアレイン","サンダーレイン","ロックレイン","マナオービット","マナバースト","スチームバースト","カラミティレイン"];
@@ -1250,8 +1400,8 @@ function spawnDemon(map){const m=MAPS[map];if(!m||!m.bossDef)return;const lv=are
  demons.push({id,rank:'demon',stats:{DEX:lv*2,AGI:lv*2,INT:lv*5,PIE:lv*4,VIT:lv*8,LUK:lv},map,jp:'魔人',el:'無',x:m.bx||WORLD_W/2,y:m.by||WORLD_H/2,r:32,col:'#d05aff',enLv:lv,hp,maxhp:hp,def:18+Math.floor(lv/2),atk,exp:expByHp(hp,ENEMY_RANK.demon.expRate),spd:.65,state:'cool',t:6+Math.random()*4,life:900,castT:0,spell:null,spells:demonSpellPool(lv+map.length),say:'',sayT:0,wAng:Math.random()*7});if(map===MAPID)flash('魔人 出現：'+m.name);}
 function demonChoose(d){const name=d.spells[(Math.random()*d.spells.length)|0],s=SPELLS.find(x=>x.name===name)||SPELLS[0];d.spell=s;d.castT=castTime(s,[])*2.8;d.state='approach';d.t=d.castT;d.say=s.name+'…';d.sayT=2;}
 function demonCast(d){const s=d.spell;if(!s)return;const rad=(s.radius||s.splash||90),col=s.color||d.col,tgt=playerTarget(d.x,d.y,d.map)||{id:null,x:P.x,y:P.y,r:P.r,d:0};burst(d.x,d.y,col,18,4);spawnFx({x:tgt.x,y:tgt.y,r:10,maxr:rad,col,life:.5,el:s.el,area:true,spark:true,seed:performance.now()%97});se('big');
- let hit=false;if(['self','aura'].includes(s.kind))hit=tgt.d<rad+(tgt.r||P.r);else if(['meteo','zone','impact'].includes(s.kind))hit=true;else hit=true;
- if(hit)hitPlayerTarget(tgt,d.atk*Math.max(.5,s.power||1));d.state='cool';d.t=10+Math.random()*2;d.spell=null;d.say=['次は外さん。','逃げても無駄だ。','魔力が満ちる。'][(Math.random()*3)|0];d.sayT=2.5;}
+ const act=spellAction(s);let hit=false;if(['self','aura'].includes(act))hit=tgt.d<rad+(tgt.r||P.r);else if(['meteo','zone','impact'].includes(act))hit=true;else hit=true;
+ if(hit)hitPlayerTarget(tgt,d.atk*Math.max(.5,spellBasePower(s)));d.state='cool';d.t=10+Math.random()*2;d.spell=null;d.say=['次は外さん。','逃げても無駄だ。','魔力が満ちる。'][(Math.random()*3)|0];d.sayT=2.5;}
 function updateDemons(dt){if(MP.enabled&&!MP.isHost)return;demonCD-=dt;if(demonCD<=0&&demons.length<1){const maps=WMAPS.filter(id=>MAPS[id]&&MAPS[id].bossDef);if(maps.length)spawnDemon(maps[(Math.random()*maps.length)|0]);demonCD=240+Math.random()*240;}
  for(const d of demons){d.life=(d.life==null?900:d.life)-dt;if(d.life<=0){d.expired=true;continue;}if(d.sayT>0)d.sayT-=dt;if(d.burn){d.burn.t-=dt;d.hp-=d.burn.dps*dt;if(d.burn.t<=0)d.burn=null;}if(d.slow>0)d.slow-=dt;if(d.stun>0){d.stun-=dt;continue;}const tgt=playerTarget(d.x,d.y,d.map);if(!tgt)continue;const dist=tgt.d,spd=d.spd*(d.slow>0?.45:1);if(dist>DEMON_AGGRO){d.wAng+=dt*.7;d.x+=Math.cos(d.wAng)*spd*.18*dt*60;d.y+=Math.sin(d.wAng)*spd*.18*dt*60;d.x=Math.max(d.r,Math.min(WORLD_W-d.r,d.x));d.y=Math.max(d.r,Math.min(WORLD_H-d.r,d.y));continue;}d.t-=dt;
   if(d.state==='cool'){if(Math.random()<0.01){d.say=['ふむ。','脆いな。','まだ立つか。'][(Math.random()*3)|0];d.sayT=2;}if(dist>DEMON_ATTACK_RANGE*.7){const a=Math.atan2(tgt.y-d.y,tgt.x-d.x);d.x+=Math.cos(a)*spd*.35*dt*60;d.y+=Math.sin(a)*spd*.35*dt*60;}else{d.wAng+=dt;d.x+=Math.cos(d.wAng)*spd*.22*dt*60;d.y+=Math.sin(d.wAng)*spd*.22*dt*60;}if(d.t<=0)demonChoose(d);}
@@ -1265,7 +1415,7 @@ function mpApplyDemonGone(m){const d=demons.find(x=>x.id===m.id);if(d&&m.killed)
 function switchMap(id,x,y){for(const en of enemies)if(en.eliteRec)en.eliteRec.hp=en.hp;MAP=MAPS[id];MAPID=id;dummy=(id==='town')?makeDummy():null;
  if(MAP.town){P.lastTown=id;for(const n of npcs){if(n.fixed){n.map=n.home;n.x=TUTOR_X;n.y=TUTOR_Y;}else if(n.home===id){n.map=id;const p=npcHomePos(n.home,n.slot||0);n.x=p.x;n.y=p.y;}else n.map=n.home;n.talk=false;n.reactT=0;}}P.x=x;P.y=y;enemies=[];shots=[];eshots=[];parts=[];floats=[];fx=[];zones=[];funnels=[];rays=[];totems=[];summons=[];rains=[];orbits=[];drains=[];pending=[];enemyRespawns=[];treasureChests=[];passers=[];boss=bosses.get(id)||null;if(!bossTimers.has(id))bossTimers.set(id,MAP.boss?3:1e9);bossCD=bossTimers.get(id);P.mapLockT=1;P.invuln=1.2;P.casting=false;P.castBackspace=false;P.chest=null;P.channels=[];P.kana='';P.pend='';P.teleportMenu=false;P.activeStone=null;fieldStones=buildFieldStones(id);if(!MAP.town)for(let i=0;i<5;i++)spawnEnemy();playBgmForMap();flash(MAP.name+' へ移動');}
 
-function castTime(s,modOrRunes){const m=modOrRunes&&modOrRunes.castMul!==undefined?modOrRunes:buildMod(modOrRunes||[]);const rn=Array.isArray(modOrRunes)?modOrRunes.length:(m._n||0);return((s.big?1.6:0.3+s.cost*0.025)+rn*0.15)*castMult()*m.castMul;}
+function castTime(s,modOrRunes){const m=modOrRunes&&modOrRunes.castMul!==undefined?modOrRunes:buildMod(modOrRunes||[]);const rn=Array.isArray(modOrRunes)?modOrRunes.length:(m._n||0),baseCost=spellBaseCost(s);return((s.big?1.6:0.3+baseCost*0.02)+rn*0.15)*castMult()*m.castMul;}
 addEventListener('keydown',e=>{audio();
  if(P.downT>0){e.preventDefault();return;}
  if(P.chest){if(e.key==='Escape'||e.code==='Space'||e.key==='Enter'){e.preventDefault();finishChest(false);return;}if(e.key==='Backspace'){e.preventDefault();if(P.chest.pend)P.chest.pend=P.chest.pend.slice(0,-1);else P.chest.kana=P.chest.kana.slice(0,-1);return;}if(/^[a-zA-Z'-]$/.test(e.key)){e.preventDefault();P.chest.pend+=e.key.toLowerCase();chestFlush();return;}if(e.key.length===1&&/[ぁ-んー]/.test(e.key)){e.preventDefault();P.chest.kana+=e.key;if(P.chest.kana===P.chest.target){P.chest.done++;P.chest.kana='';P.chest.pend='';P.chest.target=chestWord();se('ui');}return;}return;}
@@ -1359,27 +1509,28 @@ function tryCast(){finalize();
   else{flash('マナ不足（必要'+fmt(cost)+'）');se('error');}}
  else if(said){P.say=said.slice(0,32);P.sayT=2.6;se('ui');}
  P.casting=false;P.castBackspace=false;P.kana='';P.pend='';}
-function spellContext(s,runes,mod,cost,aim,tgt){const m=mod||buildMod(runes||[]),eff=getBuffs(),big=!!s.big;if(aim===undefined)aim=Math.atan2(P.face.y,P.face.x);const mpTgt=tgt||{x:P.x+Math.cos(aim)*220,y:P.y+Math.sin(aim)*220},dexRange=rangeMul(),rPow=big?1+(m.powMul-1)*2:m.powMul,rRad=(big?1+(m.radiusMul-1)*2:m.radiusMul)*dexRange,buffPow=big?1+eff.pow*3:1+eff.pow,critEx=big?Math.min(1.5,eff.crit*3):eff.crit,mpBonus=(s.mpPct?1+Math.min(2.5,(cost||0)/Math.max(1,P.maxmp)*2.2):(big?1+Math.min(0.6,(cost||0)*0.008):1)),base=magicAtk()*s.power*buffPow*rPow*mpBonus*(m.comboMul||1)*(1+playerAffix(s.el+'%')/100),bd=m.buffDurMul*(1+playerAffix('buffDur%')/100),ba=m.buffAmtMul,burn=s.burn?s.burn*(1+eff.burn*(big?3:1))*m.burnMul:0,splash=(s.splash||0)*m.splashMul*dexRange;return{s,runes,m,cost,aim,tgt,mpTgt,eff,big,bd,ba,dexRange,rRad,critEx,base,burn,splash};}
+function spellContext(s,runes,mod,cost,aim,tgt){const m=mod||buildMod(runes||[]),eff=getBuffs(),big=!!s.big;if(aim===undefined)aim=Math.atan2(P.face.y,P.face.x);const mpTgt=tgt||{x:P.x+Math.cos(aim)*220,y:P.y+Math.sin(aim)*220},dexRange=rangeMul(),rPow=big?1+(m.powMul-1)*2:m.powMul,rRad=(big?1+(m.radiusMul-1)*2:m.radiusMul)*dexRange,buffPow=big?1+eff.pow*3:1+eff.pow,critEx=big?Math.min(1.5,eff.crit*3):eff.crit,typePow=spellBasePower(s),mpBonus=(s.mpPct?1+Math.min(2.5,(cost||0)/Math.max(1,P.maxmp)*2.2):1),base=magicAtk()*typePow*buffPow*rPow*mpBonus*(m.comboMul||1)*(1+playerAffix(s.el+'%')/100),bd=m.buffDurMul*(1+playerAffix('buffDur%')/100),ba=m.buffAmtMul,burn=s.burn?s.burn*(1+eff.burn*(big?3:1))*m.burnMul:0,splash=(s.splash||0)*m.splashMul*dexRange;return{s,runes,m,cost,aim,tgt,mpTgt,eff,big,bd,ba,dexRange,rRad,critEx,base,burn,splash};}
 function dur(c,v,extra){return (v||1)*(c.m&&c.m.durMul||1)*(1+(extra||0)/100);}
 function castRaySpell(c){const s=c.s,len=(s.len||300)*c.dexRange*(c.m.distMul||1),w=(s.width||28)*c.rRad,life=dur(c,s.dur||3);rays.push({x:P.x,y:P.y,aim:c.aim,len,w,follow:s.follow!==false,el:s.el,color:s.color,dps:c.base*(s.tickDmg||0.22),rate:s.rate||0.18,tick:0,life,total:life,burn:c.burn,slow:s.slow||0});burst(P.x,P.y,s.color,10,3);}
 function castTotemSpell(c){const s=c.s,x=c.mpTgt.x,y=c.mpTgt.y,life=dur(c,s.dur||10,playerAffix('summonDur%'));totems.push({name:s.name,x,y,r:(s.radius||48)*c.rRad,el:s.el,color:s.color,life,total:life,rate:s.rate||0.7,fireT:0,hp:s.hp||80,maxhp:s.hp||80,kind:s.totem||'shot',dmg:c.base*(s.tickDmg||0.55)*(1+playerAffix('summonAtk%')/100),heal:s.heal||0,mp:s.mp||0,speed:s.speed||6});spawnFx({x,y,r:10,maxr:(s.radius||48)*c.rRad,col:s.color,life:.5,el:s.el,area:true,spark:true,seed:performance.now()%97});}
 function castSummonSpell(c){const s=c.s,x=Math.max(20,Math.min(WORLD_W-20,P.x+Math.cos(c.aim)*52)),y=Math.max(20,Math.min(WORLD_H-20,P.y+Math.sin(c.aim)*52)),life=dur(c,s.dur||18,playerAffix('summonDur%')),hp=s.hp||120;summons.push({name:s.name,x,y,r:s.r||18,el:s.el,color:s.color,life,total:life,hp,maxhp:hp,atk:c.base*(s.tickDmg||0.35)*0.5*(1+playerAffix('summonAtk%')/100),rate:s.rate||0.75,fireT:0,spd:s.spd||0.75,range:s.range||42,aggro:s.aggro||260,wAng:Math.random()*7,wT:0,asset:s.asset||'ManaWolf',mode:s.mode||'melee'});burst(x,y,s.color,18,4);}
 function castRainSpell(c){const s=c.s,x=c.mpTgt.x,y=c.mpTgt.y,r=(s.radius||130)*c.rRad,life=dur(c,s.dur||4);rains.push({x,y,r,el:s.el,color:s.color,life,total:life,rate:s.rate||0.28,tick:0,dmg:c.base*(s.tickDmg||0.5),splash:(s.splash||42)*c.rRad,burn:c.burn,slow:s.slow||0});spawnFx({x,y,r:14,maxr:r,col:s.color,life:.45,el:s.el,area:true,spark:true,seed:performance.now()%97});}
 function castOrbitSpell(c){const s=c.s,n=s.count||4,life=dur(c,s.dur||7);for(let i=0;i<n;i++)orbits.push({ang:i/n*6.283,dist:s.dist||60,spin:s.spin||2.8,x:P.x,y:P.y,r:s.r||8,el:s.el,color:s.color,dmg:c.base*(s.tickDmg||0.22),rate:s.rate||0.35,tick:0,life,total:life,hit:new WeakMap()});burst(P.x,P.y,s.color,14,4);}
-function castUtilitySpell(c){const s=c.s;if(s.kind==='return'){mpSendSpell(s,c.m,c.cost,c.aim,c.mpTgt,0,1);const t=MAPS[P.lastTown]?P.lastTown:'town',sp=townSpawn();burst(P.x,P.y,s.color,24,6);switchMap(t,sp.x,sp.y);flash('\u30ea\u30b3\u30fc\u30eb\uff1a'+MAPS[t].name+'\u3078\u5e30\u9084');return true;}
- if(s.kind==='teleport'){burst(P.x,P.y,s.color,24,6);spawnFx({x:P.x,y:P.y,r:8,maxr:96,col:s.color,life:.65,el:s.el,area:true,spark:true,seed:performance.now()%97});P.teleportMenu=true;flash('テレポート先を選択');return true;}
- if(s.kind==='resurrect'){mpSendSpell(s,c.m,c.cost,c.aim,c.mpTgt,0,1);burst(P.x,P.y,s.color,22,5);spawnFx({x:P.x,y:P.y,r:8,maxr:90,col:s.color,life:.65,el:s.el,area:true,spark:true,seed:performance.now()%97});flash('\u30ea\u30b6\u30ec\u30af\u30b7\u30e7\u30f3');return true;}
- if(s.kind==='heal'){mpSendSpell(s,c.m,c.cost,c.aim,c.mpTgt,0,1);const amt=Math.round(P.maxhp*s.heal);P.hp=Math.min(P.maxhp,P.hp+amt);spawnFloat({x:P.x,y:P.y-20,txt:'+'+fmt(amt),col:s.color,life:1});burst(P.x,P.y,s.color,14,3);spawnFx({x:P.x,y:P.y,r:8,maxr:48,col:s.color,life:.5});addBuff(s,c.bd,c.ba);flash(s.name);return true;}
- if(s.kind==='buff'){mpSendSpell(s,c.m,c.cost,c.aim,c.mpTgt,0,1);addBuff(s,c.bd,c.ba);burst(P.x,P.y,s.color,16,4);spawnFx({x:P.x,y:P.y,r:10,maxr:48,col:s.color,life:.5});flash(s.name+'\uff01');return true;}return false;}
+function castUtilitySpell(c){const s=c.s,act=spellAction(s);if(act==='return'){mpSendSpell(s,c.m,c.cost,c.aim,c.mpTgt,0,1);const t=MAPS[P.lastTown]?P.lastTown:'town',sp=townSpawn();burst(P.x,P.y,s.color,24,6);switchMap(t,sp.x,sp.y);flash('\u30ea\u30b3\u30fc\u30eb\uff1a'+MAPS[t].name+'\u3078\u5e30\u9084');return true;}
+ if(act==='teleport'){burst(P.x,P.y,s.color,24,6);spawnFx({x:P.x,y:P.y,r:8,maxr:96,col:s.color,life:.65,el:s.el,area:true,spark:true,seed:performance.now()%97});P.teleportMenu=true;flash('テレポート先を選択');return true;}
+ if(act==='resurrect'){mpSendSpell(s,c.m,c.cost,c.aim,c.mpTgt,0,1);burst(P.x,P.y,s.color,22,5);spawnFx({x:P.x,y:P.y,r:8,maxr:90,col:s.color,life:.65,el:s.el,area:true,spark:true,seed:performance.now()%97});flash('\u30ea\u30b6\u30ec\u30af\u30b7\u30e7\u30f3');return true;}
+ if(act==='utility'){if(s.name==='インベントリ')P.menu=true;else if(s.name==='スペル')P.mlist='spell';else if(s.name==='ルーン')P.mlist='rune';se('ui');return true;}
+ if(act==='heal'){mpSendSpell(s,c.m,c.cost,c.aim,c.mpTgt,0,1);const amt=Math.round(P.maxhp*s.heal);P.hp=Math.min(P.maxhp,P.hp+amt);spawnFloat({x:P.x,y:P.y-20,txt:'+'+fmt(amt),col:s.color,life:1});burst(P.x,P.y,s.color,14,3);spawnFx({x:P.x,y:P.y,r:8,maxr:48,col:s.color,life:.5});addBuff(s,c.bd,c.ba);flash(s.name);return true;}
+ if(act==='buff'){mpSendSpell(s,c.m,c.cost,c.aim,c.mpTgt,0,1);addBuff(s,c.bd,c.ba);burst(P.x,P.y,s.color,16,4);spawnFx({x:P.x,y:P.y,r:10,maxr:48,col:s.color,life:.5});flash(s.name+'\uff01');return true;}return false;}
 function applySpellTarget(en,c,factor){applyDmg(en,c.base,c.s.el,c.s.color,c.critEx,factor);if(c.burn)setBurn(en,c.burn*(factor||1),c.bd);if(c.s.slow)setSlow(en,c.s.slow);}
-function castAreaSpell(c){const s=c.s,big=c.big;let cx=P.x,cy=P.y;if(s.kind==='meteo'&&c.tgt){cx=c.tgt.x;cy=c.tgt.y;}const rad=s.radius*c.rRad;spawnFx({x:cx,y:cy,r:14,maxr:rad,col:s.color,life:big?.7:.45,el:s.el,area:true});burst(cx,cy,s.color,big?28:14,big?6:4);if(big||s.power>=1.4)shake=Math.max(shake,big?22:5);for(const en of targets())if(Math.hypot(en.x-cx,en.y-cy)<rad+en.r)applySpellTarget(en,c);}
-function castFrontSpell(c){const s=c.s,PI=Math.PI,rad=(s.radius||120)*c.rRad,half=s.kind==='fan'?(s.fan||0.6):0.45,cx=P.x+Math.cos(c.aim)*(s.offset||0),cy=P.y+Math.sin(c.aim)*(s.offset||0);if(s.kind==='fan'){spawnFx({x:P.x,y:P.y,r:14,maxr:rad,col:s.color,life:.45,a0:c.aim-half,a1:c.aim+half,el:s.el,area:true});for(let q=0;q<10;q++){const aa=c.aim-half+Math.random()*half*2;burst(P.x+Math.cos(aa)*rad*0.7,P.y+Math.sin(aa)*rad*0.7,s.color,2,3);}}else{spawnFx({x:cx,y:cy,r:12,maxr:rad,col:s.color,life:.4,el:s.el,area:true});burst(cx,cy,s.color,12,4);}for(const en of targets()){const d=Math.hypot(en.x-P.x,en.y-P.y);if(d<rad+en.r){let dd=Math.atan2(en.y-P.y,en.x-P.x)-c.aim;while(dd>PI)dd-=2*PI;while(dd<-PI)dd+=2*PI;if(Math.abs(dd)<half)applySpellTarget(en,c);}}}
+function castAreaSpell(c){const s=c.s,big=c.big,act=spellAction(s);let cx=P.x,cy=P.y;if((act==='meteo'||act==='impact')&&c.tgt){cx=c.tgt.x;cy=c.tgt.y;}const rad=(s.radius||s.splash||90)*c.rRad;spawnFx({x:cx,y:cy,r:14,maxr:rad,col:s.color,life:big?.7:.45,el:s.el,area:true});burst(cx,cy,s.color,big?28:14,big?6:4);if(big||spellBasePower(s)>=1.2)shake=Math.max(shake,big?22:5);for(const en of targets())if(Math.hypot(en.x-cx,en.y-cy)<rad+en.r)applySpellTarget(en,c);}
+function castFrontSpell(c){const s=c.s,act=spellAction(s),PI=Math.PI,rad=(s.radius||120)*c.rRad,half=act==='fan'?(s.fan||0.6):0.45,cx=P.x+Math.cos(c.aim)*(s.offset||0),cy=P.y+Math.sin(c.aim)*(s.offset||0);if(act==='fan'){spawnFx({x:P.x,y:P.y,r:14,maxr:rad,col:s.color,life:.45,a0:c.aim-half,a1:c.aim+half,el:s.el,area:true});for(let q=0;q<10;q++){const aa=c.aim-half+Math.random()*half*2;burst(P.x+Math.cos(aa)*rad*0.7,P.y+Math.sin(aa)*rad*0.7,s.color,2,3);}}else{spawnFx({x:cx,y:cy,r:12,maxr:rad,col:s.color,life:.4,el:s.el,area:true});burst(cx,cy,s.color,12,4);}for(const en of targets()){const d=Math.hypot(en.x-P.x,en.y-P.y);if(d<rad+en.r){let dd=Math.atan2(en.y-P.y,en.x-P.x)-c.aim;while(dd>PI)dd-=2*PI;while(dd<-PI)dd+=2*PI;if(Math.abs(dd)<half)applySpellTarget(en,c);}}}
 function castZoneSpell(c){const s=c.s,zx=c.tgt?c.tgt.x:P.x+Math.cos(c.aim)*(s.offset||90),zy=c.tgt?c.tgt.y:P.y+Math.sin(c.aim)*(s.offset||90);spawnZone({x:zx,y:zy,r:(s.radius||90)*c.rRad,el:s.el,color:s.color,dps:c.base*(s.tickDmg||0.30),rate:s.rate||0.4,tick:0,life:(s.dur||4),total:(s.dur||4),slow:s.slow||0,burn:c.burn});spawnFx({x:zx,y:zy,r:14,maxr:(s.radius||90)*c.rRad,col:s.color,life:.4,el:s.el,area:true});}
 function castAuraSpell(c){const s=c.s;spawnZone({follow:true,x:P.x,y:P.y,r:(s.radius||110)*c.rRad,el:s.el,color:s.color,dps:c.base*(s.tickDmg||0.25),rate:s.rate||0.35,tick:0,life:(s.dur||5),total:(s.dur||5),slow:s.slow||0,burn:c.burn});burst(P.x,P.y,s.color,16,4);}
 function castMultiSpell(c){const s=c.s,m=c.m;spawnZone({x:P.x,y:P.y,vx:Math.cos(c.aim)*(s.speed||5),vy:Math.sin(c.aim)*(s.speed||5),r:(s.r||40)*m.sizeMul,el:s.el,color:s.color,dps:c.base*(s.tickDmg||0.22),rate:s.rate||0.12,tick:0,life:(s.dur||1.1)*m.distMul,total:(s.dur||1.1)*m.distMul,slow:s.slow||0,burn:c.burn});burst(P.x,P.y,s.color,6,3);}
 function castFunnelSpell(c,rep){const s=c.s,n=s.count||3;for(let k=0;k<n;k++)funnels.push({ang:k/n*6.283+rep,dist:s.dist||72,spin:s.spin||2.2,x:P.x,y:P.y,el:s.el,color:s.color,dmg:c.base*(s.boltDmg||0.5)*0.5,speed:s.speed||7,fireT:0.2,rate:s.rate||0.5,life:(s.dur||6)});burst(P.x,P.y,s.color,14,4);}
-function castProjectileSpell(c){const s=c.s,m=c.m,n=m.split,spread=0.3,pierce=(s.kind==='pierce')||m.pierce,each=n>1?c.base/n:c.base;for(let j=0;j<n;j++){const a=c.aim+(j-(n-1)/2)*spread;spawnProjectile({x:P.x,y:P.y,vx:Math.cos(a)*s.speed*m.speedMul,vy:Math.sin(a)*s.speed*m.speedMul,r:(s.r||7)*m.sizeMul,el:s.el,color:s.color,dmg:each,critEx:c.critEx,splash:c.splash,burn:c.burn,slow:s.slow||0,durMul:c.bd,pierce,homing:m.homing,life:1.8*m.distMul*c.dexRange,hit:new Set()});}burst(P.x+Math.cos(c.aim)*14,P.y+Math.sin(c.aim)*14,s.color,5,3);if(c.big)shake=Math.max(shake,18);}
-function resolveSpellAction(c,rep){const k=c.s.kind;if(k==='self'||k==='meteo'||k==='mix')castAreaSpell(c);else if(k==='front'||k==='fan')castFrontSpell(c);else if(k==='zone')castZoneSpell(c);else if(k==='aura')castAuraSpell(c);else if(k==='multi')castMultiSpell(c);else if(k==='funnel')castFunnelSpell(c,rep);else if(k==='ray')castRaySpell(c);else if(k==='totem')castTotemSpell(c);else if(k==='summon')castSummonSpell(c);else if(k==='rain')castRainSpell(c);else if(k==='orbit')castOrbitSpell(c);else castProjectileSpell(c);}
+function castProjectileSpell(c){const s=c.s,m=c.m,n=m.split,spread=0.3,pierce=(spellAction(s)==='pierce')||m.pierce,each=n>1?c.base/n:c.base;for(let j=0;j<n;j++){const a=c.aim+(j-(n-1)/2)*spread;spawnProjectile({x:P.x,y:P.y,vx:Math.cos(a)*s.speed*m.speedMul,vy:Math.sin(a)*s.speed*m.speedMul,r:(s.r||7)*m.sizeMul,el:s.el,color:s.color,dmg:each,critEx:c.critEx,splash:c.splash,burn:c.burn,slow:s.slow||0,durMul:c.bd,pierce,homing:m.homing,life:1.8*m.distMul*c.dexRange,hit:new Set()});}burst(P.x+Math.cos(c.aim)*14,P.y+Math.sin(c.aim)*14,s.color,5,3);if(c.big)shake=Math.max(shake,18);}
+function resolveSpellAction(c,rep){const k=spellAction(c.s);if(k==='self'||k==='meteo'||k==='mix'||k==='impact')castAreaSpell(c);else if(k==='front'||k==='fan')castFrontSpell(c);else if(k==='zone')castZoneSpell(c);else if(k==='aura')castAuraSpell(c);else if(k==='multi')castMultiSpell(c);else if(k==='funnel')castFunnelSpell(c,rep);else if(k==='ray')castRaySpell(c);else if(k==='totem')castTotemSpell(c);else if(k==='summon')castSummonSpell(c);else if(k==='rain')castRainSpell(c);else if(k==='orbit')castOrbitSpell(c);else castProjectileSpell(c);}
 function finishSpellCast(c){if(c.big){buffs.clear();flash(c.s.name+'\uff1a\u30d0\u30d5\u89e3\u9664');}else addBuff(c.s,c.bd,c.ba);if(c.s.hpDrain)drains.push({life:c.s.hpDrainDur||6,hp:P.maxhp*c.s.hpDrain/(c.s.hpDrainDur||6),mp:0});if(c.m.drainKinds){const hd=c.m.drainKinds.hp,md=c.m.drainKinds.mp;if(hd&&hd.amount>0&&hd.dur>0)drains.push({life:hd.dur,hp:P.maxhp*hd.amount/hd.dur,mp:0});if(md&&md.amount>0&&md.dur>0)drains.push({life:md.dur,hp:0,mp:P.maxmp*md.amount/md.dur});}if(c.m.silence)P.silenceT=Math.max(P.silenceT||0,c.m.silence);if(c.m.confuse)P.confuseT=Math.max(P.confuseT||0,c.m.confuse);}
 function fireSpell(s,runes,mod,cost,aim,tgt){const c=spellContext(s,runes,mod,cost,aim,tgt);se(c.big?'big':'cast');if(c.big)shake=Math.max(shake,18);if(castUtilitySpell(c))return;mpSendSpell(s,c.m,c.cost,c.aim,c.mpTgt,c.base,c.rRad);resolveSpellAction(c,0);for(let r=1;r<c.m.repeatMul;r++)pending.push({t:0.1*r,fn:()=>resolveSpellAction(c,r)});finishSpellCast(c);}
 
@@ -1844,7 +1995,7 @@ function drawShop(){const {x0,y0,w,h}=drawShopFrame();
   let lx=x0+70,ly=y0+78;ctx.fillStyle='#d8d0ff';ctx.font='bold 18px system-ui';ctx.fillText('謎の石碑',lx,ly);ly+=28;ctx.fillStyle='#8a9690';ctx.font='12px system-ui';ctx.fillText('この石碑に刻まれたスペルを1つだけ解読します。',lx,ly);ly+=42;
   const list=stoneSpells();if(!list.length){ctx.fillStyle='#778';ctx.fillText('この石碑から読み取れる新しいスペルはありません',lx,ly);}
   for(let i=0;i<list.length;i++){const s=list[i],known=P.spellsSeen.has(s.name),by=ly+i*52;ctx.fillStyle=known?'rgba(80,80,90,.18)':'rgba(42,36,74,.24)';ctx.fillRect(lx,by-18,620,38);ctx.strokeStyle=known?'#555':'#b48cff';ctx.lineWidth=1.5;ctx.strokeRect(lx,by-18,620,38);
-   ctx.fillStyle=known?'#777':s.color;ctx.font='bold 14px system-ui';ctx.fillText(s.name,lx+14,by);ctx.fillStyle='#9aa';ctx.font='11px system-ui';ctx.fillText(s.el+' / '+(KINDLAB[s.kind]||s.kind)+' / MP '+s.cost, lx+220,by);
+   ctx.fillStyle=known?'#777':s.color;ctx.font='bold 14px system-ui';ctx.fillText(s.name,lx+14,by);ctx.fillStyle='#9aa';ctx.font='11px system-ui';ctx.fillText(s.el+' / '+s.kind+' / MP '+spellCostLabel(s), lx+220,by);
    ctx.fillStyle=known?'#333':'#3d2f62';ctx.fillRect(lx+472,by-14,112,26);ctx.strokeStyle=known?'#666':'#d8d0ff';ctx.strokeRect(lx+472,by-14,112,26);ctx.fillStyle=known?'#999':'#eee8ff';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillText(known?'習得済み':'解読する',lx+528,by+3);ctx.textAlign='left';if(!known)clickAreas.push({x:lx+472,y:by-14,w:112,h:26,fn:()=>learnStoneSpell(s,P.activeStone)});tipAreas.push({x:lx,y:by-18,w:430,h:38,it:{spell:s}});}
  }else if(P.shop==='guild'){
   let lx=x0+24,ly=y0+62;ctx.fillStyle='#ffd24a';ctx.font='bold 13px system-ui';ctx.fillText('ギルドランク '+guildRank()+' / 名声レベル '+P.fameLv+'（'+fmt(P.fame)+'/'+fmt(fameNeed(P.fameLv))+'）',lx,y0+h-12);
@@ -1869,7 +2020,6 @@ function drawShop(){const {x0,y0,w,h}=drawShopFrame();
  if(msgT>0){ctx.textAlign='center';ctx.globalAlpha=Math.min(1,msgT);ctx.fillStyle='#ffe08a';ctx.font='bold 15px system-ui';ctx.fillText(msg,W/2,y0+h-16);ctx.globalAlpha=1;ctx.textAlign='left';}renderTips();}
 const BLAB={pow:'威',crit:'会',burn:'焼',def:'防',regen:'再',mpregen:'M回',spd:'速'};
 function buffDesc(s){if(!s.buffs||!s.buffs.length)return '-';return s.buffs.map(([k,a])=>(BLAB[k]||k)+'+'+(a<1?Math.round(a*100)+'%':a)).join(',');}
-const KINDLAB={bolt:'弾',impact:'着弾爆発',pierce:'貫通',self:'自周囲',meteo:'着弾AoE',front:'前方',fan:'扇形',zone:'設置',aura:'追従周囲',multi:'多段',funnel:'ファンネル',ray:'レイ',totem:'トーテム',summon:'召喚',rain:'降雨',orbit:'周回弾',mix:'混合',buff:'バフ',heal:'回復',return:'帰還',teleport:'町転移',resurrect:'蘇生'};
 const RUNE_CATS=[['威力',5],['節約',5],['範囲',5],['収束',5],['飛距離',5],['発動回数',4],['遅延',5],['迅速',5],['バフ量',5],['バフ時間',5],['全体バフ',5],['分裂',3],['変質',4],['確率',4],['持続時間',5],['マナ禁術',5],['ブラッド禁術',5],['特殊',2]];
 function drawMagicList(){clickAreas=[];tipAreas=[];ctx.fillStyle='rgba(6,10,8,.95)';ctx.fillRect(0,0,W,H);
  const x0=30,y0=16,w=840,h=572;ctx.fillStyle='rgba(20,18,14,.98)';ctx.strokeStyle='#caa64b';ctx.lineWidth=2;ctx.fillRect(x0,y0,w,h);ctx.strokeRect(x0,y0,w,h);
@@ -1880,9 +2030,9 @@ function drawMagicList(){clickAreas=[];tipAreas=[];ctx.fillStyle='rgba(6,10,8,.9
   ctx.font='9px system-ui';ctx.fillStyle='#9aa';ctx.fillText('列=属性＋特殊／上:小・下:大（MP順）。石碑で習得した魔法のみ名称と詳細（ホバー）が解放される',x0+18,y0+48);
   for(let ci=0;ci<5;ci++){const el=ELS[ci],col=ELC[el],bx=x0+16+ci*cw;let by=y0+66;
    ctx.fillStyle=col;ctx.font='bold 13px system-ui';ctx.fillText('■ '+el+(el==='特殊'?'':' 属性'),bx,by);by+=15;
-   const draw=(s)=>{const seen=P.spellsSeen.has(s.name);if(seen){ctx.fillStyle=col;ctx.font='bold 10px system-ui';ctx.fillText(s.name,bx,by);ctx.fillStyle='#8a96a0';ctx.font='7px system-ui';ctx.fillText('['+(KINDLAB[s.kind]||s.kind)+']',bx,by+8);tipAreas.push({x:bx-2,y:by-10,w:cw-14,h:15,it:{spell:s}});}else{ctx.fillStyle='#55504a';ctx.font='10px system-ui';ctx.fillText('未知の魔法',bx,by);}by+=14;};
-   if(el==='特殊'){const sp=SPELLS.filter(s=>!['火','水','風','土'].includes(s.el)).sort((a,b)=>a.cost-b.cost);ctx.fillStyle='#7a8a80';ctx.font='8px system-ui';ctx.fillText('― 特殊 ―',bx,by);by+=11;for(const s of sp)draw(s);}
-   else{const sm=SPELLS.filter(s=>s.el===el&&!s.big).sort((a,b)=>a.cost-b.cost),bg=SPELLS.filter(s=>s.el===el&&s.big).sort((a,b)=>a.cost-b.cost);
+   const draw=(s)=>{const seen=P.spellsSeen.has(s.name);if(seen){ctx.fillStyle=col;ctx.font='bold 10px system-ui';ctx.fillText(s.name,bx,by);ctx.fillStyle='#8a96a0';ctx.font='7px system-ui';ctx.fillText('['+s.kind+']',bx,by+8);tipAreas.push({x:bx-2,y:by-10,w:cw-14,h:15,it:{spell:s}});}else{ctx.fillStyle='#55504a';ctx.font='10px system-ui';ctx.fillText('未知の魔法',bx,by);}by+=14;};
+   if(el==='特殊'){const sp=SPELLS.filter(s=>!['火','水','風','土'].includes(s.el)).sort((a,b)=>spellTextLen(a)-spellTextLen(b)||spellBaseCost(a)-spellBaseCost(b));ctx.fillStyle='#7a8a80';ctx.font='8px system-ui';ctx.fillText('― 特殊 ―',bx,by);by+=11;for(const s of sp)draw(s);}
+   else{const sm=SPELLS.filter(s=>s.el===el&&!s.big).sort((a,b)=>spellTextLen(a)-spellTextLen(b)||spellBaseCost(a)-spellBaseCost(b)),bg=SPELLS.filter(s=>s.el===el&&s.big).sort((a,b)=>spellTextLen(a)-spellTextLen(b)||spellBaseCost(a)-spellBaseCost(b));
     ctx.fillStyle='#7a8a80';ctx.font='8px system-ui';ctx.fillText('― 小魔法 ―',bx,by);by+=11;for(const s of sm)draw(s);
     by+=2;ctx.fillStyle='#7a8a80';ctx.font='8px system-ui';ctx.fillText('― 大魔法 ―',bx,by);by+=11;for(const s of bg)draw(s);}}
  }else{ctx.font='10px system-ui';ctx.fillStyle='#9aa';ctx.fillText('種類別。未開放は「未知のルーン」。モンスター撃破やクエスト報酬で解放（各モンスター固有1種）',x0+18,y0+48);
@@ -1903,9 +2053,9 @@ function drawTeleportMenu(){clickAreas=[];tipAreas=[];ctx.fillStyle='rgba(5,6,12
 function drawTooltip(it){let title,col,lines=[];if(it.stat){title=it.stat;col='#ffe08a';lines.push('上昇: '+(STAT_HELP[it.stat]||[]).join(' / '));lines.push('現在値 '+effStat(it.stat)+'（基礎 '+P.base[it.stat]+'）');}
  else if(it.combo){const n=it.combo==='spell'?P.spellCombo:P.elCombo,tot=Math.min(5,P.spellCombo+P.elCombo);title=it.combo==='spell'?'スペル連携':'属性連携';col=it.combo==='spell'?'#ffe08a':'#9fe8ff';lines.push('この連携 '+n+'回分 / 合計 +'+(tot*10)+'% 火力（最大+50%）');lines.push(it.combo==='spell'?'違う魔法を続けると+10%。同じ魔法で戻る。':'違う属性を続けると+10%。同じ属性で戻る。');lines.push('個人管理。他プレイヤーには付与されない。');}
  else if(it.rune){const r=it.rune;title=r.name+'（'+r.read[0]+'）';col='#caa64b';lines.push('効果: '+(r.info||'-'));lines.push('呪文の前に続けて唱える（MPは乗算）');
- }else if(it.spell){const s=it.spell,ct=((s.big?1.6:0.3+s.cost*0.025))*castMult();title=s.name+'（'+s.read[0]+'）';col=s.color||'#cfd6e0';
-  lines.push('属性 '+s.el+' ／ '+(s.big?'大魔法':'小魔法')+' ／ 種別 '+(KINDLAB[s.kind]||s.kind));
-  lines.push('MP '+s.cost+'   威力 '+(s.power||'-')+'   詠唱 '+ct.toFixed(1)+'s');
+ }else if(it.spell){const s=it.spell,ct=castTime(s,[]);title=s.name+'（'+s.read[0]+'）';col=s.color||'#cfd6e0';
+  lines.push('属性 '+s.el+' ／ '+(s.big?'大魔法':'小魔法')+' ／ 種別 '+s.kind);
+  lines.push('MP '+spellCostLabel(s)+'   基礎威力 '+spellBasePower(s).toFixed(2)+'   詠唱 '+ct.toFixed(1)+'s');
   if(s.heal)lines.push('回復 '+Math.round(s.heal*100)+'%');
   if(s.radius)lines.push('範囲 '+s.radius);if(s.splash)lines.push('爆発範囲 '+s.splash);if(s.fan)lines.push('扇角 '+s.fan.toFixed(2));
   if(s.buffs&&s.buffs.length)lines.push('バフ '+buffDesc(s));
@@ -1965,15 +2115,15 @@ function drawWeatherFx(){const tm=performance.now()/1000;for(const w of weathers
   ctx.strokeStyle=c+'88';ctx.lineWidth=2;ctx.stroke();
   for(let i=0;i<26;i++){const a=i*2.39+tm*(w.type==='マナ嵐'?2.2:0.5),rr=((i*53+tm*60*(w.type==='宝物雨'?3:1))%w.r),px=w.x+Math.cos(a)*rr,py=w.y+Math.sin(a)*rr+(w.type==='宝物雨'?((tm*120+i*40)%w.r):0);ctx.globalAlpha=0.5;ctx.fillStyle=c;ctx.beginPath();ctx.arc(px,py,w.type==='宝物雨'?2.4:1.8,0,7);ctx.fill();ctx.globalAlpha=1;}
   ctx.fillStyle=c;ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillText('☼ '+w.type,w.x,w.y-w.r-8);}}
-function drawPredict(){for(const c of P.channels){const s=c.spell,m=c.mod||{radiusMul:1,distMul:1},big=!!s.big,rr=(big?1+(m.radiusMul-1)*2:m.radiusMul)*rangeMul(),pr=1-c.t/c.total,rot=performance.now()/720+pr*2;
+function drawPredict(){for(const c of P.channels){const s=c.spell,m=c.mod||{radiusMul:1,distMul:1},act=spellAction(s),big=!!s.big,rr=(big?1+(m.radiusMul-1)*2:m.radiusMul)*rangeMul(),pr=1-c.t/c.total,rot=performance.now()/720+pr*2;
   ctx.strokeStyle='rgba(90,170,255,.7)';ctx.fillStyle='rgba(90,170,255,.14)';ctx.lineWidth=2;
-  if(s.kind==='meteo'||s.kind==='zone'){const r=(s.radius||90)*rr,cr=Math.max(12,r*pr);ctx.beginPath();ctx.arc(c.tx,c.ty,r,0,7);ctx.fill();ctx.stroke();drawEffectArea(s.el,c.tx,c.ty,cr,0.25+0.45*pr,rot);drawSparkles(c.tx,c.ty,cr,s.el,8+Math.floor(pr*8),c.total,0.45+0.45*pr);}
-  else if(s.kind==='self'||s.kind==='aura'){const r=(s.radius||110)*rr,cr=Math.max(12,r*pr);ctx.beginPath();ctx.arc(P.x,P.y,r,0,7);ctx.fill();ctx.stroke();drawEffectArea(s.el,P.x,P.y,cr,0.25+0.45*pr,rot);drawSparkles(P.x,P.y,cr,s.el,8+Math.floor(pr*8),c.total,0.45+0.45*pr);}
-  else if(s.kind==='front'||s.kind==='fan'){const rad=(s.radius||140)*rr,half=s.kind==='fan'?(s.fan||0.6):0.45,cx=P.x+Math.cos(c.aim)*rad*0.45,cy=P.y+Math.sin(c.aim)*rad*0.45,cr=Math.max(12,rad*pr*0.65);ctx.beginPath();ctx.moveTo(P.x,P.y);ctx.arc(P.x,P.y,rad,c.aim-half,c.aim+half);ctx.closePath();ctx.fill();ctx.stroke();drawEffectArea(s.el,cx,cy,cr,0.22+0.38*pr,rot);drawSparkles(cx,cy,cr,s.el,7+Math.floor(pr*7),c.total,0.4+0.4*pr);}
-  else if(s.kind==='funnel'||s.kind==='orbit'){const cr=Math.max(12,(s.dist||72)*pr);ctx.beginPath();ctx.arc(P.x,P.y,(s.dist||72),0,7);ctx.stroke();drawEffectArea(s.el,P.x,P.y,cr,0.22+0.35*pr,rot);drawSparkles(P.x,P.y,cr,s.el,7+Math.floor(pr*7),c.total,0.35+0.4*pr);}
-  else if(s.kind==='ray'){const len=(s.len||300)*(m.distMul||1)*rangeMul(),w=(s.width||28)*rr;ctx.save();ctx.globalAlpha=.22+.35*pr;ctx.strokeStyle=s.color;ctx.lineWidth=w*2;ctx.beginPath();ctx.moveTo(P.x,P.y);ctx.lineTo(P.x+Math.cos(c.aim)*len*pr,P.y+Math.sin(c.aim)*len*pr);ctx.stroke();ctx.restore();}
-  else if(s.kind==='totem'||s.kind==='summon'){const r=(s.radius||70)*rr;ctx.beginPath();ctx.arc(c.tx,c.ty,r,0,7);ctx.fill();ctx.stroke();drawEffectArea(s.el,c.tx,c.ty,Math.max(12,r*pr),0.22+0.38*pr,rot);}
-  else if(s.kind==='rain'){const r=(s.radius||130)*rr;ctx.beginPath();ctx.arc(c.tx,c.ty,r,0,7);ctx.fill();ctx.stroke();drawEffectArea(s.el,c.tx,c.ty,Math.max(12,r*pr),0.22+0.38*pr,rot);}
+  if(act==='meteo'||act==='zone'||act==='impact'){const r=(s.radius||s.splash||90)*rr,cr=Math.max(12,r*pr);ctx.beginPath();ctx.arc(c.tx,c.ty,r,0,7);ctx.fill();ctx.stroke();drawEffectArea(s.el,c.tx,c.ty,cr,0.25+0.45*pr,rot);drawSparkles(c.tx,c.ty,cr,s.el,8+Math.floor(pr*8),c.total,0.45+0.45*pr);}
+  else if(act==='self'||act==='aura'){const r=(s.radius||110)*rr,cr=Math.max(12,r*pr);ctx.beginPath();ctx.arc(P.x,P.y,r,0,7);ctx.fill();ctx.stroke();drawEffectArea(s.el,P.x,P.y,cr,0.25+0.45*pr,rot);drawSparkles(P.x,P.y,cr,s.el,8+Math.floor(pr*8),c.total,0.45+0.45*pr);}
+  else if(act==='front'||act==='fan'){const rad=(s.radius||140)*rr,half=act==='fan'?(s.fan||0.6):0.45,cx=P.x+Math.cos(c.aim)*rad*0.45,cy=P.y+Math.sin(c.aim)*rad*0.45,cr=Math.max(12,rad*pr*0.65);ctx.beginPath();ctx.moveTo(P.x,P.y);ctx.arc(P.x,P.y,rad,c.aim-half,c.aim+half);ctx.closePath();ctx.fill();ctx.stroke();drawEffectArea(s.el,cx,cy,cr,0.22+0.38*pr,rot);drawSparkles(cx,cy,cr,s.el,7+Math.floor(pr*7),c.total,0.4+0.4*pr);}
+  else if(act==='funnel'||act==='orbit'){const cr=Math.max(12,(s.dist||72)*pr);ctx.beginPath();ctx.arc(P.x,P.y,(s.dist||72),0,7);ctx.stroke();drawEffectArea(s.el,P.x,P.y,cr,0.22+0.35*pr,rot);drawSparkles(P.x,P.y,cr,s.el,7+Math.floor(pr*7),c.total,0.35+0.4*pr);}
+  else if(act==='ray'){const len=(s.len||300)*(m.distMul||1)*rangeMul(),w=(s.width||28)*rr;ctx.save();ctx.globalAlpha=.22+.35*pr;ctx.strokeStyle=s.color;ctx.lineWidth=w*2;ctx.beginPath();ctx.moveTo(P.x,P.y);ctx.lineTo(P.x+Math.cos(c.aim)*len*pr,P.y+Math.sin(c.aim)*len*pr);ctx.stroke();ctx.restore();}
+  else if(act==='totem'||act==='summon'){const r=(s.radius||70)*rr;ctx.beginPath();ctx.arc(c.tx,c.ty,r,0,7);ctx.fill();ctx.stroke();drawEffectArea(s.el,c.tx,c.ty,Math.max(12,r*pr),0.22+0.38*pr,rot);}
+  else if(act==='rain'){const r=(s.radius||130)*rr;ctx.beginPath();ctx.arc(c.tx,c.ty,r,0,7);ctx.fill();ctx.stroke();drawEffectArea(s.el,c.tx,c.ty,Math.max(12,r*pr),0.22+0.38*pr,rot);}
   else{const len=440*(m.distMul||1);ctx.beginPath();ctx.moveTo(P.x,P.y);ctx.lineTo(P.x+Math.cos(c.aim)*len,P.y+Math.sin(c.aim)*len);ctx.stroke();ctx.beginPath();ctx.arc(c.tx,c.ty,8,0,7);ctx.stroke();}}}
 document.getElementById('ref').innerHTML='<b>M</b> キーで魔法・ルーン一覧を表示　／　属性相性: 火→風→土→水→火';
 async function loadInitialSave(){let loaded=await loadFromIndexedDb(true);if(!loaded&&loadFromCookie(true)){loaded=true;saveToIndexedDb(true);}if(!loaded){const sp=townSpawn();switchMap('town',sp.x,sp.y);}}
