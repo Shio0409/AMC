@@ -121,6 +121,7 @@ window.AMC_MAPS=function AMC_MAPS(ctx){
  };
  const out={};
  for(let i=0;i<A.length;i++){const [id,name,mlv,theme,kind,seed,count,enemies,bossDef,fac]=A[i],t=THEME[theme]||THEME.plains,town=kind==='town';out[id]={name,mlv,town,ground:t.ground,gpond:t.gpond,deco:t.deco,ponds:t.ponds.map(p=>({...p})),decos:genDecos(seed,count),enemies:(enemies||[]).slice(),boss:!!bossDef,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:bossDef||null,portals:[]};if(town)out[id].facilities=facilities(fac||'small');}
+ out.macroJail={name:'牢獄',mlv:0,town:true,ground:'#24262b',gpond:'#303844',deco:'rock',ponds:[],decos:genDecos(40404,16),enemies:[],boss:false,bx:WORLD_W/2,by:WORLD_H*0.28,bossDef:null,portals:[]};
  const STONES={
   field:[{id:'field:flare-chain',x:540,y:520,spell:'フレアチェイン'},{id:'field:mist-veil',x:1380,y:880,spell:'ミストヴェール'}],
   royalPlain:[{id:'royalPlain:flare-seal',x:620,y:470,spell:'フレアシール'},{id:'royalPlain:air-raid',x:1510,y:970,spell:'エアレイド'}],
