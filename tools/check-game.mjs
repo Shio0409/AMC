@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import vm from 'node:vm';
 
 const src = fs.readFileSync('index.html', 'utf8');
 const scripts = [...src.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)]
@@ -70,6 +71,21 @@ if (src.includes('const NPC_KEYWORD_REPLIES=[')) {
 }
 if (!externalScripts.includes('AMC_NPC_KEYWORD_REPLIES')) {
   throw new Error('npc_dialogue.js is not loaded');
+}
+
+{
+  const ctx = { window: {} };
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync('npc_dialogue.js', 'utf8'), ctx);
+  const rows = ctx.window.AMC_NPC_KEYWORD_REPLIES || [];
+  const kana = /^[\u3041-\u3096\u30fc]+$/;
+  const nonKanaKeys = [];
+  rows.forEach((row, index) => {
+    for (const key of row.keys || []) {
+      if (!kana.test(key)) nonKanaKeys.push(`${index}:${key}`);
+    }
+  });
+  if (nonKanaKeys.length) throw new Error(`NPC dialogue keys must be hiragana only: ${nonKanaKeys.join(', ')}`);
 }
 
 if (/\b(?:shots|eshots)\s*=\s*\[/.test(src)) {
