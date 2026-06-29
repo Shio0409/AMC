@@ -1148,68 +1148,69 @@ function drawSparkles(x,y,r,el,count,seed,alpha){const tm=performance.now()/1000
   ctx.globalAlpha=(alpha||1)*Math.max(0,tw);ctx.fillStyle='hsl('+((h+i*18+tm*45)%360)+' 95% '+(62+tw*24)+'%)';ctx.beginPath();ctx.arc(px,py,1.2+tw*2.2,0,7);ctx.fill();
   if(tw>0.72){ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(px-4,py);ctx.lineTo(px+4,py);ctx.moveTo(px,py-4);ctx.lineTo(px,py+4);ctx.stroke();}}
  ctx.globalAlpha=1;}
+const NPC_COLOR='#e8eefc';
 const NPC_DEFS=[
- {name:'行商人ミラ',col:'#ffcf6a',home:'town',roam:true,dl:[
+ {name:'行商人ミラ',home:'town',roam:true,dl:[
   ['いらっしゃい、見ない顔だね。','うちの品、見ていくかい？'],['お、また来たね！','旅の話、ちょっと聞かせてよ。'],
   ['あんたとは気が合いそうだ。','とっておきを回してあげる。'],['あんたなら掛け売りでもいいよ。','商売仲間みたいなもんさ！'],
   ['よっ、相棒！顔見せに来たか。','あんたの無事が一番の儲けさ。']]},
- {name:'衛兵ガロ',col:'#9fb0c0',home:'town',dl:[
+ {name:'衛兵ガロ',home:'town',dl:[
   ['……止まれ。何者だ。','町の平和は俺が守る。'],['お前か。通っていい。','無茶はするなよ、新人。'],
   ['お前の働き、見ているぞ。','頼れる奴だと思っている。'],['お前になら背中を預けられる。','東の門、任せてもいいくらいだ。'],
   ['戦友、と呼ばせてもらおう。','お前が居れば町は安泰だ。']]},
- {name:'少女ティナ',col:'#ff9ec0',home:'town',roam:true,dl:[
+ {name:'少女ティナ',home:'town',roam:true,dl:[
   ['わっ、魔法つかえるの！？','すごい、かっこいい……！'],['また会えた！ねえ魔法見せて！','わたしも使えるかな？'],
   ['おにいちゃんみたいになりたいな。','こっそり練習してるんだ、えへへ。'],['約束だよ、空を飛ぶ魔法を一緒に！','おにいちゃんは わたしの先生だね！'],
   ['だいすき！ずっと友だちだよ！','りゅうせいの魔法、見せてね！']]},
- {name:'学者フェン',col:'#a0d0ff',home:'town',dl:[
+ {name:'学者フェン',home:'town',dl:[
   ['詠唱とは世界への問い合わせさ。','……君、素人ではないな？'],['ルーンの重ね掛け、悪くない。','少しは見どころがある。'],
   ['君の戦い方、研究に値するよ。','共同研究でもしたい気分だ。'],['君となら難題も解けそうだ。','礼は言わんが、感謝してる。'],
   ['友よ、と言ったら笑うかい？','君の発想にはいつも驚かされる。']]},
- {name:'鍛冶見習いコウ',col:'#ff8a5a',home:'town',dl:[
+ {name:'鍛冶見習いコウ',home:'town',dl:[
   ['おう、強化なら任せろ！','親方を超えるのが俺の夢だ！'],['また来たな、燃えてきたぜ！','その装備、鍛え甲斐がある！'],
   ['お前の装備、一番強くする！','相棒の道具は手を抜かねえ！'],['お前のためなら徹夜も辞さねえ！','二人で最強装備を目指そう！'],
   ['ブラザー！今日も打つぞ！','お前の冒険、俺の鎚が支える！']]},
- {name:'吟遊詩人リル',col:'#c0a0ff',home:'field',roam:true,dl:[
+ {name:'吟遊詩人リル',home:'field',roam:true,dl:[
   ['♪ 見知らぬ旅人 ひとり〜','やあ、いい風が吹いてる。'],['また会ったね、旅の人。','君の話、詩にしたくなる。'],
   ['君の戦い、一篇の叙事詩だ。','次の街で歌わせてもらうよ。'],['君は私のミューズだね。','どこへでも、歌って追うよ。'],
   ['親友に捧ぐ歌を作ったんだ。','君の旅路に祝福を込めて♪']]},
- {name:'老魔道士オルト',col:'#bfe8c0',home:'field',dl:[
+ {name:'老魔道士オルト',home:'field',dl:[
   ['ふぉっふぉ、若い力よ。','マナの巡りを感じるかね？'],['また来たか。精進しておるな。','撃ちすぎは器を広げるが隙も生む。'],
   ['お主、見込みがあるのう。','秘伝を少し授けてもよかろう。'],['お主は儂の弟子も同然じゃ。','バフを重ねて放つのじゃ。'],
   ['好い後継ができたものよ。','この老骨、未来を託すぞ。']]},
- {name:'チュートリアル案内人',col:'#9fe8ff',home:'town',fixed:true,tutorial:true,dl:[['困ったらここで基本を確認できます。','カカシでダメージも試せます。']]}
+ {name:'チュートリアル案内人',home:'town',fixed:true,tutorial:true,dl:[['困ったらここで基本を確認できます。','カカシでダメージも試せます。']]}
 ];
 const TOWN_NPC_DATA={
- town:[['ミラベル','人間','町の案内役','よく笑う世話焼き','蜂蜜色のケープ','#ffcf6a',0],['ガロム','人間','門番','まじめだが照れ屋','磨いた胸当て','#9fb0c0',1],['ティナ','小人族','見習い魔法使い','好奇心旺盛','大きなリボン','#ff9ec0',2]],
- windmere:[['エイル','風精族','風車守','のんびりした聞き上手','風鈴の耳飾り','#9fe8ff',3],['ノル','人間','粉ひき職人','力持ちでやさしい','白い粉のついた袖','#d8c090',4],['リッカ','獣人','配達係','足が速く人なつこい','短い青マント','#90e0b8',5]],
- mabel:[['メイ','人間','麦畑の管理人','面倒見がよい','麦穂の髪飾り','#e6c76a',0],['コポ','小人族','種屋','几帳面で親切','丸眼鏡','#bfe8c0',6],['サナ','人間','パン焼き','朗らかな努力家','焼き色のエプロン','#ffb080',2]],
- fenceEnd:[['フェリオ','人間','柵直し職人','口数は少ないが温かい','革手袋','#c0a080',4],['ネネ','獣人','見張り番','耳がよく明るい','赤いスカーフ','#ff9a9a',5],['ユグ','樹人族','苗木係','ゆっくり話す穏やかさ','若葉の肩掛け','#8ed070',6]],
- goldhahn:[['ハンナ','人間','穀物商','商売上手で気前がいい','金糸の帽子','#ffd86a',0],['ブラン','牛人族','荷馬車係','穏やかな大柄','厚い作業服','#d0b080',4],['ピコ','小人族','市場の帳簿係','数字好きで親切','小さな算盤','#b8d8ff',2]],
- stillrow:[['ロウナ','人間','水路番','静かで頼れる','青い腰布','#80c8e8',3],['セト','蜥蜴人','灌漑技師','几帳面な職人気質','防水ゴーグル','#9fc090',6],['ミント','妖精族','花売り','少し夢見がち','花冠','#ffb8d8',5]],
- univel:[['ユリアン','人間','王都案内人','礼儀正しく親しみやすい','紺の制服','#c8d8ff',1],['マティカ','人間','図書館司書','物知りで柔らかい','銀縁眼鏡','#a0d0ff',3],['ロゼ','獣人','路地の菓子職人','明るく手際がいい','桃色の前掛け','#ff9ec0',2],['セドリック','人間','若い騎士','誠実で少し心配性','白い肩章','#d8d8e8',4]],
- ceres:[['セラ','人間','薬草師','落ち着いた気配り上手','緑のポーチ','#9fe0a0',5],['トト','小人族','鐘つき','元気な朝型','真鍮の鈴','#ffd27a',6],['リオン','人間','宿屋番','聞き上手','柔らかなショール','#e0c8a0',0]],
- rowendil:[['ロウェナ','エルフ','森の道案内','優雅で親切','蔦模様の外套','#90d8a0',3],['ディル','獣人','弓具職人','陽気な職人','羽根飾り','#c0e080',5],['マユ','小人族','茸採り','慎重でかわいい','茸柄の帽子','#d0b0ff',2]],
- timber:[['ティム','人間','木こり','豪快だがやさしい','斧の革帯','#c09060',4],['ベラ','樹人族','年輪読み','穏やかな長話好き','苔色の髪','#80c070',6],['ナナセ','人間','木工細工師','細やかな気配り','木屑のついた袖','#e0b880',0]],
- hunterHideout:[['ハルカ','獣人','罠外し名人','軽口がうまい','短いフード','#a8d8a0',5],['ゲント','人間','猟場番','無骨だが親切','古い弓袋','#b8a070',1],['シア','エルフ','薬矢師','静かな励まし上手','薄紫の手袋','#c8a0ff',3]],
- greenhollow:[['ホロ','小人族','苔庭師','のんびり屋','苔の帽子','#8fd090',6],['リーネ','妖精族','光虫飼い','きらきらした語り口','蛍石の腕輪','#b8fff0',2],['オルバ','人間','橋守','頼れるお兄さん肌','丈夫な長靴','#b0c8a0',4]],
- miraLake:[['ミラ','水精族','湖畔案内人','透明感のある穏やかさ','水色のヴェール','#80d8ff',3],['カイ','人間','釣り師','気さくな聞き役','釣り針の帽子','#a0c8e0',1],['ルル','小人族','貝細工師','照れ屋で丁寧','貝殻の首飾り','#ffd0e8',2]],
- ripple:[['リプ','水精族','波紋読み','柔らかく前向き','波模様の袖','#78c8ff',3],['マロ','人間','渡し守','世話好き','厚手のロープ帯','#c8b090',4],['フィナ','妖精族','水草染め職人','色に詳しい','青緑の指先','#90e8c8',5]],
- resortTown:[['ラナ','人間','湯治宿の若女将','おっとりした働き者','薄桃の羽織','#ffb8c8',0],['ポル','小人族','土産物係','商売熱心で憎めない','小さな看板リュック','#ffd88a',6],['シェル','獣人','浜辺の警備員','明るい体育会系','白い笛','#a8d8ff',5]],
- acrossPort:[['アクロ','人間','港湾案内人','声が大きく親切','青い船員帽','#80b8ff',1],['マリン','水精族','潮読み','冗談好き','珊瑚の髪留め','#70e0d0',3],['トバリ','鳥人族','灯台係','遠くを見るのが得意','羽根付き外套','#d8d8ff',5],['サム','人間','倉庫番','几帳面で優しい','荷札だらけの上着','#c8b080',4]],
- dockside:[['ドック','人間','船大工','手先が器用','工具ベルト','#d0a070',4],['ミウ','猫人族','魚市場の案内','陽気で素早い','魚柄の前掛け','#ffb090',5],['エッダ','人間','ロープ編み職人','穏やかで根気強い','縄目の腕輪','#b8c0a0',0]],
- saltFlat:[['ソルト','人間','塩田管理人','さっぱりした性格','白い日よけ布','#e8e0c8',1],['ナギ','水精族','干潟の採集者','静かな観察好き','硝子瓶の腰袋','#90d8e8',3],['パル','小人族','保存食係','小さな親切を重ねる','塩壺リュック','#d8c090',6]],
- graubachCity:[['グラウ','人間','工場案内人','理屈好きだが親切','煤けた作業帽','#b0b0a0',4],['リベット','機人族','修理技師','無表情だが優しい','真鍮の関節','#a8c0c8',6],['ネイラ','人間','安全監督','きびきびした気配り','黄色い腕章','#ffd86a',1],['コル','小人族','歯車屋','早口で楽しげ','歯車の眼鏡','#c8d0ff',2]],
- ashCommon:[['アッシュ','人間','煤払い職人','笑うと明るい','灰色のバンダナ','#b8b0a8',4],['モナ','獣人','食堂係','元気をくれる','大きな鍋つかみ','#ffb878',5],['イオ','機人族','街灯管理','丁寧な口調','小さなランプ','#ffe08a',6]],
- eisenroar:[['アイゼ','人間','鉱山受付','頼れる姉御肌','鉄色のコート','#b0b8c8',1],['ロア','ドワーフ','鍛冶親方','豪快で面倒見がよい','分厚い革前掛け','#d09060',4],['キラ','結晶族','鑑定士','静かでやさしい','光る指先','#c8e8ff',3],['ピック','小人族','鉱石拾い','小走りで働き者','小さなつるはし','#ffd27a',6]],
- deepvein:[['ヴェイン','ドワーフ','坑道測量士','慎重で親切','測量棒','#c0a080',4],['ミカ','結晶族','灯り守','淡々と励ます','結晶ランタン','#b8e8ff',3],['トトリ','小人族','休憩所係','お茶好き','湯気の立つ水筒','#e0c090',2]],
- freepick:[['フリー','人間','自由採掘者','おおらかで気前がいい','寄せ集め装備','#d8b070',0],['バル','ドワーフ','鉱石交換屋','見た目より繊細','赤銅の髭飾り','#c89070',4],['ネル','獣人','坑道走り','明るい案内役','発光石の靴','#a8d8ff',5]],
- wallguard:[['ウォル','人間','壁門指揮官','落ち着いた励まし上手','白い外套','#d0d8e8',1],['ミラド','人間','補給係','細かい気配り','大きな鞄','#d8c090',0],['ゼナ','獣人','斥候','軽やかで親しみやすい','灰色のフード','#a8b8c8',5],['オリカ','小人族','地図描き','几帳面な話し方','折り畳み地図','#b8d8ff',6]],
- garrison:[['ガレス','人間','訓練教官','声は大きいが優しい','訓練用の木剣','#c0c8d0',1],['リタ','人間','救護班','手早く温かい','白い包帯ポーチ','#ffd0d0',2],['ブロウ','牛人族','荷役兵','穏やかな力持ち','厚い肩当て','#c8a880',4]],
- pioneerVillages:[['パイ','人間','開拓まとめ役','前向きな苦労人','土のついた靴','#d0b080',0],['ニア','小人族','井戸掘り','元気で励まし上手','小さなヘルメット','#b8d8f0',6],['モリス','樹人族','防風林係','ゆったりした安心感','若枝の杖','#90c878',3]],
- liberta:[['リベル','人間','自由市の案内','気さくなまとめ役','色違いの袖','#ffcf8a',0],['タヴィ','猫人族','屋根伝い配達','いたずら好きだが親切','鈴付きマフラー','#ffb0c0',5],['エマ','人間','小劇場の受付','表情豊か','星柄ケープ','#c8a8ff',2]],
- lastHold:[['ラス','人間','最後の砦の案内','静かな頼もしさ','黒い外套','#c0c0d8',1],['ホルン','ドワーフ','防壁修理長','不器用な優しさ','補修道具一式','#c89070',4],['サリ','光精族','祈りの灯守','柔らかく勇気づける','小さな灯火','#fff0a0',3],['ネム','小人族','記録係','眠そうでも誠実','分厚い帳面','#b8c8ff',6]],
- exileCamp:[['エグ','人間','流刑地の炊き出し係','面倒見がよい','煤けた鍋','#d0a880',0],['ライカ','獣人','見回り','さばさばした優しさ','裂けたマント','#b8b8c8',5],['ノア','人間','手紙預かり','静かな聞き役','封筒の束','#d8c8b0',2]],
- ruinedSankt:[['ザンク','人間','廃区案内人','冗談で怖さを和らげる','古い礼服','#b8b0c8',1],['クレア','光精族','瓦礫の花守','明るい祈り手','白い花飾り','#ffe8b0',3],['メル','小人族','拾得物係','宝探し好き','大きな袋','#d8c090',6]]
+ town:[['ミラベル','人間','町の案内役','よく笑う世話焼き','蜂蜜色のケープ',0],['ガロム','人間','門番','まじめだが照れ屋','磨いた胸当て',1],['ティナ','小人族','見習い魔法使い','好奇心旺盛','大きなリボン',2]],
+ windmere:[['エイル','風精族','風車守','のんびりした聞き上手','風鈴の耳飾り',3],['ノル','人間','粉ひき職人','力持ちでやさしい','白い粉のついた袖',4],['リッカ','獣人','配達係','足が速く人なつこい','短い青マント',5]],
+ mabel:[['メイ','人間','麦畑の管理人','面倒見がよい','麦穂の髪飾り',0],['コポ','小人族','種屋','几帳面で親切','丸眼鏡',6],['サナ','人間','パン焼き','朗らかな努力家','焼き色のエプロン',2]],
+ fenceEnd:[['フェリオ','人間','柵直し職人','口数は少ないが温かい','革手袋',4],['ネネ','獣人','見張り番','耳がよく明るい','赤いスカーフ',5],['ユグ','樹人族','苗木係','ゆっくり話す穏やかさ','若葉の肩掛け',6]],
+ goldhahn:[['ハンナ','人間','穀物商','商売上手で気前がいい','金糸の帽子',0],['ブラン','牛人族','荷馬車係','穏やかな大柄','厚い作業服',4],['ピコ','小人族','市場の帳簿係','数字好きで親切','小さな算盤',2]],
+ stillrow:[['ロウナ','人間','水路番','静かで頼れる','青い腰布',3],['セト','蜥蜴人','灌漑技師','几帳面な職人気質','防水ゴーグル',6],['ミント','妖精族','花売り','少し夢見がち','花冠',5]],
+ univel:[['ユリアン','人間','王都案内人','礼儀正しく親しみやすい','紺の制服',1],['マティカ','人間','図書館司書','物知りで柔らかい','銀縁眼鏡',3],['ロゼ','獣人','路地の菓子職人','明るく手際がいい','桃色の前掛け',2],['セドリック','人間','若い騎士','誠実で少し心配性','白い肩章',4]],
+ ceres:[['セラ','人間','薬草師','落ち着いた気配り上手','緑のポーチ',5],['トト','小人族','鐘つき','元気な朝型','真鍮の鈴',6],['リオン','人間','宿屋番','聞き上手','柔らかなショール',0]],
+ rowendil:[['ロウェナ','エルフ','森の道案内','優雅で親切','蔦模様の外套',3],['ディル','獣人','弓具職人','陽気な職人','羽根飾り',5],['マユ','小人族','茸採り','慎重でかわいい','茸柄の帽子',2]],
+ timber:[['ティム','人間','木こり','豪快だがやさしい','斧の革帯',4],['ベラ','樹人族','年輪読み','穏やかな長話好き','苔色の髪',6],['ナナセ','人間','木工細工師','細やかな気配り','木屑のついた袖',0]],
+ hunterHideout:[['ハルカ','獣人','罠外し名人','軽口がうまい','短いフード',5],['ゲント','人間','猟場番','無骨だが親切','古い弓袋',1],['シア','エルフ','薬矢師','静かな励まし上手','薄紫の手袋',3]],
+ greenhollow:[['ホロ','小人族','苔庭師','のんびり屋','苔の帽子',6],['リーネ','妖精族','光虫飼い','きらきらした語り口','蛍石の腕輪',2],['オルバ','人間','橋守','頼れるお兄さん肌','丈夫な長靴',4]],
+ miraLake:[['ミラ','水精族','湖畔案内人','透明感のある穏やかさ','水色のヴェール',3],['カイ','人間','釣り師','気さくな聞き役','釣り針の帽子',1],['ルル','小人族','貝細工師','照れ屋で丁寧','貝殻の首飾り',2]],
+ ripple:[['リプ','水精族','波紋読み','柔らかく前向き','波模様の袖',3],['マロ','人間','渡し守','世話好き','厚手のロープ帯',4],['フィナ','妖精族','水草染め職人','色に詳しい','青緑の指先',5]],
+ resortTown:[['ラナ','人間','湯治宿の若女将','おっとりした働き者','薄桃の羽織',0],['ポル','小人族','土産物係','商売熱心で憎めない','小さな看板リュック',6],['シェル','獣人','浜辺の警備員','明るい体育会系','白い笛',5]],
+ acrossPort:[['アクロ','人間','港湾案内人','声が大きく親切','青い船員帽',1],['マリン','水精族','潮読み','冗談好き','珊瑚の髪留め',3],['トバリ','鳥人族','灯台係','遠くを見るのが得意','羽根付き外套',5],['サム','人間','倉庫番','几帳面で優しい','荷札だらけの上着',4]],
+ dockside:[['ドック','人間','船大工','手先が器用','工具ベルト',4],['ミウ','猫人族','魚市場の案内','陽気で素早い','魚柄の前掛け',5],['エッダ','人間','ロープ編み職人','穏やかで根気強い','縄目の腕輪',0]],
+ saltFlat:[['ソルト','人間','塩田管理人','さっぱりした性格','白い日よけ布',1],['ナギ','水精族','干潟の採集者','静かな観察好き','硝子瓶の腰袋',3],['パル','小人族','保存食係','小さな親切を重ねる','塩壺リュック',6]],
+ graubachCity:[['グラウ','人間','工場案内人','理屈好きだが親切','煤けた作業帽',4],['リベット','機人族','修理技師','無表情だが優しい','真鍮の関節',6],['ネイラ','人間','安全監督','きびきびした気配り','黄色い腕章',1],['コル','小人族','歯車屋','早口で楽しげ','歯車の眼鏡',2]],
+ ashCommon:[['アッシュ','人間','煤払い職人','笑うと明るい','灰色のバンダナ',4],['モナ','獣人','食堂係','元気をくれる','大きな鍋つかみ',5],['イオ','機人族','街灯管理','丁寧な口調','小さなランプ',6]],
+ eisenroar:[['アイゼ','人間','鉱山受付','頼れる姉御肌','鉄色のコート',1],['ロア','ドワーフ','鍛冶親方','豪快で面倒見がよい','分厚い革前掛け',4],['キラ','結晶族','鑑定士','静かでやさしい','光る指先',3],['ピック','小人族','鉱石拾い','小走りで働き者','小さなつるはし',6]],
+ deepvein:[['ヴェイン','ドワーフ','坑道測量士','慎重で親切','測量棒',4],['ミカ','結晶族','灯り守','淡々と励ます','結晶ランタン',3],['トトリ','小人族','休憩所係','お茶好き','湯気の立つ水筒',2]],
+ freepick:[['フリー','人間','自由採掘者','おおらかで気前がいい','寄せ集め装備',0],['バル','ドワーフ','鉱石交換屋','見た目より繊細','赤銅の髭飾り',4],['ネル','獣人','坑道走り','明るい案内役','発光石の靴',5]],
+ wallguard:[['ウォル','人間','壁門指揮官','落ち着いた励まし上手','白い外套',1],['ミラド','人間','補給係','細かい気配り','大きな鞄',0],['ゼナ','獣人','斥候','軽やかで親しみやすい','灰色のフード',5],['オリカ','小人族','地図描き','几帳面な話し方','折り畳み地図',6]],
+ garrison:[['ガレス','人間','訓練教官','声は大きいが優しい','訓練用の木剣',1],['リタ','人間','救護班','手早く温かい','白い包帯ポーチ',2],['ブロウ','牛人族','荷役兵','穏やかな力持ち','厚い肩当て',4]],
+ pioneerVillages:[['パイ','人間','開拓まとめ役','前向きな苦労人','土のついた靴',0],['ニア','小人族','井戸掘り','元気で励まし上手','小さなヘルメット',6],['モリス','樹人族','防風林係','ゆったりした安心感','若枝の杖',3]],
+ liberta:[['リベル','人間','自由市の案内','気さくなまとめ役','色違いの袖',0],['タヴィ','猫人族','屋根伝い配達','いたずら好きだが親切','鈴付きマフラー',5],['エマ','人間','小劇場の受付','表情豊か','星柄ケープ',2]],
+ lastHold:[['ラス','人間','最後の砦の案内','静かな頼もしさ','黒い外套',1],['ホルン','ドワーフ','防壁修理長','不器用な優しさ','補修道具一式',4],['サリ','光精族','祈りの灯守','柔らかく勇気づける','小さな灯火',3],['ネム','小人族','記録係','眠そうでも誠実','分厚い帳面',6]],
+ exileCamp:[['エグ','人間','流刑地の炊き出し係','面倒見がよい','煤けた鍋',0],['ライカ','獣人','見回り','さばさばした優しさ','裂けたマント',5],['ノア','人間','手紙預かり','静かな聞き役','封筒の束',2]],
+ ruinedSankt:[['ザンク','人間','廃区案内人','冗談で怖さを和らげる','古い礼服',1],['クレア','光精族','瓦礫の花守','明るい祈り手','白い花飾り',3],['メル','小人族','拾得物係','宝探し好き','大きな袋',6]]
 };
 const NPC_RUNE_POOL=['アルティメット','クインタプル','エクストリーム','インフィニティ','ギガンティック','ショットガン','マシンガン','バラージ','サークル','クロス','ワイドショット','ナローショット','スキャッター','ヘビー','インスタントリー','セーバー','ピアース','ホーミング','アフリクト','ロック','リユース','コンバージ','ストレッチ','ターキー'];
 function npcHashText(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h>>>0;}
@@ -1259,7 +1260,7 @@ function townNpcLines(d){const town=(MAPS[d.home]&&MAPS[d.home].name)||d.home,h=
   [npcPick(close,h,8),npcPick(close,h,9)]
  ];}
 function npcHomePos(home,slot){const p=[[WORLD_W/2-250,WORLD_H/2-95],[WORLD_W/2+245,WORLD_H/2-88],[WORLD_W/2-180,WORLD_H/2+138],[WORLD_W/2+190,WORLD_H/2+132]][slot%4];return{x:p[0],y:p[1]};}
-const TOWN_NPC_DEFS=Object.entries(TOWN_NPC_DATA).flatMap(([home,list])=>list.map((a,slot)=>{const d={home,slot,name:a[0],race:a[1],role:a[2],trait:a[3],look:a[4],col:a[5],sprite:a[6],rune:NPC_RUNE_POOL[(slot+home.length)%NPC_RUNE_POOL.length]};d.dl=townNpcLines(d);return d;}));
+const TOWN_NPC_DEFS=Object.entries(TOWN_NPC_DATA).flatMap(([home,list])=>list.map((a,slot)=>{const d={home,slot,name:a[0],race:a[1],role:a[2],trait:a[3],look:a[4],sprite:a[5],rune:NPC_RUNE_POOL[(slot+home.length)%NPC_RUNE_POOL.length]};d.dl=townNpcLines(d);return d;}));
 let npcs=NPC_DEFS.filter(d=>d.tutorial).concat(TOWN_NPC_DEFS).map((d,idx)=>{const p=d.fixed?{x:TUTOR_X,y:TUTOR_Y}:npcHomePos(d.home,d.slot||0);return{...d,idx,map:d.home,x:p.x,y:p.y,wAng:Math.random()*7,st:0,li:0,talk:false,tt:0,moveT:8+Math.random()*20,aff:0,done:0,q:null,offer:null};});
 // NPCごとの解放ルーン（高度ルーン）と固有レアレリック
 const NPC_RUNE=['アルティメット','クインタプル','エクストリーム','インフィニティ','ギガンティック','ショットガン','マシンガン','バラージ','サークル','スキャッター','ヘビー','インスタントリー'];
@@ -1390,15 +1391,17 @@ function npcAccept(n,o){if(n.q)return;if(!n.offers||!n.offers.length)n.offers=ge
 function npcAffGain(q){return q.rank==='high'?50:q.rank==='mid'?30:20;}
 function addNpcAff(n,amt){n.affLv=affLv(n);n.aff=(n.aff||0)+amt;while(n.aff>=100&&n.affLv<5){n.aff-=100;n.affLv++;n.done=Math.max(n.done||0,n.affLv-1);}if(n.affLv>=5)n.aff=Math.min(100,n.aff);}
 function npcClaim(n){if(!n.q||n.q.count<n.q.need)return;const x=n.q.exp,g=npcAffGain(n.q);gainExp(x);addNpcAff(n,g);n.q=null;n.offers=[];n.offer=null;P.boxes.push({box:true,npc:n.idx,name:n.name+'の贈り物'});flash(n.name+'と親しくなった！ 好感度+'+g+'%（Lv'+affLv(n)+' '+Math.floor(n.aff||0)+'%）＋贈り物');se('quest');}
+function npcBubbleLines(t,maxW){const chars=String(t||'').split(''),lines=[];let line='';for(const ch of chars){const next=line+ch;if(line&&ctx.measureText(next).width>maxW){lines.push(line);line=ch;}else line=next;}if(line||!lines.length)lines.push(line);return lines;}
+function drawNpcBubble(x,y,t,opt){opt=opt||{};ctx.save();ctx.textAlign='center';ctx.font=opt.font||'12px system-ui';const pad=10,lineH=15,maxW=opt.maxW||360,lines=npcBubbleLines(t,maxW-pad*2),tw=Math.max(opt.minW||48,Math.min(maxW,Math.max(...lines.map(l=>ctx.measureText(l).width))+pad*2)),th=lines.length*lineH+pad*2-2,bx=x-tw/2,by=y-th-(opt.tail||10);ctx.fillStyle=opt.fill||'rgba(20,18,14,.94)';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.fillRect(bx,by,tw,th);ctx.strokeRect(bx,by,tw,th);ctx.beginPath();ctx.moveTo(x-6,by+th);ctx.lineTo(x+6,by+th);ctx.lineTo(x,by+th+(opt.tail||10));ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle=opt.color||'#f6f2e8';for(let i=0;i<lines.length;i++)ctx.fillText(lines[i],bx+tw/2,by+pad+11+i*lineH);ctx.restore();}
 function drawNpcs(){for(const n of npcs){if(n.map!==MAPID)continue;
-  if(!drawNpcSprite(n,75)){ctx.fillStyle=n.col;ctx.beginPath();ctx.arc(n.x,n.y,12,0,7);ctx.fill();ctx.fillStyle='#1a160f';ctx.beginPath();ctx.arc(n.x,n.y-2,5,0,7);ctx.fill();}
+  if(!drawNpcSprite(n,75)){ctx.fillStyle=NPC_COLOR;ctx.beginPath();ctx.arc(n.x,n.y,12,0,7);ctx.fill();ctx.fillStyle='#1a160f';ctx.beginPath();ctx.arc(n.x,n.y-2,5,0,7);ctx.fill();}
   ctx.fillStyle='#fff';ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText(n.name,n.x,n.y-57);
   ctx.fillStyle='#ffd24a';ctx.font='9px system-ui';ctx.fillText('★'.repeat(affLv(n))+' '+Math.floor(n.aff||0)+'%'+(n.q&&n.q.count>=n.q.need?' ✓報酬':n.q?' 依頼中':''),n.x,n.y-69);
-  if(n.reactT>0){const t=n.react||'！',w=Math.min(280,t.length*13+20),bx=n.x-w/2,by=n.y-62;ctx.fillStyle='rgba(40,20,16,.95)';ctx.strokeStyle='#ffd24a';ctx.lineWidth=2;ctx.fillRect(bx,by,w,28);ctx.strokeRect(bx,by,w,28);ctx.fillStyle='#ffe7b0';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillText(t,n.x,by+18);}
-  else if(n.talk){const L=npcLines(n),t=L[n.li%L.length],w=Math.min(380,t.length*13+24),bx=n.x-w/2,by=n.y-62;ctx.fillStyle='rgba(20,18,14,.92)';ctx.strokeStyle=n.col;ctx.lineWidth=2;ctx.fillRect(bx,by,w,30);ctx.strokeRect(bx,by,w,30);ctx.beginPath();ctx.moveTo(n.x-6,by+30);ctx.lineTo(n.x+6,by+30);ctx.lineTo(n.x,by+40);ctx.closePath();ctx.fill();ctx.fillStyle='#f0ead8';ctx.font='12px system-ui';ctx.fillText(t,n.x,by+19);ctx.fillStyle='#9fd0ff';ctx.font='10px system-ui';ctx.fillText('[F] 話す・依頼',n.x,n.y+30);}}}
+  if(n.reactT>0){drawNpcBubble(n.x,n.y-62,n.react||'！',{font:'bold 12px system-ui',maxW:360,fill:'rgba(34,24,20,.95)',color:'#fff4d0'});}
+  else if(n.talk){const L=npcLines(n),t=L[n.li%L.length];drawNpcBubble(n.x,n.y-62,t,{font:'12px system-ui',maxW:420});ctx.fillStyle='#9fd0ff';ctx.font='10px system-ui';ctx.fillText('[F] 話す・依頼',n.x,n.y+30);}}}
 function drawTutorialTalk(n){clickAreas=[];ctx.fillStyle='rgba(6,10,8,.94)';ctx.fillRect(0,0,W,H);
- const x0=110,y0=54,w=680,h=492;ctx.fillStyle='rgba(14,20,20,.98)';ctx.strokeStyle=n.col;ctx.lineWidth=2;ctx.fillRect(x0,y0,w,h);ctx.strokeRect(x0,y0,w,h);
- ctx.textAlign='left';ctx.fillStyle=n.col;ctx.font='bold 22px system-ui';ctx.fillText('チュートリアル案内',x0+28,y0+40);ctx.fillStyle='#8a9690';ctx.font='12px system-ui';ctx.fillText('Esc / F で閉じる',x0+w-132,y0+38);
+ const x0=110,y0=54,w=680,h=492;ctx.fillStyle='rgba(14,20,20,.98)';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.fillRect(x0,y0,w,h);ctx.strokeRect(x0,y0,w,h);
+ ctx.textAlign='left';ctx.fillStyle='#fff';ctx.font='bold 22px system-ui';ctx.fillText('チュートリアル案内',x0+28,y0+40);ctx.fillStyle='#8a9690';ctx.font='12px system-ui';ctx.fillText('Esc / F で閉じる',x0+w-132,y0+38);
  const lines=[
   '1. WASDで移動します。',
   '2. Shiftでガード。敵の攻撃に合わせてタイミングよくガードするとパリィします。',
@@ -1416,9 +1419,9 @@ function drawTutorialTalk(n){clickAreas=[];ctx.fillStyle='rgba(6,10,8,.94)';ctx.
  let yy=y0+82;ctx.font='14px system-ui';for(const l of lines){ctx.fillStyle=l[0]==='1'||l[0]==='5'||l[0]==='9'?'#ffe08a':'#e8f0e8';ctx.fillText(l,x0+34,yy);yy+=30;}
  ctx.fillStyle='#9fe8ff';ctx.font='bold 13px system-ui';ctx.fillText('基本: ルーンを好きなだけ入力 → 最後にスペルを1つ入力 → Spaceで発動',x0+34,y0+h-42);}
 function drawTalk(){const n=P.talkNpc;if(n.tutorial){drawTutorialTalk(n);return;}clickAreas=[];ctx.fillStyle='rgba(6,10,8,.93)';ctx.fillRect(0,0,W,H);
- const x0=150,y0=90,w=600,h=380;ctx.fillStyle='rgba(20,18,14,.98)';ctx.strokeStyle=n.col;ctx.lineWidth=2;ctx.fillRect(x0,y0,w,h);ctx.strokeRect(x0,y0,w,h);
- ctx.textAlign='left';ctx.fillStyle=n.col;ctx.font='bold 18px system-ui';ctx.fillText(n.name,x0+24,y0+34);
- const img=npcImg(n.idx);if(img&&img.complete&&img.naturalWidth){const ph=151,pw=ph*(img.naturalWidth/img.naturalHeight);ctx.save();ctx.shadowColor=n.col;ctx.shadowBlur=12;ctx.drawImage(img,x0+w-pw-30,y0+44,pw,ph);ctx.restore();}
+ const x0=150,y0=90,w=600,h=380;ctx.fillStyle='rgba(20,18,14,.98)';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.fillRect(x0,y0,w,h);ctx.strokeRect(x0,y0,w,h);
+ ctx.textAlign='left';ctx.fillStyle='#fff';ctx.font='bold 18px system-ui';ctx.fillText(n.name,x0+24,y0+34);
+ const img=npcImg(n.idx);if(img&&img.complete&&img.naturalWidth){const ph=151,pw=ph*(img.naturalWidth/img.naturalHeight);ctx.save();ctx.shadowColor='rgba(255,255,255,.45)';ctx.shadowBlur=10;ctx.drawImage(img,x0+w-pw-30,y0+44,pw,ph);ctx.restore();}
  ctx.fillStyle='#ffd24a';ctx.font='16px system-ui';ctx.fillText('好感度 '+'★'.repeat(affLv(n))+'☆'.repeat(5-affLv(n))+'  (Lv'+affLv(n)+'/5 '+Math.floor(n.aff||0)+'%)',x0+24,y0+62);
  ctx.fillStyle='#8a9690';ctx.font='12px system-ui';ctx.fillText('Esc / F で閉じる',x0+w-130,y0+34);
  const L=npcLines(n);ctx.fillStyle='#f0ead8';ctx.font='14px system-ui';ctx.fillText('「'+L[0]+'」',x0+24,y0+100);ctx.fillText('「'+L[1]+'」',x0+24,y0+124);
@@ -1649,7 +1652,7 @@ function tryCast(){finalize();
  if(['マップ','まっぷ','map'].includes(said)){P.worldMap=true;P.casting=false;P.castBackspace=false;P.kana='';P.pend='';se('ui');return;}
  if(['デバッグメニュー','でばっぐめにゅー','debug','debugmenu','debug menu'].includes(said)){P.debugMenu=true;P.casting=false;P.castBackspace=false;P.kana='';P.pend='';se('ui');return;}
  if(said==='まくろめーたー'){toggleMacroMeter();P.casting=false;P.castBackspace=false;P.kana='';P.pend='';return;}
- const ci=NPC_CALL.indexOf(P.kana);if(ci>=0){const n=npcs[ci];n.map=MAPID;n.x=P.x+44;n.y=P.y;n.talk=false;n.reactT=2;n.react='呼ばれて来たよ！';burst(n.x,n.y,n.col,16,4);flash(n.name+'を呼び寄せた');P.casting=false;P.castBackspace=false;P.kana='';P.pend='';return;}
+ const ci=NPC_CALL.indexOf(P.kana);if(ci>=0){const n=npcs[ci];n.map=MAPID;n.x=P.x+44;n.y=P.y;n.talk=false;n.reactT=2;n.react='呼ばれて来たよ！';burst(n.x,n.y,NPC_COLOR,16,4);flash(n.name+'を呼び寄せた');P.casting=false;P.castBackspace=false;P.kana='';P.pend='';return;}
  const seg=segment(P.kana);
  if(seg.spell){if(!P.spellsSeen.has(seg.spell.name))decodeSpellByInput(seg.spell);
   if(seg.spell.big&&bigCD>0){flash('大魔法は冷却中（'+bigCD.toFixed(1)+'s）');P.casting=false;P.castBackspace=false;P.kana='';P.pend='';return;}
