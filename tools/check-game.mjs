@@ -60,6 +60,9 @@ const required = [
   'spawnDungeonFloorContents',
   'NPC_KEYWORD_REPLIES',
   'npcRespondToSpeech',
+  'macroFlush',
+  'macroFinalize',
+  'macroSubmit',
 ];
 
 for (const name of required) {
