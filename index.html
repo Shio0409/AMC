@@ -908,7 +908,7 @@ const P={name:(localStorage.getItem('amc_player_name')||'Player').slice(0,16),na
  shop:null,shopStock:[],smithSel:null,activeStone:null,facLock:false,mapLockT:0,rerollMul:1,parryT:0,tpCD:0,worldMap:false,magicScroll:0,
  hpPot:1,mpPot:1,jewels:[],quests:[],questBoard:null,questBoardAt:0,jewelSel:null,socketSel:null,talkNpc:null,mlist:null,
  runes:new Set(),boxes:[],spellsSeen:new Set(),bestiary:{},stones:{},stoneSeen:{},bestSel:null,bestFilter:'seen',bestScroll:0,stoneScroll:0,lastTown:'town',visitedTowns:new Set(['town']),fame:0,fameLv:1,dungeon:{active:false},invTab:'equip',invScroll:0,
- casting:false,castBackspace:false,menu:false,saveMenu:false,saveTab:'save',bestiaryMenu:false,stoneLogMenu:false,debugMenu:false,teleportMenu:false,channels:[],kana:'',pend:'',invuln:0,downT:0,downMap:'',downX:0,downY:0};
+ casting:false,castBackspace:false,menu:false,saveMenu:false,saveTab:'save',helpPage:'basic',bestiaryMenu:false,stoneLogMenu:false,debugMenu:false,teleportMenu:false,channels:[],kana:'',pend:'',invuln:0,downT:0,downMap:'',downX:0,downY:0};
 recompute();P.hp=P.maxhp;P.mp=P.maxmp;P.inv.push(genItem(1,false,'R'),genItem(1,false,'R'));
 let enemies=[],demons=[],projectiles=[],magicObjects=[],zones=[],funnels=[],rays=[],totems=[],summons=[],rains=[],orbits=[],floats=[],fx=[],parts=[],fieldStones=[],treasureChests=[],drains=[],pending=[],enemyRespawns=[],dummy=null,msg='',msgT=0,shake=0,boss=null,bossCD=3,bigCD=0,demonCD=75,chestCD=25,clickAreas=[],tipAreas=[],mouseX=0,mouseY=0,shopResetAt=performance.now()+600000,lastAutoSave=performance.now(),autoSaveRunning=false,saveBusyT=0,saveOkT=0,saveErrT=0,marketRows=[],marketMine=null,marketBusy=false,marketMsg='',marketSel=null,marketPrice='',marketListings=[],tradeTarget='',tradeItem=null,tradeGem='',tradeIncoming=null,tradePending=null,tradeEscrow=null,mpDmgSkip=null,loopErrT=0;const held={},buffs=new Map(),bosses=new Map(),bossTimers=new Map();
 const MP_MAX=4,MP_URL='https://bbpdphmztyzznxyphprf.supabase.co',MP_KEY='sb_publishable_T6awXv8PgWgF_e9LKhFzBQ_AcS00gRe',MP_ICE=[{urls:'stun:stun.l.google.com:19302'}];
@@ -2061,7 +2061,56 @@ function drawSaveMenu(){if(P.bestiaryMenu){drawBestiary();return;}if(P.stoneLogM
  const bx0=x+34,by0=y+120,button=(label,bx,by,bw,bh,fn,col)=>{ctx.fillStyle=col||'#20352e';ctx.strokeStyle='#78e087';ctx.lineWidth=2;ctx.fillRect(bx,by,bw,bh);ctx.strokeRect(bx,by,bw,bh);ctx.fillStyle='#dfffe0';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillText(label,bx+bw/2,by+Math.round(bh/2)+5);clickAreas.push({x:bx,y:by,w:bw,h:bh,fn});};
  if(tab==='save'){ctx.textAlign='left';ctx.fillStyle='#8a9690';ctx.font='12px system-ui';ctx.fillText('IndexedDB保存 / Cookie読込 / テキスト書き出し・読み込み',bx0,by0-14);const btns=[['IndexedDB保存',()=>saveToIndexedDb(false)],['IndexedDB読込',()=>loadFromIndexedDb(false)],['Cookie読込',importCookieSave],['テキスト書出',exportSaveText],['テキスト読込',importSaveText],['謎の石碑ログ',()=>{P.stoneLogMenu=true;se('ui');}],['モンスター図鑑',()=>{P.bestiaryMenu=true;se('ui');}]];for(let i=0;i<btns.length;i++)button(btns[i][0],bx0+(i%3)*150,by0+Math.floor(i/3)*58,136,38,btns[i][1],i>=5?'#2a2436':'#20352e');}
  if(tab==='config'){ctx.textAlign='left';ctx.fillStyle='#caa64b';ctx.font='bold 13px system-ui';ctx.fillText('入手装備フィルター',bx0,by0);const fs=[0,2,3,4,5,6],fw=58;for(let i=0;i<fs.length;i++){const v=fs[i],bx=bx0+150+i*fw,by=by0-16,on=(P.lootMin||0)===v;ctx.fillStyle=on?'#caa64b':'#2b3028';ctx.strokeStyle=on?'#ffe08a':'#5c6a5e';ctx.lineWidth=1;ctx.fillRect(bx,by,fw-8,24);ctx.strokeRect(bx,by,fw-8,24);ctx.fillStyle=on?'#19150d':'#d8e0d8';ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.fillText((RAR[v]&&RAR[v].k||'C')+'+',bx+(fw-8)/2,by+16);clickAreas.push({x:bx,y:by,w:fw-8,h:24,fn:()=>{P.lootMin=v;flash('フィルター: '+lootFilterLabel(v));}});}const volBtn=(label,bx,by,fn)=>button(label,bx,by,36,24,fn,'#243044');ctx.textAlign='left';ctx.fillStyle='#caa64b';ctx.font='bold 13px system-ui';ctx.fillText('BGM音量 '+Math.round(BGM_VOL*100)+'%',bx0,by0+62);volBtn('-',bx0+150,by0+45,()=>{BGM_VOL=Math.max(0,BGM_VOL-0.1);saveAudioPrefs();});volBtn('+',bx0+194,by0+45,()=>{BGM_VOL=Math.min(1,BGM_VOL+0.1);saveAudioPrefs();});ctx.textAlign='left';ctx.fillStyle='#caa64b';ctx.font='bold 13px system-ui';ctx.fillText('SE音量 '+Math.round(SE_VOL*100)+'%',bx0,by0+104);volBtn('-',bx0+150,by0+87,()=>{SE_VOL=Math.max(0,SE_VOL-0.1);saveAudioPrefs();});volBtn('+',bx0+194,by0+87,()=>{SE_VOL=Math.min(1,SE_VOL+0.1);saveAudioPrefs();se('ui');});}
- if(tab==='help'){const lines=['WASD: 移動   Space: 詠唱開始/確定   Esc: メニュー   Shift: パリィ   Ctrl: ブリンク','1: HP薬   2: MP薬   F: 話す/調べる/購入','詠唱中の文字はキャラの頭上に表示されます。詠唱中も移動でき、連続詠唱できます。','「インベントリ」「スペル」「ルーン」「マップ」は詠唱でも開けます。','大魔法ほど詠唱が長くなります。DEXで射程が伸び、敵を倒すと装備がドロップします。','属性相性: 火→風→土→水→火'];ctx.textAlign='left';ctx.font='13px system-ui';for(let i=0;i<lines.length;i++){ctx.fillStyle=i<2?'#dff7ff':'#cfd6e0';ctx.fillText(lines[i],bx0,by0+i*34);}}
+ if(tab==='help'){const pages=[
+  ['basic','基本'],['control','操作'],['magic','魔法'],['shop','施設'],['growth','成長'],['dungeon','ダンジョン']
+ ];const help={
+  basic:{title:'基本的な流れ',lines:[
+   '1. 町で準備する：装備屋・道具屋・ルーン店・ギルドなどを使って探索準備を整えます。',
+   '2. フィールドへ出る：道や出口から次のマップへ移動し、敵を倒してEXP・gem・素材・装備を集めます。',
+   '3. 強くなる：レベルアップでステータスポイントを振り、装備更新・強化・ジュエル装着で戦力を伸ばします。',
+   '4. 町を広げる：新しい町へ到達するとテレポート先に登録され、移動魔法で戻りやすくなります。',
+   '5. ボスやダンジョンに挑む：通常マップのボス、ギルドのランダムダンジョン、強敵イベントで大きな報酬を狙います。',
+   '6. 迷ったら：ギルド依頼を受ける、未探索の道へ進む、石碑を探す、装備を更新するのが次の目標です。']},
+  control:{title:'操作と画面',lines:[
+   'WASD：移動。詠唱中も移動できます。Shift：パリィ。Ctrl：短距離ブリンク。F：話す/調べる/購入。',
+   'Space：詠唱開始、詠唱中は確定。Enterでも確定。Escまたは左上の歯車：メニュー。',
+   '1：HP薬、2：MP薬。店で薬を買っておくと探索が安定します。',
+   'マップ端や道を通ると隣接マップへ移動します。画面右上のミニマップで周辺と強敵情報を確認できます。',
+   'キャラ頭上の文字は入力中の詠唱です。敵の頭上にも詠唱名やルーン名が出るので、危険な攻撃の予兆になります。',
+   'メニュー内のコンフィグでBGM/SE音量と入手装備フィルターを調整できます。']},
+  magic:{title:'魔法とルーン',lines:[
+   'Spaceで詠唱を開始し、ローマ字でひらがなを入力してSpace/Enterで発動します。',
+   '魔法名だけでも発動できます。例：ふぁいあ。ルーン名を前につけると性能が変化します。',
+   'ルーン例：ダブル/トリプル系は複数回発動、マシンガンは10連射、ショットガンは扇状に5発など。',
+   '大魔法は威力や範囲が大きい代わりに詠唱が長く、発動後にクールタイムがあります。',
+   'リコール：最後に訪れた町へ帰還。ワープ：最後に訪れた町へ移動。テレポート：訪問済みの町を選んで移動。',
+   'ブリンク：短距離移動魔法。リザレクション：蘇生系。インベントリ/スペル/ルーン/マップも詠唱で開けます。',
+   '属性相性は 火→風→土→水→火。敵や状況に合わせて属性を変えると有利です。']},
+  shop:{title:'町の施設',lines:[
+   '装備屋：ランダム装備を購入。序盤の更新や不足部位の補強に使います。',
+   '鍛冶屋：装備強化、レア度昇格、不完全装備の浄化。素材を使って主力装備を伸ばします。',
+   '道具屋：HP薬・MP薬を購入。探索前の補充が重要です。',
+   'ルーン店：ルーンを購入。魔法に組み合わせることで連射・拡散・遅延・強化などの個性を作れます。',
+   '宝飾店：ジュエル装着と合成。装備に追加効果を付けられますが、装着は不可逆です。',
+   '錬金店：シャードを使って装備を作成。入力ミニゲームの成績で一部シャードが返還されます。',
+   '銀行：gemを預け入れ/引き出し。マーケット：レジェンダリー以上の通常装備を出品・購入できます。',
+   '冒険者ギルド：依頼受注、報酬受取、ダンジョン挑戦。教会：回復/蘇生系の施設です。']},
+  growth:{title:'成長と報酬',lines:[
+   '敵を倒すとEXP、gem、素材、装備が手に入ります。罰則中はドロップなし/EXP半減になります。',
+   'レベルアップでステータスポイントを獲得します。インベントリ画面でSTR/DEX/INTなどに振れます。',
+   '装備はレア度・レベル・強化値・ソケット・セット効果で強さが変わります。不要品は売却できます。',
+   'ジュエルは装備に追加効果を付与します。同種3個で上位へ合成できます。',
+   'ギルド依頼やNPC依頼を達成するとgem/EXP/名声が得られます。名声が上がると依頼の質も伸びます。',
+   'モンスター図鑑は討伐数で情報が開示されます。弱点、出現地、ドロップ調査に使えます。']},
+  dungeon:{title:'ダンジョン',lines:[
+   '冒険者ギルドから難易度を選んで開始します。マップは毎回手続き生成されます。',
+   '基本5階層で、階層が進むほど敵が強くなり、報酬も上がります。5階層目にはボスが出ます。',
+   '各階層はすべての敵を倒さないと次へ進めません。HUDに残敵数が表示されます。',
+   '道中には宝箱が配置されます。階層攻略中の回復・装備更新・報酬源として活用します。',
+   'ボスを倒して条件を満たすとランダム宝箱が5個出現します。高難易度ほど狙える報酬も大きくなります。',
+   '準備不足なら町へ戻って装備強化、薬補充、ルーン購入をしてから挑み直すのが安全です。']}
+ };for(let i=0;i<pages.length;i++){const [k,l]=pages[i],on=(P.helpPage||'basic')===k,bx=bx0+(i%6)*92,by=by0-18;ctx.fillStyle=on?'#caa64b':'#27302c';ctx.strokeStyle=on?'#ffe08a':'#5c6a5e';ctx.lineWidth=1;ctx.fillRect(bx,by,84,24);ctx.strokeRect(bx,by,84,24);ctx.fillStyle=on?'#19150d':'#d8e0d8';ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.fillText(l,bx+42,by+16);clickAreas.push({x:bx,y:by,w:84,h:24,fn:()=>{P.helpPage=k;se('ui');}});}
+ const page=help[P.helpPage||'basic']||help.basic,wrap=t=>{const out=[];let s=t;while(s.length>42){let n=42,p=Math.max(s.lastIndexOf('。',42),s.lastIndexOf('、',42),s.lastIndexOf('：',42));if(p>18)n=p+1;out.push(s.slice(0,n));s=s.slice(n);}if(s)out.push(s);return out;};ctx.textAlign='left';ctx.fillStyle='#dff7ff';ctx.font='bold 15px system-ui';ctx.fillText(page.title,bx0,by0+26);ctx.save();ctx.beginPath();ctx.rect(bx0-4,by0+38,w-54,h-98);ctx.clip();ctx.font='12px system-ui';let yy=by0+58;for(const line of page.lines){const parts=wrap(line);for(let j=0;j<parts.length;j++){ctx.fillStyle=(j===0&&line[1]==='.')?'#e8dcb0':'#cfd6e0';ctx.fillText((j?'  ':'')+parts[j],bx0,yy);yy+=17;}yy+=5;}ctx.restore();}
  if(tab==='multi'){ctx.textAlign='left';ctx.fillStyle='#dff7ff';ctx.font='bold 14px system-ui';ctx.fillText('マルチプレイ',bx0,by0);ctx.fillStyle='#9aa';ctx.font='12px system-ui';ctx.fillText('合言葉とパスワードを入力して Host / Join を押してください。',bx0,by0+28);ctx.fillText('状態: '+(MP.status||'multiplayer off'),bx0,by0+62);}
  const cx=x+w-74,cy=y+h-44;ctx.fillStyle='#332828';ctx.strokeStyle='#d8a0a0';ctx.lineWidth=2;ctx.fillRect(cx,cy,48,28);ctx.strokeRect(cx,cy,48,28);ctx.fillStyle='#ffe0e0';ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillText('閉じる',cx+24,cy+19);clickAreas.push({x:cx,y:cy,w:48,h:28,fn:()=>{P.saveMenu=false;se('ui');}});}
 function drawDebugMenu(){clickAreas=[];tipAreas=[];ctx.fillStyle='rgba(4,4,8,.88)';ctx.fillRect(0,0,W,H);
