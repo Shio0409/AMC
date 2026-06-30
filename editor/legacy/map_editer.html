@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AMC Map Editer</title>
+<style>
+html,body{margin:0;height:100%;background:#101411;color:#e8efe8;font:13px system-ui,"Yu Gothic",sans-serif;overflow:hidden}
+button,input,select,textarea{font:inherit}
+.app{display:grid;grid-template-columns:280px 1fr 330px;height:100%}
+.side,.props{background:#151b17;border-right:1px solid #30392f;padding:12px;overflow:auto}
+.props{border-right:0;border-left:1px solid #30392f}
+h1{font-size:16px;margin:0 0 10px;color:#ffe08a}
+h2{font-size:13px;margin:14px 0 8px;color:#9fe8ff}
+label{display:block;margin:8px 0 4px;color:#b8c8bd}
+select,input,textarea{box-sizing:border-box;width:100%;background:#0d120f;border:1px solid #3c4a3e;color:#e8efe8;border-radius:4px;padding:6px}
+textarea{height:190px;resize:vertical;font:12px ui-monospace,Consolas,monospace}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+button{background:#263526;border:1px solid #617b5d;color:#e8ffe8;border-radius:4px;padding:7px 8px;cursor:pointer}
+button:hover{border-color:#ffe08a;color:#fff}
+button.danger{background:#3a2020;border-color:#8a4a4a}
+button.primary{background:#2f3f22;border-color:#caa64b;color:#fff3b8}
+.canvasWrap{position:relative;background:#050806;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.hud{position:absolute;left:12px;top:10px;background:rgba(6,10,8,.82);border:1px solid #405040;border-radius:4px;padding:6px 8px;color:#dce8dc;pointer-events:none}
+.hint{color:#95a795;line-height:1.55;font-size:12px}
+.pill{display:inline-block;border:1px solid #576857;border-radius:4px;padding:2px 6px;margin:2px;color:#d8e8d8;background:#0d120f}
+.muted{color:#89988a}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <h1>AMC Map Editer</h1>
+    <label>Mode</label>
+    <select id="modeSelect">
+      <option value="map">Area detail</option>
+      <option value="world">World layout</option>
+    </select>
+    <label>マップ</label>
+    <select id="mapSelect"></select>
+
+    <h2>編集レイヤー</h2>
+    <select id="layer">
+      <option value="tilePatches">Map chips</option>
+      <option value="decos">装飾</option>
+      <option value="ponds">池</option>
+      <option value="spawnZones">Monster spawn</option>
+      <option value="facilities">施設</option>
+      <option value="stones">Stone</option>
+      <option value="npcs">NPC</option>
+      <option value="portals">Legacy portal</option>
+      <option value="boss">ボス位置</option>
+      <option value="settings">マップ設定</option>
+    </select>
+    <div class="buttons">
+      <button id="addBtn" class="primary">追加</button>
+      <button id="deleteBtn" class="danger">削除</button>
+      <button id="saveDraftBtn">下書き保存</button>
+      <button id="loadDraftBtn">下書き読込</button>
+    </div>
+
+    <h2>表示</h2>
+    <div class="buttons">
+      <button id="fitBtn">全体表示</button>
+      <button id="centerBtn">中央へ</button>
+    </div>
+    <p class="hint">
+      ドラッグ: 選択物を移動<br>
+      右ドラッグ / 中ドラッグ: カメラ移動<br>
+      ホイール: ズーム<br>
+      Delete: 選択物削除<br>
+      A: 現在レイヤーに追加
+    </p>
+
+    <h2>出力</h2>
+    <div class="buttons">
+      <button id="exportBtn" class="primary">JSON出力</button>
+      <button id="copyBtn">コピー</button>
+    </div>
+    <textarea id="out" spellcheck="false"></textarea>
+  </aside>
+
+  <main class="canvasWrap">
+    <canvas id="cv" width="1200" height="800"></canvas>
+    <div class="hud" id="hud"></div>
+  </main>
+
+  <aside class="props">
+    <h1>プロパティ</h1>
+    <div id="propBox" class="hint">オブジェクトを選択してください。</div>
+    <h2>凡例</h2>
+    <div class="hint">
+      <span class="pill">緑: 装飾</span>
+      <span class="pill">青: 池</span>
+      <span class="pill">黄: ポータル</span>
+      <span class="pill">桃: 施設</span>
+      <span class="pill">赤: ボス</span>
+    </div>
+  </aside>
+</div>
+
+<script src="maps.js"></script>
+<script>
+const BASE_W=2600,BASE_H=2000;
+function genDecos(seed,count){const d=[];let s=seed;const rnd=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};for(let i=0;i<count;i++){const x=rnd()*BASE_W,y=rnd()*BASE_H;if(Math.hypot(x-BASE_W/2,y-BASE_H/2)<150)continue;d.push({x,y,t:rnd()});}return d;}
+if(!window.AMC_MAPS)throw new Error('maps.js is not loaded');
+const originalMaps=window.AMC_MAPS({WORLD_W:BASE_W,WORLD_H:BASE_H,genDecos});
+const maps=Object.fromEntries(Object.entries(originalMaps).map(([id,m])=>[id,cloneMap(m)]));
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),modeSel=document.getElementById('modeSelect'),mapSelect=document.getElementById('mapSelect'),layerSel=document.getElementById('layer'),propBox=document.getElementById('propBox'),out=document.getElementById('out'),hud=document.getElementById('hud');
+let mapId='town',map=maps[mapId],view={x:0,y:0,z:.35},sel=null,drag=null;
+
+function defaultWorldRect(i,m){const cols=8,gap=280;return{x:(i%cols)*(BASE_W+gap),y:Math.floor(i/cols)*(BASE_H+gap),w:m.w||BASE_W,h:m.h||BASE_H};}
+function cloneMap(m){return JSON.parse(JSON.stringify({...m,w:m.w||BASE_W,h:m.h||BASE_H,worldRect:m.worldRect||null,ponds:m.ponds||[],decos:m.decos||[],tilePatches:m.tilePatches||[],spawnZones:m.spawnZones||[],stones:m.stones||[],npcs:m.npcs||[],portals:m.portals||[],facilities:m.facilities||[]}));}
+Object.entries(maps).forEach(([id,m],i)=>{if(!m.worldRect)m.worldRect=defaultWorldRect(i,m);});
+function mw(){return Number(map.w||BASE_W)}function mh(){return Number(map.h||BASE_H)}
+function worldBounds(){const rs=Object.values(maps).map(m=>m.worldRect).filter(Boolean);const minX=Math.min(...rs.map(r=>r.x)),minY=Math.min(...rs.map(r=>r.y)),maxX=Math.max(...rs.map(r=>r.x+r.w)),maxY=Math.max(...rs.map(r=>r.y+r.h));return{x:minX,y:minY,w:maxX-minX,h:maxY-minY};}
+function screenToWorld(x,y){return{x:x/view.z+view.x,y:y/view.z+view.y}}
+function worldToScreen(x,y){return{x:(x-view.x)*view.z,y:(y-view.y)*view.z}}
+function currentList(){return map[layerSel.value]||[]}
+function selectedObject(){if(!sel)return null;if(sel.kind==='area')return maps[sel.id]&&maps[sel.id].worldRect;if(sel.kind==='boss')return map;const list=map[sel.kind];return list&&list[sel.i]}
+function clampObj(o){if(!o)return;o.x=Math.max(0,Math.min(mw(),Number(o.x)||0));o.y=Math.max(0,Math.min(mh(),Number(o.y)||0));}
+function resizeCanvas(){const r=cv.parentElement.getBoundingClientRect();cv.width=Math.max(300,Math.floor(r.width));cv.height=Math.max(240,Math.floor(r.height));draw();}
+window.addEventListener('resize',resizeCanvas);
+
+for(const id of Object.keys(maps)){const o=document.createElement('option');o.value=id;o.textContent=id+' / '+(maps[id].name||id);mapSelect.appendChild(o);}
+mapSelect.value=mapId;
+mapSelect.onchange=()=>{mapId=mapSelect.value;map=maps[mapId];sel=null;if(modeSel.value==='world')sel={kind:'area',id:mapId};fit();renderProps();draw();};
+layerSel.onchange=()=>{sel=null;renderProps();draw();};
+modeSel.onchange=()=>{sel=null;if(modeSel.value==='world')sel={kind:'area',id:mapId};fit();renderProps();draw();};
+
+function fit(){const pad=80,b=modeSel.value==='world'?worldBounds():{x:0,y:0,w:mw(),h:mh()},z=Math.min((cv.width-pad)/b.w,(cv.height-pad)/b.h);view.z=Math.max(.02,Math.min(1.2,z));view.x=b.x+(b.w-cv.width/view.z)/2;view.y=b.y+(b.h-cv.height/view.z)/2;draw();}
+function center(){const b=modeSel.value==='world'?worldBounds():{x:0,y:0,w:mw(),h:mh()};view.x=b.x+(b.w-cv.width/view.z)/2;view.y=b.y+(b.h-cv.height/view.z)/2;draw();}
+document.getElementById('fitBtn').onclick=fit;
+document.getElementById('centerBtn').onclick=center;
+
+function addObject(){if(modeSel.value==='world')return;const w=screenToWorld(cv.width/2,cv.height/2),kind=layerSel.value;if(kind==='tilePatches'){map.tilePatches=map.tilePatches||[];map.tilePatches.push({x:w.x-160,y:w.y-120,w:320,h:240,tile:'grassland_1_32x32.png'});sel={kind,i:map.tilePatches.length-1};}
+else if(kind==='decos'){map.decos.push({x:w.x,y:w.y,t:Math.random()});sel={kind,i:map.decos.length-1};}
+else if(kind==='ponds'){map.ponds.push({x:w.x,y:w.y,rx:180,ry:100});sel={kind,i:map.ponds.length-1};}
+else if(kind==='spawnZones'){map.spawnZones=map.spawnZones||[];map.spawnZones.push({x:w.x-180,y:w.y-130,w:360,h:260,enemies:(map.enemies||[]).slice(0,3),rate:1});sel={kind,i:map.spawnZones.length-1};}
+else if(kind==='portals'){map.portals.push({x:w.x,y:w.y,r:30,to:mapId,tx:w.x,ty:w.y,label:'portal',color:'#7CFFA0'});sel={kind,i:map.portals.length-1};}
+else if(kind==='facilities'){map.facilities=map.facilities||[];map.facilities.push({x:w.x,y:w.y,r:44,type:'guild',label:'guild'});sel={kind,i:map.facilities.length-1};}
+else if(kind==='stones'){map.stones=map.stones||[];map.stones.push({x:w.x,y:w.y,r:34,spell:''});sel={kind,i:map.stones.length-1};}
+else if(kind==='npcs'){map.npcs=map.npcs||[];map.npcs.push({x:w.x,y:w.y,name:'NPC',role:''});sel={kind,i:map.npcs.length-1};}
+else if(kind==='boss'){map.boss=true;map.bx=w.x;map.by=w.y;sel={kind:'boss',i:0};}
+clampObj(selectedObject());renderProps();draw();}
+function deleteSelected(){if(!sel)return;if(sel.kind==='boss'){map.boss=false;sel=null;}else{const list=map[sel.kind];if(list)list.splice(sel.i,1);sel=null;}renderProps();draw();}
+document.getElementById('addBtn').onclick=addObject;
+document.getElementById('deleteBtn').onclick=deleteSelected;
+
+function hitTest(w){if(modeSel.value==='world'){let best=null,bd=Infinity;for(const [id,m]of Object.entries(maps)){const r=m.worldRect;if(!r)continue;if(w.x>=r.x&&w.x<=r.x+r.w&&w.y>=r.y&&w.y<=r.y+r.h){const d=Math.hypot(w.x-(r.x+r.w/2),w.y-(r.y+r.h/2));if(d<bd){bd=d;best={kind:'area',id};}}}return best;}const kind=layerSel.value;if(kind==='boss'&&map.boss){if(Math.hypot(w.x-(map.bx||mw()/2),w.y-(map.by||mh()*.28))<34/view.z+20)return{kind:'boss',i:0};return null;}
+ const list=map[kind]||[];let best=null,bd=Infinity;
+ for(let i=0;i<list.length;i++){const o=list[i];let d=Infinity;if(['tilePatches','spawnZones'].includes(kind)){d=(w.x>=o.x&&w.x<=o.x+(o.w||1)&&w.y>=o.y&&w.y<=o.y+(o.h||1))?0:Infinity;}else if(kind==='ponds'){const dx=(w.x-o.x)/(o.rx||1),dy=(w.y-o.y)/(o.ry||1);d=(dx*dx+dy*dy<=1.15)?Math.hypot(w.x-o.x,w.y-o.y):Infinity;}else d=Math.hypot(w.x-o.x,w.y-o.y);const r=kind==='facilities'?(o.r||44):kind==='portals'?(o.r||30):20/view.z+12;if((['tilePatches','spawnZones'].includes(kind)?d===0:d<r)&&d<bd){bd=d;best={kind,i};}}
+ return best;}
+
+cv.addEventListener('mousedown',e=>{const w=screenToWorld(e.offsetX,e.offsetY);if(e.button===1||e.button===2){drag={mode:'pan',sx:e.offsetX,sy:e.offsetY,vx:view.x,vy:view.y};return;}const h=hitTest(w);sel=h;if(h){if(h.kind==='area'){mapId=h.id;map=maps[mapId];mapSelect.value=mapId;}const o=selectedObject();drag={mode:'move',kind:h.kind,i:h.i,id:h.id,dx:w.x-(h.kind==='boss'?(map.bx||0):o.x),dy:w.y-(h.kind==='boss'?(map.by||0):o.y)};}else drag=null;renderProps();draw();});
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+window.addEventListener('mousemove',e=>{if(!drag)return;const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;if(drag.mode==='pan'){view.x=drag.vx-(x-drag.sx)/view.z;view.y=drag.vy-(y-drag.sy)/view.z;draw();return;}const w=screenToWorld(x,y);if(drag.kind==='area'){const o=maps[drag.id]&&maps[drag.id].worldRect;if(o){o.x=w.x-drag.dx;o.y=w.y-drag.dy;}}else if(drag.kind==='boss'){map.bx=Math.max(0,Math.min(mw(),w.x-drag.dx));map.by=Math.max(0,Math.min(mh(),w.y-drag.dy));}else{const o=selectedObject();if(o){o.x=w.x-drag.dx;o.y=w.y-drag.dy;clampObj(o);}}renderProps(false);draw();});
+window.addEventListener('mouseup',()=>{drag=null});
+cv.addEventListener('wheel',e=>{e.preventDefault();const before=screenToWorld(e.offsetX,e.offsetY),mul=e.deltaY<0?1.12:.89;view.z=Math.max(.08,Math.min(2.5,view.z*mul));const after=screenToWorld(e.offsetX,e.offsetY);view.x+=before.x-after.x;view.y+=before.y-after.y;draw();},{passive:false});
+window.addEventListener('keydown',e=>{if(e.target&&['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;if(e.key==='Delete')deleteSelected();if(e.key==='a'||e.key==='A')addObject();});
+
+function field(label,key,type='number',step='1'){const o=selectedObject();const v=sel&&sel.kind==='boss'?(key==='x'?map.bx:key==='y'?map.by:map[key]):o&&o[key];return `<label>${label}</label><input data-key="${key}" type="${type}" step="${step}" value="${v??''}">`;}
+function renderProps(redraw=true){if(modeSel.value==='map'&&layerSel.value==='settings'){propBox.innerHTML=mapSettingsHtml();bindProps();return;}if(!sel){propBox.innerHTML=modeSel.value==='world'?'エリア矩形を選択してください。':'オブジェクトを選択してください。';return;}const o=selectedObject();if(!o){propBox.innerHTML='選択がありません。';return;}let html=`<div class="muted">${sel.kind}${sel.id?' / '+sel.id:' #'+sel.i}</div>`;
+ if(sel.kind==='area'){html+=field('world x','x')+field('world y','y')+field('width','w')+field('height','h')+`<label>name</label><input data-areakey="name" type="text" value="${maps[sel.id].name||sel.id}"><label>town</label><select data-areakey="town"><option value="true"${maps[sel.id].town?' selected':''}>true</option><option value="false"${!maps[sel.id].town?' selected':''}>false</option></select>`;}
+ else if(sel.kind==='tilePatches')html+=field('x','x')+field('y','y')+field('width','w')+field('height','h')+field('tile','tile','text');
+ else if(sel.kind==='decos')html+=field('x','x')+field('y','y')+field('種類 t','t','number','0.01');
+ else if(sel.kind==='ponds')html+=field('x','x')+field('y','y')+field('横幅 rx','rx')+field('高さ ry','ry');
+ else if(sel.kind==='spawnZones')html+=field('x','x')+field('y','y')+field('width','w')+field('height','h')+field('敵CSV enemies','enemies','text')+field('湧き rate','rate');
+ else if(sel.kind==='portals')html+=field('x','x')+field('y','y')+field('半径 r','r')+field('接続先 to','to','text')+field('到着 x tx','tx')+field('到着 y ty','ty')+field('ラベル label','label','text')+field('色 color','color','text');
+ else if(sel.kind==='facilities')html+=field('x','x')+field('y','y')+field('半径 r','r')+field('種類 type','type','text')+field('ラベル label','label','text');
+ else if(sel.kind==='stones')html+=field('x','x')+field('y','y')+field('半径 r','r')+field('spell','spell','text');
+ else if(sel.kind==='npcs')html+=field('x','x')+field('y','y')+field('name','name','text')+field('role','role','text');
+ else if(sel.kind==='boss')html+=field('x','x')+field('y','y')+`<label>ボスあり</label><select data-key="boss"><option value="true"${map.boss?' selected':''}>true</option><option value="false"${!map.boss?' selected':''}>false</option></select>`;
+ propBox.innerHTML=html;bindProps();if(redraw)draw();}
+function mapSettingsHtml(){return fieldMap('名前','name','text')+fieldMap('幅 w','w')+fieldMap('高さ h','h')+fieldMap('推奨Lv mlv','mlv')+fieldMap('地面色 ground','ground','text')+fieldMap('池色 gpond','gpond','text')+fieldMap('装飾テーマ deco','deco','text')+fieldMap('敵CSV enemies','enemies','text');}
+function fieldMap(label,key,type='number'){let v=map[key];if(key==='enemies')v=(map.enemies||[]).join(',');return `<label>${label}</label><input data-mapkey="${key}" type="${type}" value="${v??''}">`;}
+function bindProps(){propBox.querySelectorAll('input,select').forEach(el=>{el.oninput=()=>{const key=el.dataset.key,mapKey=el.dataset.mapkey,areaKey=el.dataset.areakey;if(areaKey&&sel&&sel.kind==='area'){const m=maps[sel.id];m[areaKey]=areaKey==='town'?el.value==='true':el.value;draw();return;}if(mapKey){let v=el.value;if(['w','h','mlv'].includes(mapKey))v=Number(v)||0;if(mapKey==='enemies')v=el.value.split(',').map(s=>s.trim()).filter(Boolean);map[mapKey]=v;if(mapKey==='w'||mapKey==='h'){map.worldRect[mapKey]=v;}draw();return;}else if(sel&&sel.kind==='boss'){if(key==='x')map.bx=Number(el.value)||0;else if(key==='y')map.by=Number(el.value)||0;else if(key==='boss')map.boss=el.value==='true';else map[key]=el.value;}else{const o=selectedObject();if(!o)return;let v=el.type==='number'?Number(el.value):el.value;if(key==='enemies')v=String(el.value).split(',').map(s=>s.trim()).filter(Boolean);o[key]=v;if(sel&&sel.kind==='area'){const m=maps[sel.id];if(key==='w'||key==='h')m[key]=v;}else clampObj(o);}draw();};});}
+
+function exportData(){const data={id:mapId,name:map.name,mlv:map.mlv,w:mw(),h:mh(),town:!!map.town,ground:map.ground,gpond:map.gpond,deco:map.deco,ponds:map.ponds||[],decos:map.decos||[],portals:map.portals||[],facilities:map.facilities||[],boss:!!map.boss,bx:map.bx,by:map.by,bossDef:map.bossDef||null,enemies:map.enemies||[]};out.value=JSON.stringify(data,null,2);}
+document.getElementById('exportBtn').onclick=exportData;
+document.getElementById('copyBtn').onclick=async()=>{if(!out.value)exportData();await navigator.clipboard.writeText(out.value);};
+document.getElementById('saveDraftBtn').onclick=()=>{localStorage.setItem('amc_map_editer_'+mapId,JSON.stringify(map));};
+document.getElementById('loadDraftBtn').onclick=()=>{const s=localStorage.getItem('amc_map_editer_'+mapId);if(!s)return;maps[mapId]=JSON.parse(s);map=maps[mapId];sel=null;renderProps();draw();};
+
+function drawGrid(){const step=200,minor=50;ctx.lineWidth=1;for(const s of [minor,step]){ctx.strokeStyle=s===step?'rgba(255,255,255,.13)':'rgba(255,255,255,.055)';const x0=Math.floor(view.x/s)*s,x1=view.x+cv.width/view.z,y0=Math.floor(view.y/s)*s,y1=view.y+cv.height/view.z;ctx.beginPath();for(let x=x0;x<x1;x+=s){const p=worldToScreen(x,0).x;ctx.moveTo(p,0);ctx.lineTo(p,cv.height);}for(let y=y0;y<y1;y+=s){const p=worldToScreen(0,y).y;ctx.moveTo(0,p);ctx.lineTo(cv.width,p);}ctx.stroke();}}
+function drawLabel(txt,x,y,col){ctx.fillStyle=col||'#fff';ctx.font='11px system-ui';ctx.textAlign='center';ctx.fillText(txt,x,y);}
+function isSelected(kind,i){return sel&&sel.kind===kind&&sel.i===i}
+function draw(){ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle='#050806';ctx.fillRect(0,0,cv.width,cv.height);const tl=worldToScreen(0,0);ctx.fillStyle=map.ground||'#4f8a3f';ctx.fillRect(tl.x,tl.y,mw()*view.z,mh()*view.z);drawGrid();ctx.strokeStyle='#ffffff88';ctx.lineWidth=2;ctx.strokeRect(tl.x,tl.y,mw()*view.z,mh()*view.z);
+ for(const [i,p]of (map.ponds||[]).entries()){const s=worldToScreen(p.x,p.y);ctx.fillStyle='rgba(80,170,220,.42)';ctx.strokeStyle=isSelected('ponds',i)?'#fff':'#6fd0ff';ctx.lineWidth=isSelected('ponds',i)?3:1.5;ctx.beginPath();ctx.ellipse(s.x,s.y,(p.rx||80)*view.z,(p.ry||60)*view.z,0,0,7);ctx.fill();ctx.stroke();}
+ for(const [i,d]of (map.decos||[]).entries()){const s=worldToScreen(d.x,d.y);ctx.fillStyle=isSelected('decos',i)?'#fff':'#7CFFA0';ctx.beginPath();ctx.arc(s.x,s.y,isSelected('decos',i)?7:4,0,7);ctx.fill();}
+ for(const [i,p]of (map.portals||[]).entries()){const s=worldToScreen(p.x,p.y);ctx.strokeStyle=isSelected('portals',i)?'#fff':(p.color||'#ffe08a');ctx.fillStyle='rgba(255,220,80,.16)';ctx.lineWidth=isSelected('portals',i)?3:2;ctx.beginPath();ctx.arc(s.x,s.y,(p.r||30)*view.z,0,7);ctx.fill();ctx.stroke();drawLabel(p.label||p.to||'portal',s.x,s.y-12,'#ffe08a');}
+ for(const [i,f]of (map.facilities||[]).entries()){const s=worldToScreen(f.x,f.y),r=(f.r||44)*view.z;ctx.fillStyle='rgba(255,120,210,.22)';ctx.strokeStyle=isSelected('facilities',i)?'#fff':'#ff7ad0';ctx.lineWidth=isSelected('facilities',i)?3:2;ctx.fillRect(s.x-r,s.y-r,r*2,r*2);ctx.strokeRect(s.x-r,s.y-r,r*2,r*2);drawLabel(f.label||f.type,s.x,s.y+4,'#ffd8f0');}
+ if(map.boss){const s=worldToScreen(map.bx||mw()/2,map.by||mh()*.28);ctx.fillStyle=isSelected('boss',0)?'#fff':'#ff5a4a';ctx.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?9:18;ctx.lineTo(s.x+Math.cos(a)*r,s.y+Math.sin(a)*r);}ctx.closePath();ctx.fill();drawLabel('BOSS',s.x,s.y-22,'#ffb0a0');}
+ hud.textContent=`${mapId}  ${Math.round(mw())}x${Math.round(mh())}  zoom ${view.z.toFixed(2)}  ${layerSel.value}${sel?' #'+sel.i:''}`;}
+
+resizeCanvas();fit();renderProps();
+</script>
+</body>
+</html>
