@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -20,6 +21,7 @@ const OBJECT_LAYERS = new Set([
   'Facilities',
   'NPCs',
   'Stones',
+  'RespawnPoints',
   'Bosses',
   'Collision',
   'Decoration'
@@ -39,6 +41,92 @@ function layerByName(map, name) {
   return (map.layers || []).find(l => l.name === name);
 }
 
+function normalizeAssetPath(file) {
+  const rel = path.relative(repoRoot, file).replace(/\\/g, '/');
+  return rel.startsWith('assets/maptip/') ? rel.slice('assets/maptip/'.length) : rel;
+}
+
+function readTileset(ts) {
+  if (!ts.source) return { ...ts, baseDir: repoRoot };
+  const file = path.resolve(path.dirname(input), ts.source);
+  const data = readJson(file);
+  return { ...data, firstgid: ts.firstgid || 1, baseDir: path.dirname(file) };
+}
+
+function collectTilesets(map) {
+  const gidToImage = new Map();
+  for (const ref of map.tilesets || []) {
+    const ts = readTileset(ref);
+    const firstgid = ref.firstgid || ts.firstgid || 1;
+    for (const tile of ts.tiles || []) {
+      if (!tile.image) continue;
+      const img = path.resolve(ts.baseDir || repoRoot, tile.image);
+      gidToImage.set(firstgid + Number(tile.id || 0), normalizeAssetPath(img));
+    }
+  }
+  const gids = [...gidToImage.keys()].sort((a, b) => a - b);
+  const tileImages = [];
+  const gidToIndex = new Map();
+  for (const gid of gids) {
+    gidToIndex.set(gid, tileImages.length + 1);
+    tileImages.push(gidToImage.get(gid));
+  }
+  return { tileImages, gidToIndex };
+}
+
+function normalizeGid(gid, gidToIndex) {
+  const raw = Number(gid || 0) & 0x1fffffff;
+  return raw ? (gidToIndex.get(raw) || 0) : 0;
+}
+
+function decodeTileData(layer, data, expected) {
+  if (Array.isArray(data)) return data;
+  if (layer.encoding !== 'base64' || typeof data !== 'string') return [];
+  let buf = Buffer.from(data.trim(), 'base64');
+  if (layer.compression === 'zlib') buf = zlib.inflateSync(buf);
+  else if (layer.compression) throw new Error(`Unsupported tile compression: ${layer.compression}`);
+  const out = [];
+  for (let i = 0; i + 3 < buf.length && out.length < expected; i += 4) out.push(buf.readUInt32LE(i));
+  return out;
+}
+
+function collectTileLayers(map, gidToIndex) {
+  const out = [];
+  for (const layer of map.layers || []) {
+    if (layer.type !== 'tilelayer' || layer.visible === false) continue;
+    const chunks = [];
+    if (Array.isArray(layer.chunks)) {
+      for (const chunk of layer.chunks) {
+        const rawData = decodeTileData(layer, chunk.data || [], Number(chunk.width || 0) * Number(chunk.height || 0));
+        const data = rawData.map(gid => normalizeGid(gid, gidToIndex));
+        if (data.some(Boolean)) chunks.push({
+          x: Number(chunk.x || 0),
+          y: Number(chunk.y || 0),
+          w: Number(chunk.width || 0),
+          h: Number(chunk.height || 0),
+          cells: data.flatMap((gid, i) => gid ? [i, gid] : [])
+        });
+      }
+    } else if (Array.isArray(layer.data)) {
+      const rawData = decodeTileData(layer, layer.data, Number(layer.width || map.width || 0) * Number(layer.height || map.height || 0));
+      const data = rawData.map(gid => normalizeGid(gid, gidToIndex));
+      if (data.some(Boolean)) chunks.push({
+        x: Number(layer.x || 0),
+        y: Number(layer.y || 0),
+        w: Number(layer.width || map.width || 0),
+        h: Number(layer.height || map.height || 0),
+        cells: data.flatMap((gid, i) => gid ? [i, gid] : [])
+      });
+    }
+    out.push({
+      name: layer.name,
+      opacity: layer.opacity == null ? 1 : Number(layer.opacity),
+      chunks
+    });
+  }
+  return out;
+}
+
 function objectType(layerName, object) {
   if (object.type) return object.type;
   if (layerName.startsWith('Areas')) return 'area';
@@ -48,6 +136,7 @@ function objectType(layerName, object) {
     Facilities: 'facility',
     NPCs: 'npc',
     Stones: 'stone',
+    RespawnPoints: 'respawn',
     Bosses: 'boss',
     Collision: 'collision',
     Decoration: 'deco'
@@ -107,13 +196,31 @@ function normalizeArea(layerName, object) {
 
 function normalizeSpawnZone(layerName, object) {
   const o = objectBase(layerName, object);
+  const monster = String(o.props.monster || o.props.enemy || o.props.enemies || '').split(',')[0].trim();
+  const baseLevel = o.props.baseLevel == null
+    ? (o.props.level == null ? null : Number(o.props.level))
+    : Number(o.props.baseLevel);
+  const maxAlive = o.props.maxAlive == null
+    ? (o.props.max == null ? null : Number(o.props.max))
+    : Number(o.props.maxAlive);
   return {
     id: o.id,
     area: o.props.area || '',
-    enemies: String(o.props.enemies || '').split(',').map(s => s.trim()).filter(Boolean),
-    level: o.props.level == null ? null : Number(o.props.level),
+    monster,
+    baseLevel,
+    levelVariance: Number(o.props.levelVariance == null ? 3 : o.props.levelVariance),
+    maxAlive,
+    spawnIntervalMin: Number(o.props.spawnIntervalMin == null ? 8 : o.props.spawnIntervalMin),
+    spawnIntervalMax: Number(o.props.spawnIntervalMax == null ? 20 : o.props.spawnIntervalMax),
+    minPlayerDistance: Number(o.props.minPlayerDistance == null ? 260 : o.props.minPlayerDistance),
+    rareChance: Number(o.props.rareChance == null ? 0 : o.props.rareChance),
+    eliteChance: Number(o.props.eliteChance == null ? 0 : o.props.eliteChance),
+    respawn: o.props.respawn == null ? true : !!o.props.respawn,
+    shape: object.ellipse ? 'circle' : String(o.props.shape || 'rect'),
+    enemies: monster ? [monster] : String(o.props.enemies || '').split(',').map(s => s.trim()).filter(Boolean),
+    level: baseLevel,
     rate: Number(o.props.rate == null ? 1 : o.props.rate),
-    max: o.props.max == null ? null : Number(o.props.max),
+    max: maxAlive,
     rect: { x: o.x, y: o.y, w: o.w, h: o.h },
     polygon: o.polygon,
     props: o.props
@@ -179,13 +286,17 @@ function validate(map, world) {
     if (!area.rect.w || !area.rect.h) errors.push(`Area ${area.id} has empty rect`);
   }
   for (const zone of world.spawnZones) {
-    if (!zone.enemies.length) errors.push(`Spawn zone ${zone.id} has no enemies`);
+    if (!zone.monster && !zone.enemies.length) errors.push(`Spawn zone ${zone.id} has no monster`);
     if (zone.area && !areaIds.has(zone.area)) errors.push(`Spawn zone ${zone.id} references missing area: ${zone.area}`);
+  }
+  for (const point of world.respawnPoints || []) {
+    if (point.area && !areaIds.has(point.area)) errors.push(`Respawn point ${point.id} references missing area: ${point.area}`);
   }
   return errors;
 }
 
 function buildWorld(map) {
+  const tiles = collectTilesets(map);
   return {
     version: 1,
     source: path.relative(repoRoot, input).replace(/\\/g, '/'),
@@ -198,15 +309,18 @@ function buildWorld(map) {
     facilities: collectObjects(map, 'Facilities', (layer, o) => normalizePoint(layer, o, 'facility')),
     npcs: collectObjects(map, 'NPCs', (layer, o) => normalizePoint(layer, o, 'npc')),
     stones: collectObjects(map, 'Stones', (layer, o) => normalizePoint(layer, o, 'spell')),
+    respawnPoints: collectObjects(map, 'RespawnPoints', (layer, o) => normalizePoint(layer, o, 'respawn')),
     bosses: collectObjects(map, 'Bosses', (layer, o) => normalizePoint(layer, o, 'boss')),
     collisions: collectObjects(map, 'Collision', normalizeCollision),
     decorations: collectObjects(map, 'Decoration', (layer, o) => normalizePoint(layer, o, 'deco')),
+    tileImages: tiles.tileImages,
+    tileLayers: collectTileLayers(map, tiles.gidToIndex),
     chunks: []
   };
 }
 
 function writeWorld(world) {
-  const body = `// Generated by editor/import-tiled-world.mjs. Do not edit by hand.\nwindow.AMC_WORLD_DATA = ${JSON.stringify(world, null, 2)};\n`;
+  const body = `// Generated by editor/import-tiled-world.mjs. Do not edit by hand.\nwindow.AMC_WORLD_DATA=${JSON.stringify(world)};\n`;
   fs.writeFileSync(output, body, 'utf8');
 }
 

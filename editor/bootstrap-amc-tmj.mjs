@@ -50,70 +50,13 @@ function loadMaps() {
   return sandbox.window.AMC_MAPS({ WORLD_W, WORLD_H, genDecos });
 }
 
-function portalSide(p) {
-  if (p.x < 100) return 'w';
-  if (p.x > WORLD_W - 100) return 'e';
-  if (p.y < 100) return 'n';
-  return 's';
-}
-
-function placeRects(maps) {
-  const ids = Object.keys(maps);
-  const rects = new Map();
-  const queue = [];
-  const start = maps.town ? 'town' : ids[0];
-  rects.set(start, { x: 0, y: 0, w: WORLD_W, h: WORLD_H });
-  queue.push(start);
-
-  while (queue.length) {
-    const id = queue.shift();
-    const base = rects.get(id);
-    for (const p of maps[id].portals || []) {
-      const to = p.to;
-      if (!maps[to] || rects.has(to)) continue;
-      const side = portalSide(p);
-      let x = base.x;
-      let y = base.y;
-      if (side === 'e') {
-        x = base.x + WORLD_W + GAP;
-        y = base.y + (p.y - (p.ty ?? WORLD_H / 2));
-      } else if (side === 'w') {
-        x = base.x - WORLD_W - GAP;
-        y = base.y + (p.y - (p.ty ?? WORLD_H / 2));
-      } else if (side === 's') {
-        x = base.x + (p.x - (p.tx ?? WORLD_W / 2));
-        y = base.y + WORLD_H + GAP;
-      } else {
-        x = base.x + (p.x - (p.tx ?? WORLD_W / 2));
-        y = base.y - WORLD_H - GAP;
-      }
-      const r = avoidOverlap({ x, y, w: WORLD_W, h: WORLD_H }, rects);
-      rects.set(to, r);
-      queue.push(to);
-    }
-  }
-
-  let fallback = 0;
-  for (const id of ids) {
-    if (rects.has(id)) continue;
-    const col = fallback % 8;
-    const row = Math.floor(fallback / 8);
-    rects.set(id, { x: col * (WORLD_W + GAP), y: (row + 8) * (WORLD_H + GAP), w: WORLD_W, h: WORLD_H });
-    fallback++;
-  }
-
-  const minX = Math.min(...[...rects.values()].map(r => r.x));
-  const minY = Math.min(...[...rects.values()].map(r => r.y));
-  const margin = 512;
-  for (const r of rects.values()) {
-    r.x = Math.round(r.x - minX + margin);
-    r.y = Math.round(r.y - minY + margin);
-  }
-  return rects;
-}
-
-function overlaps(a, b) {
-  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+function loadTownNpcData() {
+  const code = fs.readFileSync(path.resolve(repoRoot, 'index.html'), 'utf8');
+  const match = code.match(/const TOWN_NPC_DATA=([\s\S]*?);\s*const NPC_RUNE_POOL=/);
+  if (!match) return {};
+  const sandbox = {};
+  vm.runInNewContext(`data=${match[1]}`, sandbox, { filename: 'index.html:TOWN_NPC_DATA' });
+  return sandbox.data || {};
 }
 
 function avoidOverlap(r, rects) {
@@ -194,6 +137,22 @@ function rectObject({ name, type, x, y, w, h, properties }) {
     height: Math.round(h),
     rotation: 0,
     visible: true,
+    properties: properties || []
+  };
+}
+
+function ellipseObject({ name, type, x, y, w, h, properties }) {
+  return {
+    id: nextObjectId++,
+    name: name || '',
+    type: type || '',
+    x: Math.round(x),
+    y: Math.round(y),
+    width: Math.round(w),
+    height: Math.round(h),
+    rotation: 0,
+    visible: true,
+    ellipse: true,
     properties: properties || []
   };
 }
@@ -370,6 +329,19 @@ function simplifyPolygon(poly) {
   return cleaned.length >= 3 ? cleaned : rounded.slice(0, 3);
 }
 
+function absolutePolygonBounds(poly) {
+  const xs = poly.map(p => p.x);
+  const ys = poly.map(p => p.y);
+  const x = Math.min(...xs);
+  const y = Math.min(...ys);
+  return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
+}
+
+function absolutePolygonCenter(poly) {
+  const b = absolutePolygonBounds(poly);
+  return { x: b.x + b.w / 2, y: b.y + b.h / 2 };
+}
+
 function buildPartitionCells(rects) {
   const entries = [...rects.entries()].map(([id, r]) => ({
     id,
@@ -404,6 +376,173 @@ function buildPartitionCells(rects) {
   return cells;
 }
 
+function seededNumber(id, salt = '') {
+  return hashString(`${id}:${salt}`);
+}
+
+function chooseSpawnMonster(id, m, biome) {
+  const pool = (m.enemies && m.enemies.length ? m.enemies : []).filter(Boolean);
+  if (!pool.length) return null;
+  return pool[seededNumber(id, biome) % pool.length];
+}
+
+function spawnZoneShape(id, kind, biome) {
+  if (kind === 'dungeon') return 'rect';
+  if (biome === 'lake' || biome === 'marsh' || biome === 'river') return 'circle';
+  return seededNumber(id, 'shape') % 3 === 0 ? 'circle' : 'rect';
+}
+
+function spawnZoneStats(kind, level) {
+  const dungeon = kind === 'dungeon';
+  const route = kind === 'road';
+  return {
+    maxAlive: dungeon ? 4 : route ? 2 : Math.max(2, Math.min(5, 2 + Math.floor(level / 28))),
+    spawnIntervalMin: dungeon ? 0 : 8,
+    spawnIntervalMax: dungeon ? 0 : 20,
+    respawn: !dungeon,
+    rareChance: dungeon ? 0.04 : route ? 0.015 : 0.025,
+    eliteChance: dungeon ? 0.006 : route ? 0.0015 : 0.003
+  };
+}
+
+function buildSpawnZone(id, m, r, cell, kind) {
+  if (kind === 'town' || kind === 'village' || kind === 'camp' || kind === 'jail') return null;
+  const biome = r.biome || m.deco || 'plains';
+  const monster = chooseSpawnMonster(id, m, biome);
+  if (!monster) return null;
+
+  const level = Math.max(1, (m.mlv || 0) + 1);
+  const bounds = absolutePolygonBounds(cell);
+  const center = absolutePolygonCenter(cell);
+  const seed = seededNumber(id, 'spawn');
+  const jitterX = ((seed & 255) / 255 - 0.5) * Math.min(260, bounds.w * 0.08);
+  const jitterY = (((seed >>> 8) & 255) / 255 - 0.5) * Math.min(260, bounds.h * 0.08);
+  const cx = Math.max(bounds.x + 80, Math.min(bounds.x + bounds.w - 80, center.x + jitterX));
+  const cy = Math.max(bounds.y + 80, Math.min(bounds.y + bounds.h - 80, center.y + jitterY));
+  const shape = spawnZoneShape(id, kind, biome);
+  const size = Math.max(280, Math.min(1400, Math.min(bounds.w, bounds.h) * (kind === 'road' ? 0.32 : 0.42)));
+  const wide = shape === 'rect' ? size * (1.05 + ((seed >>> 16) & 3) * 0.12) : size;
+  const high = shape === 'rect' ? size * (0.82 + ((seed >>> 20) & 3) * 0.1) : size;
+  const stats = spawnZoneStats(kind, level);
+  const commonProps = props([
+    ['area', id],
+    ['monster', monster],
+    ['baseLevel', level, 'int'],
+    ['levelVariance', 3, 'int'],
+    ['maxAlive', stats.maxAlive, 'int'],
+    ['spawnIntervalMin', stats.spawnIntervalMin, 'float'],
+    ['spawnIntervalMax', stats.spawnIntervalMax, 'float'],
+    ['minPlayerDistance', 260, 'int'],
+    ['rareChance', stats.rareChance, 'float'],
+    ['eliteChance', stats.eliteChance, 'float'],
+    ['respawn', stats.respawn, 'bool'],
+    ['shape', shape],
+    ['biome', biome],
+    // Legacy fields for older tools while runtime import migrates to monster/baseLevel.
+    ['enemies', monster],
+    ['level', level, 'int'],
+    ['max', stats.maxAlive, 'int'],
+    ['rate', 1, 'float']
+  ]);
+
+  const object = {
+    name: `${id}_${monster}_spawn`,
+    type: 'spawnZone',
+    x: cx - wide / 2,
+    y: cy - high / 2,
+    w: wide,
+    h: high,
+    properties: commonProps
+  };
+  return shape === 'circle' ? ellipseObject(object) : rectObject(object);
+}
+
+function rectGap(a, b) {
+  const dx = Math.max(0, Math.max(a.x - b.x - b.w, b.x - a.x - a.w));
+  const dy = Math.max(0, Math.max(a.y - b.y - b.h, b.y - a.y - a.h));
+  return Math.hypot(dx, dy);
+}
+
+function pointSegmentDistance(p, a, b) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy || 1;
+  const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
+  return Math.hypot(p.x - (a.x + dx * t), p.y - (a.y + dy * t));
+}
+
+function segmentsDistance(a, b, c, d) {
+  return Math.min(
+    pointSegmentDistance(a, c, d),
+    pointSegmentDistance(b, c, d),
+    pointSegmentDistance(c, a, b),
+    pointSegmentDistance(d, a, b)
+  );
+}
+
+function polygonDistance(a, b) {
+  const ab = absolutePolygonBounds(a);
+  const bb = absolutePolygonBounds(b);
+  if (rectGap(ab, bb) > 360) return Infinity;
+  let best = Infinity;
+  for (let i = 0; i < a.length; i++) {
+    const a1 = a[i];
+    const a2 = a[(i + 1) % a.length];
+    for (let j = 0; j < b.length; j++) {
+      const b1 = b[j];
+      const b2 = b[(j + 1) % b.length];
+      best = Math.min(best, segmentsDistance(a1, a2, b1, b2));
+      if (best <= 1) return 0;
+    }
+  }
+  return best;
+}
+
+function mapSpawnsInWorld(id, m, r) {
+  const kind = areaKind(m, r);
+  return !['town', 'village', 'camp', 'jail'].includes(kind) && m.enemies && m.enemies.length;
+}
+
+function harmonizeGeneratedMapLevels(maps, rects, cells) {
+  const ids = Object.keys(maps).filter(id => mapSpawnsInWorld(id, maps[id], rects.get(id)) && cells.has(id));
+  const levels = new Map(ids.map(id => [id, Math.max(1, (maps[id].mlv || 0) + 1)]));
+  const mutable = new Set(ids.filter(id => maps[id].generatedArea && !maps[id].levelFixed));
+  const neighbors = new Map(ids.map(id => [id, []]));
+
+  for (let i = 0; i < ids.length; i++) {
+    for (let j = i + 1; j < ids.length; j++) {
+      const a = ids[i];
+      const b = ids[j];
+      const d = polygonDistance(cells.get(a), cells.get(b));
+      if (d <= 220) {
+        neighbors.get(a).push(b);
+        neighbors.get(b).push(a);
+      }
+    }
+  }
+
+  for (let iter = 0; iter < 18; iter++) {
+    const next = new Map(levels);
+    for (const id of mutable) {
+      const ns = neighbors.get(id) || [];
+      if (!ns.length) continue;
+      const avg = ns.reduce((sum, n) => sum + (levels.get(n) || 1), 0) / ns.length;
+      let lv = Math.round((levels.get(id) || avg) * 0.25 + avg * 0.75);
+      const minAllowed = Math.max(...ns.map(n => (levels.get(n) || 1) - 15));
+      const maxAllowed = Math.min(...ns.map(n => (levels.get(n) || 1) + 15));
+      if (minAllowed <= maxAllowed) {
+        lv = Math.max(minAllowed, Math.min(maxAllowed, lv));
+      } else {
+        lv = Math.round((minAllowed + maxAllowed) / 2);
+      }
+      next.set(id, Math.max(1, Math.min(100, lv)));
+    }
+    for (const [id, lv] of next) levels.set(id, lv);
+  }
+
+  for (const id of mutable) maps[id].mlv = Math.max(0, (levels.get(id) || 1) - 1);
+}
+
 function scaledPoint(r, x, y) {
   return {
     x: r.x + (x / WORLD_W) * r.w,
@@ -427,8 +566,87 @@ function facilityList(id, m, r) {
   return [];
 }
 
+function placedPointInArea(r, id, salt, index, total) {
+  const cols = Math.max(1, Math.ceil(Math.sqrt(total || 1)));
+  const rows = Math.max(1, Math.ceil((total || 1) / cols));
+  const col = index % cols;
+  const row = Math.floor(index / cols);
+  const seed = seededNumber(id, `${salt}:${index}`);
+  const innerX = 0.18 + ((col + 0.5) / cols) * 0.64;
+  const innerY = 0.2 + ((row + 0.5) / rows) * 0.58;
+  const jitterX = (((seed & 255) / 255) - 0.5) * Math.min(220, r.w / Math.max(5, cols));
+  const jitterY = ((((seed >>> 8) & 255) / 255) - 0.5) * Math.min(180, r.h / Math.max(5, rows));
+  return {
+    x: Math.max(r.x + 80, Math.min(r.x + r.w - 80, r.x + r.w * innerX + jitterX)),
+    y: Math.max(r.y + 80, Math.min(r.y + r.h - 80, r.y + r.h * innerY + jitterY))
+  };
+}
+
+function npcObjectsForArea(id, r, npcData) {
+  const list = npcData[id] || [];
+  return list.map((a, slot) => {
+    const p = placedPointInArea(r, id, 'npc', slot, list.length);
+    return pointObject({
+      name: a[0] || `${id}_npc_${slot}`,
+      type: 'npc',
+      x: p.x,
+      y: p.y,
+      properties: props([
+        ['area', id],
+        ['npc', a[0] || `${id}_npc_${slot}`],
+        ['home', id],
+        ['slot', slot, 'int'],
+        ['race', a[1] || ''],
+        ['role', a[2] || ''],
+        ['trait', a[3] || ''],
+        ['look', a[4] || ''],
+        ['sprite', a[5] == null ? 0 : a[5], 'int']
+      ])
+    });
+  });
+}
+
+function respawnObjectForArea(id, r, facilities) {
+  const guild = facilities.find(f => f.type === 'guild');
+  if (!guild) return null;
+  const p = placedPointInArea(r, id, 'respawn', 0, 1);
+  const gx = guild.worldX ?? p.x;
+  const gy = guild.worldY ?? p.y;
+  return pointObject({
+    name: `${id}_respawn`,
+    type: 'respawn',
+    x: gx,
+    y: Math.min(r.y + r.h - 70, gy + 92),
+    properties: props([
+      ['area', id],
+      ['respawn', 'guild'],
+      ['facility', 'guild'],
+      ['priority', 1, 'int']
+    ])
+  });
+}
+
+function stoneObjectsForArea(id, m, r) {
+  return (m.stones || []).map((st, index) => {
+    const p = scaledPoint(r, st.x, st.y);
+    return pointObject({
+      name: st.id || `${id}:stone:${index}`,
+      type: 'stone',
+      x: p.x,
+      y: p.y,
+      properties: props([
+        ['id', st.id || `${id}:${index}`],
+        ['area', id],
+        ['spell', st.spell || ''],
+        ['radius', st.r || 34, 'int']
+      ])
+    });
+  });
+}
+
 function buildTiledMap(maps, rects) {
   const cells = buildPartitionCells(rects);
+  const npcData = loadTownNpcData();
   const areaLayers = {
     Areas_Towns: [],
     Areas_Fields: [],
@@ -437,10 +655,12 @@ function buildTiledMap(maps, rects) {
   };
   const spawnZones = [];
   const facilities = [];
+  const npcs = [];
+  const stones = [];
+  const respawnPoints = [];
   const bosses = [];
   const ponds = [];
   const decorations = [];
-  const legacyPortals = [];
 
   for (const [id, m] of Object.entries(maps)) {
     const r = rects.get(id);
@@ -462,6 +682,52 @@ function buildTiledMap(maps, rects) {
       ])
     }));
 
+    const spawnZone = buildSpawnZone(id, m, r, cells.get(id), kind);
+    if (spawnZone) spawnZones.push(spawnZone);
+
+    const areaFacilities = facilityList(id, m, r);
+    const placedFacilities = [];
+    for (let i = 0; i < areaFacilities.length; i++) {
+      const f = areaFacilities[i];
+      const p = placedPointInArea(r, id, 'facility', i, areaFacilities.length);
+      const placed = { ...f, worldX: p.x, worldY: p.y };
+      placedFacilities.push(placed);
+      facilities.push(pointObject({
+        name: FACILITY_LABELS[f.type] || f.type,
+        type: 'facility',
+        x: p.x,
+        y: p.y,
+        properties: props([
+          ['area', id],
+          ['facility', f.type],
+          ['label', FACILITY_LABELS[f.type] || f.type],
+          ['radius', f.r || 44, 'int']
+        ])
+      }));
+    }
+
+    const respawn = respawnObjectForArea(id, r, placedFacilities);
+    if (respawn) respawnPoints.push(respawn);
+    npcs.push(...npcObjectsForArea(id, r, npcData));
+    stones.push(...stoneObjectsForArea(id, m, r));
+
+    if (m.boss && m.bossDef) {
+      const p = scaledPoint(r, m.bx || WORLD_W / 2, m.by || WORLD_H * 0.28);
+      bosses.push(pointObject({
+        name: `${name}のボス`,
+        type: 'boss',
+        x: p.x,
+        y: p.y,
+        properties: props([
+          ['area', id],
+          ['boss', `${id}_boss`],
+          ['label', `${name}のボス`],
+          ['level', (m.mlv || 0) + 1, 'int'],
+          ['element', m.bossDef.el || '']
+        ])
+      }));
+    }
+
     if (AREA_PLANNING_ONLY) continue;
 
     if (!m.town && m.enemies && m.enemies.length) {
@@ -477,39 +743,6 @@ function buildTiledMap(maps, rects) {
           ['enemies', m.enemies.join(',')],
           ['level', (m.mlv || 0) + 1, 'int'],
           ['rate', 1]
-        ])
-      }));
-    }
-
-    for (const f of facilityList(id, m, r)) {
-      const p = scaledPoint(r, f.x, f.y);
-      facilities.push(pointObject({
-        name: FACILITY_LABELS[f.type] || f.type,
-        type: 'facility',
-        x: p.x,
-        y: p.y,
-        properties: props([
-          ['area', id],
-          ['facility', f.type],
-          ['label', FACILITY_LABELS[f.type] || f.type],
-          ['radius', f.r || 44, 'int']
-        ])
-      }));
-    }
-
-    if (m.boss && m.bossDef) {
-      const p = scaledPoint(r, m.bx || WORLD_W / 2, m.by || WORLD_H * 0.28);
-      bosses.push(pointObject({
-        name: `${name}のボス`,
-        type: 'boss',
-        x: p.x,
-        y: p.y,
-        properties: props([
-          ['area', id],
-          ['boss', `${id}_boss`],
-          ['label', `${name}のボス`],
-          ['level', (m.mlv || 0) + 1, 'int'],
-          ['element', m.bossDef.el || '']
         ])
       }));
     }
@@ -548,23 +781,6 @@ function buildTiledMap(maps, rects) {
       }));
     }
 
-    for (const p of m.portals || []) {
-      const lp = scaledPoint(r, p.x, p.y);
-      legacyPortals.push(pointObject({
-        name: p.to || 'portal',
-        type: 'legacyPortal',
-        x: lp.x,
-        y: lp.y,
-        properties: props([
-          ['area', id],
-          ['to', p.to || ''],
-          ['tx', p.tx || 0, 'int'],
-          ['ty', p.ty || 0, 'int'],
-          ['label', p.label || ''],
-          ['radius', p.r || 30, 'int']
-        ])
-      }));
-    }
   }
 
   const maxX = Math.max(...[...rects.values()].map(r => r.x + r.w)) + 512;
@@ -585,13 +801,13 @@ function buildTiledMap(maps, rects) {
       objectLayer('Areas_Routes', areaLayers.Areas_Routes),
       objectLayer('SpawnZones', spawnZones),
       objectLayer('Facilities', facilities),
+      objectLayer('RespawnPoints', respawnPoints),
       objectLayer('Bosses', bosses),
       objectLayer('Ponds', ponds),
       objectLayer('Decoration', decorations),
-      objectLayer('LegacyPortals', legacyPortals),
       objectLayer('Collision', []),
-      objectLayer('NPCs', []),
-      objectLayer('Stones', [])
+      objectLayer('NPCs', npcs),
+      objectLayer('Stones', stones)
     ],
     nextlayerid: nextLayerId,
     nextobjectid: nextObjectId,
@@ -607,7 +823,8 @@ function buildTiledMap(maps, rects) {
   };
 }
 
-const maps = { ...loadMaps(), ...createStoryExtraMaps(genDecos) };
+const baseMaps = loadMaps();
+const maps = { ...baseMaps, ...createStoryExtraMaps(genDecos, baseMaps) };
 const rects = applyStoryWorldLayout(maps);
 const tiled = buildTiledMap(maps, rects);
 

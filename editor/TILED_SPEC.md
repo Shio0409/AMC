@@ -1,130 +1,129 @@
 # AMC Tiled ワールド仕様
 
-このフォルダは、将来的なシームレス巨大ワールド用の編集データと変換ツールを置く場所です。
+このディレクトリは、Tiled で編集する巨大ワールドマップと、それをゲーム用データへ変換するツールを管理します。
 
-## 目的
+## 基本方針
 
-今後は「小さいマップ同士をポータルで接続する方式」から、次の構造へ移行します。
-
-- 1枚の巨大なワールド座標を持つ。
-- その中に名前付きのエリアを配置する。
-- プレイヤーがエリアに入ったら、エリア名を画面上に表示する。
-- エリアごとに敵、施設、NPC、石碑、ボス、BGM、推奨レベルなどを持たせる。
-- プレイヤー周辺のチャンク/エリアだけ読み込む。
-- 遠く離れたチャンク/エリアの情報は破棄する。
-- ポータル移動ではなく、辺や境界をまたいだ自然な移動にする。
-
-Tiled のファイルは「編集元データ」として扱います。ゲーム本体が Tiled の仕様に強く依存しないよう、`import-tiled-world.mjs` でゲーム用の `world_data.js` に変換します。
+- ゲーム内の通常フィールドは、1枚の巨大な Tiled マップ上にある名前付きエリアとして扱います。
+- エリアは四角形でも多角形でも構いません。
+- 町、村、キャンプ、フィールド、道、ダンジョンは `kind` で区別します。
+- ゲーム側では `world_data.js` を読み込み、既存の `MAPS` に Tiled の情報を反映します。
+- `world_data.js` は生成物です。手で編集せず、Tiled の `.tmj` を編集して再生成します。
 
 ## 推奨ファイル構成
 
 ```txt
 editor/
-  TILED_SPEC.md
   AMC.tmj
-  AMC.world
+  TILED_SPEC.md
+  validate-tiled-world.mjs
   import-tiled-world.mjs
-  tilesets/
+  build-world.mjs
+  bootstrap-amc-tmj.mjs
+  story-world-layout.mjs
   legacy/
 world_data.js
 ```
 
-- `AMC.tmj`: Tiled で編集するメインワールド。
-- `AMC.world`: 複数マップに分ける場合の Tiled ワールドファイル。最初は無くてもよいです。
-- `world_data.js`: importer が生成するゲーム用データ。手で編集しません。
+## よく使うコマンド
+
+Tiled データを検証するだけ:
+
+```powershell
+node editor/validate-tiled-world.mjs
+```
+
+検証してから `world_data.js` を生成:
+
+```powershell
+node editor/build-world.mjs
+```
+
+施設、石碑、復帰地点、ボス配置が所属エリア外に出ている場合の自動補正:
+
+```powershell
+node editor/repair-tiled-placements.mjs
+```
+
+入力/出力ファイルを指定する場合:
+
+```powershell
+node editor/build-world.mjs editor/AMC.tmj world_data.js
+```
+
+ゲーム全体の静的チェック:
+
+```powershell
+node tools/check-game.mjs
+```
+
+`tools/check-game.mjs` は Tiled 検証も実行します。
 
 ## Tiled 側の基本設定
 
-推奨設定:
-
 - 形式: `.tmj`
-- タイルサイズ: `32 x 32`
 - Orientation: `Orthogonal`
-- Infinite Map: 使用可
-- 座標: 巨大ワールド上のピクセル座標として扱う
+- Tile Size: `32 x 32`
+- Infinite Map: 使用してもよい
+- 座標: Tiled 上のピクセル座標を巨大ワールド座標として扱います。
 
-## レイヤー仕様
+## レイヤー
 
-レイヤー名は大文字小文字を区別します。
+### エリアレイヤー
 
-### タイルレイヤー
+以下はいずれもエリア定義用の Object Layer です。
 
-- `Ground`: 地面の基本タイル。
-- `Detail`: 道、花、床の変化、小さな地面装飾など。
+- `Areas`
+- `Areas_Towns`
+- `Areas_Fields`
+- `Areas_Dungeons`
+- `Areas_Routes`
 
-### オブジェクトレイヤー
+エリアオブジェクトのプロパティ:
 
-- `Areas`: 名前付きエリア。必須。
-- `SpawnZones`: モンスターの湧き範囲。
-- `Facilities`: 店、ギルド、教会、銀行など。
-- `NPCs`: NPC の配置。
-- `Stones`: 石碑の配置。
-- `Bosses`: ボスの位置や範囲。
-- `Collision`: 通行不可範囲。
-- `Decoration`: 木、岩、瓦礫、置物など。
+- `id`: 必須。ゲーム内で使う安定ID。例: `town`, `mabel_field`
+- `name`: 表示名
+- `kind`: `town`, `village`, `camp`, `jail`, `field`, `dungeon`, `road`
+- `level`: 推奨レベル。1以上
+- `theme`: 地形テーマ。例: `plains`, `forest`, `desert`
+- `bgm`: BGMキー。任意
 
-最初の importer では `Areas` だけ必須です。移行中は他のレイヤーが空でも構いません。
+### SpawnZones
 
-## オブジェクトの type
-
-Tiled のオブジェクトには、できるだけ `type` を設定します。
-
-- `area`
-- `spawnZone`
-- `facility`
-- `npc`
-- `stone`
-- `boss`
-- `collision`
-- `deco`
-
-`type` が空の場合、importer はレイヤー名から推測します。
-
-## Areas レイヤー
-
-エリアは矩形またはポリゴンで配置します。まずは矩形推奨です。
-
-必須/推奨プロパティ:
-
-- `id`: 安定したエリアID。例: `town`, `mabel_field`
-- `name`: 画面に表示するエリア名
-- `kind`: `town`, `field`, `dungeon`, `road` など
-- `level`: 推奨レベル
-- `theme`: 見た目テーマ。例: `village`, `farm`, `forest`
-- `bgm`: BGM キー。任意
-
-例:
-
-```txt
-type: area
-id: town
-name: リンドフィー
-kind: town
-level: 1
-theme: village
-```
-
-## SpawnZones レイヤー
-
-敵の湧き範囲を矩形またはポリゴンで配置します。
+モンスターの湧き範囲です。四角形または Ellipse を使います。Ellipse はゲーム側では円形扱いです。
 
 プロパティ:
 
-- `area`: 所属エリアID。省略時は、範囲が入っているエリアから推測予定。
-- `enemies`: 敵IDをカンマ区切りで指定。例: `slime,hornRabbit,manaBunny`
-- `level`: 湧き範囲のレベル補正。任意。
-- `rate`: 湧き速度倍率。省略時 `1`
-- `max`: その範囲の最大同時出現数。任意。
+- `area`: 必須。所属エリアID
+- `monster`: 必須。モンスターIDを1種類だけ指定
+- `baseLevel`: 必須。基準レベル
+- `levelVariance`: 任意。初期値 `3`
+- `maxAlive`: 必須。その範囲の同時出現上限
+- `spawnIntervalMin`: 任意。初期値 `8`
+- `spawnIntervalMax`: 任意。初期値 `20`
+- `minPlayerDistance`: 任意。初期値 `260`
+- `rareChance`: 任意
+- `eliteChance`: 任意
+- `respawn`: 任意。通常フィールドは `true`、ダンジョンは `false` 推奨
+- `shape`: 任意。`rect` または `circle`
 
-## Facilities レイヤー
+ルール:
 
-施設を点オブジェクトとして配置します。
+- 1つのスポーン範囲に入れるモンスターは1種類だけです。
+- 町、村、キャンプ、牢獄エリアには配置しません。
+- 別のスポーン範囲との重なりは1つまで許可します。
+- Polygon のスポーン範囲は使いません。
+
+### Facilities
+
+施設の配置です。
 
 プロパティ:
 
-- `area`: 所属エリアID。任意。
-- `facility`: 施設種別
-- `label`: 表示名。任意。
+- `area`: 必須
+- `facility`: 必須。施設種別
+- `label`: 任意。表示名
+- `radius`: 任意。接触判定半径
 
 施設種別:
 
@@ -138,62 +137,102 @@ theme: village
 - `bank`
 - `church`
 
-## NPCs レイヤー
+町ごとにすべての施設を置く必要はありません。ただし、復帰地点の基準になるため、町や村には `guild` を置くのを推奨します。
 
-NPC を点オブジェクトとして配置します。
+### NPCs
+
+NPC の配置です。
 
 プロパティ:
 
-- `area`: 所属エリアID。任意。
-- `npc`: 安定した NPC ID
+- `area`: 必須
+- `npc`: NPC ID
 - `name`: 表示名
-- `role`: 役割。任意。
+- `role`: 任意
 
-## Stones レイヤー
+### Stones
 
-石碑を点オブジェクトとして配置します。
-
-プロパティ:
-
-- `area`: 所属エリアID。任意。
-- `id`: 安定した石碑ID
-- `spell`: 解読で習得する魔法名
-
-## Bosses レイヤー
-
-ボス位置やボス範囲を配置します。
+石碑の配置です。
 
 プロパティ:
 
-- `area`: 所属エリアID。任意。
-- `boss`: ボスID、またはボス定義キー
-- `level`: ボスレベル補正。任意。
+- `area`: 必須
+- `id`: 石碑ID
+- `spell`: 解読で得る内容。任意
 
-## Collision レイヤー
+### RespawnPoints
 
-通行不可範囲を矩形またはポリゴンで配置します。
-
-用途:
-
-- 崖
-- 壁
-- 建物
-- 水辺
-- 大きな岩や障害物
-
-## Decoration レイヤー
-
-タイルではなくオブジェクトとして置きたい装飾を配置します。
+復帰地点です。基本的にはギルド前に置きます。
 
 プロパティ:
 
-- `deco`: 装飾ID、画像ID、またはプリセット名
-- `scale`: 拡大率。任意。
-- `variant`: バリエーション番号。任意。
+- `area`: 必須
+- `respawn`: 任意
+
+### Bosses
+
+ボス配置です。
+
+プロパティ:
+
+- `area`: 必須
+- `boss`: ボス定義キー。任意
+- `level`: 任意
+
+### Collision / Decoration
+
+- `Collision`: 通行不可範囲
+- `Decoration`: 木、岩、草花、遺跡片など。`deco` プロパティに `assets/pictures/` の画像名を入れるとゲーム内に描画されます。
+
+### タイルレイヤー
+
+Tiled で直接地形を描く場合は、次の Tile Layer を使います。
+
+- `Ground`: 地面の基本タイル
+- `Detail`: 道、草花、地形変化などの上描き
+
+マップチップは `editor/maptiles.tsj` に登録しています。画像の実体は `assets/maptip/` にあります。
+
+現時点では `Ground` / `Detail` が空でもゲームは旧自動地形で描画されます。Tiled 側でタイルを置いた場所だけ、ゲーム内で Tiled タイルが上に反映されます。
+
+`editor/paint-tiled-terrain.mjs` を実行すると、エリアの `kind` / `theme` に合わせて `Ground` / `Detail` と `Decoration` を自動配置します。
+
+タイルレイヤーは Tiled 標準の `base64 + zlib` 圧縮チャンクで保存します。ゲーム用の `world_data.js` では、置いたタイルだけを持つ軽量形式に変換されます。
+
+## 検証でエラーになるもの
+
+`editor/validate-tiled-world.mjs` は次をエラーとして扱います。
+
+- エリアIDの未設定または重複
+- 空サイズのエリア
+- Object Layer であるべきレイヤーが別タイプ
+- `Ground` / `Detail` が Tile Layer ではない
+- `editor/maptiles.tsj` がない
+- `area` プロパティの未設定
+- 存在しないエリア参照
+- 施設種別の不正
+- 存在しないモンスターID
+- スポーン範囲に複数モンスターを指定
+- 町系エリア内のスポーン範囲
+- スポーン範囲が所属エリア外
+- スポーン範囲が2つ以上の別スポーン範囲と重なる
+- Polygon のスポーン範囲
+- 不正な `baseLevel`, `levelVariance`, `maxAlive`, 湧き時間
+
+## 検証で警告になるもの
+
+警告は作業を止めませんが、見直し推奨です。
+
+- エリア表示名の重複
+- 未知の `kind`
+- エリアレベルとスポーン基準レベルが大きく離れている
+- 円形スポーンの幅と高さが違う
+- 町系エリアに `guild` がない
+- エリアの外接矩形が多数のエリアと重なる
 
 ## 生成される world_data.js
 
-importer は次の形で出力します。
+`import-tiled-world.mjs` は次のようなデータを出力します。
 
 ```js
 window.AMC_WORLD_DATA = {
@@ -208,33 +247,23 @@ window.AMC_WORLD_DATA = {
   facilities: [],
   npcs: [],
   stones: [],
+  respawnPoints: [],
   bosses: [],
   collisions: [],
   decorations: [],
+  tileImages: [],
+  tileLayers: [],
   chunks: []
 };
 ```
 
-最初のゲーム統合では、まず `areas` を読み、プレイヤーが入ったエリア名を表示するところから始めます。
+## 編集時の運用
 
-## 移行方針
+1. Tiled で `editor/AMC.tmj` を編集する。
+2. 地形と装飾を自動配置し直す場合は `node editor/paint-tiled-terrain.mjs` を実行する。
+3. 配置警告が出る場合は `node editor/repair-tiled-placements.mjs` を実行する。
+4. `node editor/build-world.mjs` を実行する。
+5. `node tools/check-game.mjs` を実行する。
+6. ゲームで確認する。
 
-- 既存の `maps.js` は、しばらく残します。
-- 新方式が安定するまでは、旧マップと新ワールドを併用します。
-- まずは `town` 周辺など小さい範囲だけを Tiled 化します。
-- フィールド間のシームレス移動が安定してから、ポータル方式を段階的に廃止します。
-- AMC 固有のルールチェックは Tiled ではなく importer/checker 側に書きます。
-
-## importer 実行
-
-```powershell
-node editor/import-tiled-world.mjs
-```
-
-既定では `editor/AMC.tmj` を読み、`world_data.js` を生成します。
-
-別ファイルを指定する場合:
-
-```powershell
-node editor/import-tiled-world.mjs editor/AMC.tmj world_data.js
-```
+マップ編集で壊れやすいのは、IDの打ち間違い、所属エリアの指定忘れ、スポーン範囲の重なりです。大きく編集した後は、必ず検証を通してください。

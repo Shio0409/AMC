@@ -1,0 +1,169 @@
+{
+  "type": "tileset",
+  "tiledversion": "1.12.2",
+  "version": "1.10",
+  "name": "AMC Map Tips",
+  "tilewidth": 32,
+  "tileheight": 32,
+  "spacing": 0,
+  "margin": 0,
+  "tilecount": 25,
+  "columns": 0,
+  "grid": {
+    "orientation": "orthogonal",
+    "width": 32,
+    "height": 32
+  },
+  "tiles": [
+    {
+      "id": 0,
+      "image": "../assets/maptip/ancient_ruins_1_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 1,
+      "image": "../assets/maptip/ancient_ruins_2_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 2,
+      "image": "../assets/maptip/cave_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 3,
+      "image": "../assets/maptip/cobblestone_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 4,
+      "image": "../assets/maptip/desert_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 5,
+      "image": "../assets/maptip/farm_field_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 6,
+      "image": "../assets/maptip/flower_field_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 7,
+      "image": "../assets/maptip/forest_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 8,
+      "image": "../assets/maptip/grassland_1_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 9,
+      "image": "../assets/maptip/grassland_2_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 10,
+      "image": "../assets/maptip/gravel_road_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 11,
+      "image": "../assets/maptip/ice_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 12,
+      "image": "../assets/maptip/mine_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 13,
+      "image": "../assets/maptip/mountain_1_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 14,
+      "image": "../assets/maptip/mountain_2_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 15,
+      "image": "../assets/maptip/pond_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 16,
+      "image": "../assets/maptip/rocky_ground_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 17,
+      "image": "../assets/maptip/ruins_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 18,
+      "image": "../assets/maptip/snow_mountain_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 19,
+      "image": "../assets/maptip/soil_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 20,
+      "image": "../assets/maptip/swamp_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 21,
+      "image": "../assets/maptip/unpaved_road_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 22,
+      "image": "../assets/maptip/volcano_1_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 23,
+      "image": "../assets/maptip/volcano_2_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    },
+    {
+      "id": 24,
+      "image": "../assets/maptip/woodland_32x32.png",
+      "imagewidth": 32,
+      "imageheight": 32
+    }
+  ]
+}

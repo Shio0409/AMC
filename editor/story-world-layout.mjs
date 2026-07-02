@@ -188,6 +188,105 @@ function allLayoutRows() {
   return [...rows, ...gapFillerRows(rows)];
 }
 
+const BIOME_NAME_PARTS = {
+  plains: ['平原', '草原', '丘陵', '風渡り原', '見晴らし台地'],
+  forest: ['木立', '林道', '森外れ', '若木林', '梢道'],
+  deepForest: ['深森', '古木林', '暗い木立', '根鳴り林', '苔むす森'],
+  farm: ['畑道', '麦原', '農道', '実り丘', '風車畑'],
+  river: ['川辺', '浅瀬', '河原', '流れ道', '水音の岸'],
+  lake: ['湖畔', '水辺', '入り江', '鏡浜', 'さざ波岸'],
+  marsh: ['湿原', '葦原', 'ぬかるみ', '霧沼', '沈み草地'],
+  coast: ['浜辺', '潮道', '磯辺', '白砂浜', '波打ち岬'],
+  mountain: ['山麓', '峠道', '岩場', '尾根道', '崖下'],
+  wasteland: ['荒野', '灰原', '乾いた谷', 'ひび割れ地', '風化原'],
+  desert: ['砂地', '砂丘', '乾きの道', '陽炎原', '白砂地'],
+  snow: ['雪原', '凍土', '白い峠', '霜降る丘', '氷風道'],
+  void: ['虚無原', '歪み場', '忘れ野', '残響地', '記憶の裂け目'],
+  ruin: ['遺構', '廃道', '崩れ跡', '古壁跡', '眠る礎'],
+  road: ['脇道', '辻道', '街道端', '分かれ道', '古い標道'],
+  industry: ['煤け地', '鉄屑場', '工場外縁', '錆びた空地', '煙の低地']
+};
+
+const GAP_NAME_PREFIXES = ['東', '西', '南', '北', '上', '下', '奥', '手前', '古い', '新しい', '小さな', '静かな'];
+const GAP_NAME_CONNECTORS = ['裏手の', '外れの', '脇の', '奥の', '手前の', '風下の', '影の'];
+
+function nearestRows(baseRows, x, y, count = 3) {
+  return baseRows
+    .map(row => ({ row, d: Math.hypot(row[2] - x, row[3] - y) }))
+    .sort((a, b) => a.d - b.d)
+    .slice(0, count);
+}
+
+function gapBiome(baseRows, x, y, fallback) {
+  const near = nearestRows(baseRows, x, y, 4);
+  const counts = new Map();
+  for (const n of near) counts.set(n.row[7], (counts.get(n.row[7]) || 0) + 1 / Math.max(1, n.d));
+  let best = fallback;
+  let bestScore = -1;
+  for (const [biome, score] of counts) {
+    if (score > bestScore) {
+      best = biome;
+      bestScore = score;
+    }
+  }
+  return best || fallback;
+}
+
+function stripAreaSuffix(name) {
+  return String(name || '')
+    .replace(/[0-9０-９]+$/u, '')
+    .replace(/の宿場$/u, '')
+    .replace(/街道$/u, '')
+    .replace(/村$/u, '')
+    .replace(/町$/u, '')
+    .replace(/都市$/u, '')
+    .trim();
+}
+
+function gapName(baseRows, x, y, biome, index) {
+  const near = nearestRows(baseRows, x, y, 2);
+  const anchor = stripAreaSuffix(near[0]?.row[1] || '辺境');
+  const second = stripAreaSuffix(near[1]?.row[1] || '');
+  const parts = BIOME_NAME_PARTS[biome] || BIOME_NAME_PARTS.plains;
+  const part = parts[index % parts.length];
+  if (second && index % 5 === 0) return `${anchor}と${second}の間の${part}`;
+  if (index % 7 === 0) return `${anchor}外縁の${part}`;
+  if (index % 3 === 0) return `${anchor}近くの${part}`;
+  return `${anchor}${part}`;
+}
+
+function uniqueGapName(name, usedNames, anchor, part, index) {
+  if (!usedNames.has(name)) {
+    usedNames.add(name);
+    return name;
+  }
+  const candidates = [];
+  for (const prefix of GAP_NAME_PREFIXES) candidates.push(`${anchor}${prefix}${part}`);
+  for (const connector of GAP_NAME_CONNECTORS) candidates.push(`${anchor}${connector}${part}`);
+  for (const alt of ['細道', '小径', '外縁', '境目', '見晴らし', '隠れ場', '古道']) {
+    candidates.push(`${anchor}${part}${alt}`);
+  }
+  for (let i = 0; i < candidates.length; i++) {
+    const candidate = candidates[(index + i) % candidates.length];
+    if (!usedNames.has(candidate)) {
+      usedNames.add(candidate);
+      return candidate;
+    }
+  }
+  let salt = index;
+  while (true) {
+    const prefix = GAP_NAME_PREFIXES[salt % GAP_NAME_PREFIXES.length];
+    const connector = GAP_NAME_CONNECTORS[Math.floor(salt / GAP_NAME_PREFIXES.length) % GAP_NAME_CONNECTORS.length];
+    const alt = BIOME_NAME_PARTS.plains[Math.floor(salt / 17) % BIOME_NAME_PARTS.plains.length];
+    const candidate = `${anchor}${prefix}${connector}${part}${alt}`;
+    if (!usedNames.has(candidate)) {
+      usedNames.add(candidate);
+      return candidate;
+    }
+    salt++;
+  }
+}
+
 function gapFillerRows(baseRows) {
   const rows = [];
   const minX = Math.min(...baseRows.map(row => row[2]));
@@ -197,17 +296,24 @@ function gapFillerRows(baseRows) {
   const gap = 520;
   const threshold = 460;
   const biomes = ['plains', 'forest', 'farm', 'river', 'lake', 'marsh', 'coast', 'mountain', 'wasteland'];
+  const usedNames = new Set(baseRows.map(row => row[1]));
   let index = 1;
 
   for (let y = minY + gap * 0.55; y <= maxY - gap * 0.35; y += gap) {
     for (let x = minX + gap * 0.55; x <= maxX - gap * 0.35; x += gap) {
       const nearest = Math.min(...baseRows.map(row => Math.hypot(row[2] - x, row[3] - y)));
       if (nearest < threshold) continue;
-      const biome = biomes[(index + Math.floor(x / gap) + Math.floor(y / gap)) % biomes.length];
+      const fallbackBiome = biomes[(index + Math.floor(x / gap) + Math.floor(y / gap)) % biomes.length];
+      const biome = gapBiome(baseRows, x, y, fallbackBiome);
       const wide = index % 4 === 0;
+      const near = nearestRows(baseRows, x, y, 1);
+      const anchor = stripAreaSuffix(near[0]?.row[1] || '辺境');
+      const parts = BIOME_NAME_PARTS[biome] || BIOME_NAME_PARTS.plains;
+      const part = parts[index % parts.length];
+      const name = uniqueGapName(gapName(baseRows, x, y, biome, index), usedNames, anchor, part, index);
       rows.push([
         `wild_gap_${String(index).padStart(3, '0')}`,
-        `未踏地${index}`,
+        name,
         x + ((index % 3) - 1) * 180,
         y + ((index % 5) - 2) * 120,
         wide ? 2350 : 1900,
@@ -282,8 +388,70 @@ const EXTRA_LEVELS = {
   memoryGarden: 96
 };
 
-export function createStoryExtraMaps(genDecos) {
+function mapBaseLevel(m) {
+  return Math.max(1, (m?.mlv || 0) + 1);
+}
+
+function rowAllowsSpawns(row) {
+  return !['town', 'village', 'camp', 'jail'].includes(row[6]);
+}
+
+function clampLevel(level) {
+  return Math.max(1, Math.min(100, Math.round(level)));
+}
+
+function weightedLevelFrom(points, x, y, limit = 6) {
+  const near = points
+    .map(a => ({ ...a, d: Math.hypot(a.x - x, a.y - y) }))
+    .sort((a, b) => a.d - b.d)
+    .slice(0, limit);
+  if (!near.length) return 1;
+  let total = 0;
+  let weight = 0;
+  for (const a of near) {
+    const w = 1 / Math.max(1, a.d * a.d);
+    total += a.level * w;
+    weight += w;
+  }
+  return clampLevel(total / weight);
+}
+
+function buildLevelResolver(rows, baseMaps) {
+  const anchors = [];
+  let levels = new Map();
+  const fixed = new Set();
+  for (const row of rows) {
+    const [id, , x, y, , , kind] = row;
+    let level = EXTRA_LEVELS[id] || null;
+    const m = baseMaps?.[id];
+    if (!level && m && !m.town && m.enemies?.length) level = mapBaseLevel(m);
+    if (!level) continue;
+    if (['town', 'village', 'camp', 'jail'].includes(kind) && !EXTRA_LEVELS[id]) continue;
+    const clamped = clampLevel(level);
+    levels.set(id, clamped);
+    fixed.add(id);
+    anchors.push({ id, x, y, level: clamped });
+  }
+
+  for (const row of rows) {
+    const [id, , x, y] = row;
+    if (levels.has(id)) continue;
+    levels.set(id, rowAllowsSpawns(row) ? weightedLevelFrom(anchors, x, y) : 1);
+  }
+
+  return row => {
+    const [id, , x, y] = row;
+    if (EXTRA_LEVELS[id]) return EXTRA_LEVELS[id];
+    const m = baseMaps?.[id];
+    if (m && !m.town && m.enemies?.length) return mapBaseLevel(m);
+    return levels.get(id) || weightedLevelFrom(anchors, x, y);
+  };
+}
+
+export function createStoryExtraMaps(genDecos, baseMaps = {}) {
   const out = {};
+  const rows = allLayoutRows();
+  const levelForRow = buildLevelResolver(rows, baseMaps);
   const existing = new Set([
     'town', 'field', 'hill', 'westRoad', 'eastRoad', 'oldForest', 'watchtower', 'windmere', 'mabel',
     'fenceEnd', 'univel', 'ceres', 'royalPlain', 'oldRoyalRoad', 'sewer', 'undergrow', 'shrineRuins',
@@ -300,14 +468,16 @@ export function createStoryExtraMaps(genDecos) {
     'recordCore', 'starshipWreck', 'finalSector', 'postGameSector', 'macroJail'
   ]);
 
-  for (const row of allLayoutRows()) {
+  for (const row of rows) {
     const [id, name, , , , , kind, biome] = row;
     if (existing.has(id)) continue;
-    const mlv = EXTRA_LEVELS[id] || 1;
+    const mlv = levelForRow(row);
     const town = ['town', 'village', 'camp', 'jail'].includes(kind);
     out[id] = {
       name,
       mlv: Math.max(0, mlv - 1),
+      generatedArea: true,
+      levelFixed: !!EXTRA_LEVELS[id],
       town,
       ground: '#50644a',
       gpond: '#4d8ca8',
@@ -319,7 +489,6 @@ export function createStoryExtraMaps(genDecos) {
       bx: 1300,
       by: 560,
       bossDef: kind === 'dungeon' ? { jp: `${name}の主`, el: '', col: '#d0d0d0', hp: 5000 + mlv * 400, atk: 30 + mlv * 3 } : null,
-      portals: [],
       facilities: town ? [{ x: 1300, y: 1000, r: 50, type: 'guild' }] : []
     };
   }

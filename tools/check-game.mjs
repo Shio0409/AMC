@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { spawnSync } from 'node:child_process';
 
 const src = fs.readFileSync('index.html', 'utf8');
 const scripts = [...src.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)]
@@ -10,7 +11,7 @@ if (!script) throw new Error('script block not found');
 
 new Function(script);
 
-const externalScripts = ['maps.js', 'enemies.js', 'bestiary.js', 'enemy_spells.js', 'boss_patterns.js', 'npc_dialogue.js']
+const externalScripts = ['maps.js', 'enemies.js', 'bestiary.js', 'enemy_spells.js', 'boss_patterns.js', 'npc_dialogue.js', 'world_data.js']
   .map((file) => fs.readFileSync(file, 'utf8'))
   .join('\n');
 const allSrc = `${src}\n${externalScripts}`;
@@ -95,6 +96,200 @@ if (/\b(?:shots|eshots)\s*=\s*\[/.test(src)) {
   throw new Error('legacy shot arrays are back');
 }
 
+{
+  const rawPendingPushes = [...src.matchAll(/pending\.push/g)].length;
+  if (rawPendingPushes !== 1 || !src.includes('function schedulePending')) {
+    throw new Error('pending queue must go through schedulePending');
+  }
+}
+
+if (/useMapPortal|MAP\.portals|\.portals/.test(src) || /\.portals/.test(fs.readFileSync('maps.js', 'utf8'))) {
+  throw new Error('legacy portal references are back in game code');
+}
+if (/WORLD_W\s*\/\s*r\.w/.test(src)) {
+  throw new Error('Tiled area rendering must not normalize every area to WORLD_W');
+}
+
+for (const needle of [
+  'world_data.js',
+  'function findWorldAreaAt',
+  'function switchWorldEdgeIfNeeded',
+  'function drawMinimap',
+  'miniZoom',
+  'a.minimap',
+  'seedMapEnemies(id,enemies)',
+  'function drawTiledTileLayers',
+  'function tiledWorldActive',
+  'function drawTileScaled',
+  'function tiledGroundCfg',
+  'function pickTiledFallbackTile',
+  'function drawTiledFallbackGround',
+  'drawTiledFallbackGround(area,view,ts,dw,dh)',
+  'function worldLocalScale',
+  'function areaLocalScale',
+  'function areaLocalWidth',
+  'function areaLocalHeight',
+  'function clampUnitToMap',
+  'function areaLocalRawPoint',
+  'if(tiledWorldActive()){drawTiledTileLayers',
+  'if(!tiledWorldActive())for(const d of MAP.decos)',
+  'const lw=areaLocalWidth(a),lh=areaLocalHeight(a)',
+  'dh=dw',
+  'WORLD_DATA.tileLayers',
+  'WORLD_DATA.tileImages',
+  'function playerWorldPos',
+  'function syncPlayerWorldPos',
+  'function savedWorldSpawn',
+  'function movePlayerWorld',
+  'function setPlayerWorld',
+  'function worldPointRef',
+  'function syncPointWorld',
+  'function syncUnitWorld',
+  'function randomLocalPoint',
+  'function syncEnemyWorld',
+  'function syncBossWorld',
+  'function syncDemonWorld',
+  'function syncProjectileWorld',
+  'function syncMagicWorld',
+  'function syncNpcWorld',
+  'function unitDistance',
+  'function inPlayerView',
+  'function combatActiveNearPlayer',
+  'function despawnFarFromPlayer',
+  'function transientObjectAlive',
+  'function relocalizeWorldObject',
+  'function carrySeamlessObjects',
+  'function showAreaName',
+  'function drawAreaName',
+  'function drawWorldDecorations',
+  'function drawWorldFacilities',
+  'function drawWorldFieldStones',
+  'function drawWorldTreasureChests',
+  'function drawWorldNpcs',
+  'function mpVisualSpellLocal',
+  'function mpWorldEventLocal',
+  'mpWorldEventLocal(msg,PROJECTILE_PAD)',
+  'mpWorldEventLocal(msg,360)',
+  'mpWorldEventLocal(m,260)',
+  'syncPointWorld(payload.map,payload.x,payload.y)',
+  'function cachedEnemiesNearPlayer',
+  'function visibleWorldEnemies',
+  'function processCachedEnemyDeaths',
+  'function processWorldBossDeaths',
+  'function drawWorldEnemies',
+  'mapRuntime',
+  'function saveMapRuntime',
+  'function restoreMapRuntime',
+  'function ensureNearbyMapRuntime',
+  'function ageMapRuntimeCaches',
+  'function pruneMapRuntimeAround',
+  'function minimapWorldFacilities',
+  'function minimapWorldStones',
+  'function syncWeatherWorld',
+  'wrect:z.rect',
+  'wx:p.wx',
+  'syncEnemyWorld(en)',
+  'syncBossWorld(b)',
+  'syncDemonWorld(d)',
+  'syncProjectileWorld(o)',
+  'syncMagicWorld(o)',
+  'function syncChestWorld',
+  'syncChestWorld({',
+  'function unitMap',
+  'function pointUnit',
+  'function pointDistance',
+  'function unitAim',
+  'function pointAim',
+  'function currentWorldView',
+  'function currentLocalFromWorld',
+  'function withCurrentLocal',
+  'function worldObjInView',
+  'function displayUnit',
+  'function displayPoint',
+  'function worldNearPlayer',
+  'unitDistance(P,',
+  'pointDistance(map,x,y',
+  'syncWeatherWorld({',
+  'syncWeatherWorld(w)',
+  'despawnFarFromPlayer(e)',
+  'transientObjectAlive(s',
+  'carrySeamlessObjects(id',
+  'seamless?0.18:1',
+  'showAreaName(MAP.name,seamless)',
+  'drawAreaName();',
+  'saveMapRuntime(MAPID)',
+  'oldPending=seamless?pending.filter',
+  'function schedulePending',
+  'function tickPending',
+  'tickPending(dt)',
+  'schedulePending(i*delay',
+  'pending=oldPending||[]',
+  'syncEnemyWorld({...e,map:id})',
+  'syncUnitWorld({...c},id',
+  'restoreMapRuntime(id)',
+  'ensureNearbyMapRuntime(id)',
+  'ageMapRuntimeCaches()',
+  'mapRuntime.values()',
+  'useWorld&&Number.isFinite(n.wx)',
+  'useWorld&&Number.isFinite(p.wx)',
+  'useWorld&&Number.isFinite(d.wx)',
+  'for(const b of bosses.values())',
+  'wa:P.worldArea',
+  'wx:Math.round(P.wx',
+  'twx:tw.wx',
+  'twy:tw.wy',
+  'wx:Number.isFinite(msg.wx)',
+  'savedWorldSpawn(d)',
+  'function tiledSettlementKind',
+  "town=tiledSettlementKind(a.kind)",
+  "function townSpawn(id)",
+  "facilities.find(f=>f.type==='guild')",
+  'const sp=townSpawn(a.id)',
+  'townSpawn(town)',
+  'townSpawn(id)',
+]) {
+  if (!src.includes(needle)) throw new Error(`Tiled world runtime hook missing: ${needle}`);
+}
+
+{
+  const ctx = { window: {} };
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync('world_data.js', 'utf8'), ctx);
+  const world = ctx.window.AMC_WORLD_DATA;
+  if (!world || !Array.isArray(world.tileImages) || world.tileImages.length < 1) {
+    throw new Error('world_data.js must include tileImages from editor/maptiles.tsj');
+  }
+  if (!Array.isArray(world.tileLayers) || !world.tileLayers.some((l) => l.name === 'Ground')) {
+    throw new Error('world_data.js must include Tiled tileLayers');
+  }
+  if (!world.tileLayers.some((l) => Array.isArray(l.chunks) && l.chunks.length > 0)) {
+    throw new Error('world_data.js must include painted Tiled tile chunks');
+  }
+  if (!Array.isArray(world.decorations) || world.decorations.length < 1) {
+    throw new Error('world_data.js must include Tiled Decoration objects');
+  }
+  const settlements = new Set(['town', 'village', 'camp']);
+  const guildAreas = new Set((world.facilities || [])
+    .filter((f) => (f.facility || (f.props && f.props.facility)) === 'guild')
+    .map((f) => f.area));
+  const missingGuild = (world.areas || [])
+    .filter((a) => settlements.has(a.kind) && !guildAreas.has(a.id))
+    .map((a) => a.id);
+  if (missingGuild.length) {
+    throw new Error(`settlement areas missing guild facility: ${missingGuild.join(', ')}`);
+  }
+  if (!fs.existsSync('editor/maptiles.tsj')) {
+    throw new Error('editor/maptiles.tsj is required for Tiled map chips');
+  }
+}
+
+for (const pattern of [
+  /for\s*\(\s*let\s+i\s*=\s*0\s*;\s*i\s*<\s*5\s*;\s*i\+\+\s*\)\s*spawnEnemy/,
+  /while\s*\(\s*enemies\.length\s*\+\s*enemyRespawns\.length\s*<\s*cap\s*\)/,
+]) {
+  if (pattern.test(src)) throw new Error(`legacy random map spawn loop is back: ${pattern}`);
+}
+
 const directMagicPush = [
   'zones',
   'funnels',
@@ -167,6 +362,14 @@ if (missingEnemySpells.length) {
 
 for (const needle of ['mpu:P.macroPenaltyUntil', 'P.macroPenaltyUntil=d.mpu']) {
   if (!src.includes(needle)) throw new Error(`macro penalty save/apply missing: ${needle}`);
+}
+
+{
+  const result = spawnSync(process.execPath, ['editor/validate-tiled-world.mjs', '--quiet-warnings'], {
+    stdio: 'inherit',
+    shell: false,
+  });
+  if (result.status !== 0) throw new Error('Tiled world validation failed');
 }
 
 console.log('game static checks ok');
