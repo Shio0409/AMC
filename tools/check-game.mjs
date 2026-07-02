@@ -93,7 +93,7 @@ if (!externalScripts.includes('AMC_NPC_KEYWORD_REPLIES')) {
 }
 
 if (/\b(?:shots|eshots)\s*=\s*\[/.test(src)) {
-  throw new Error('legacy shot arrays are back');
+  throw new Error('removed shot arrays are back');
 }
 
 {
@@ -104,16 +104,43 @@ if (/\b(?:shots|eshots)\s*=\s*\[/.test(src)) {
 }
 
 if (/useMapPortal|MAP\.portals|\.portals/.test(src) || /\.portals/.test(fs.readFileSync('maps.js', 'utf8'))) {
-  throw new Error('legacy portal references are back in game code');
+  throw new Error('removed portal references are back in game code');
 }
 if (/WORLD_W\s*\/\s*r\.w/.test(src)) {
   throw new Error('Tiled area rendering must not normalize every area to WORLD_W');
+}
+if (src.includes('const lw=area' + 'LocalWidth(a),lh=area' + 'LocalHeight(a),probes=[]')) {
+  throw new Error('removed edge probe area switching is back');
+}
+for (const removedPattern of [
+  'function switchWorldEdgeIfNeeded',
+  'function switchToWorldAreaAt',
+  'function re' + 'localizeWorldObject',
+  'function carry' + 'SeamlessObjects',
+  'function world' + 'LocalScale',
+  'function area' + 'LocalScale',
+  'function area' + 'LocalWidth',
+  'function area' + 'LocalHeight',
+  'function area' + 'LocalRawPoint',
+  'function clampUnit' + 'ToMap',
+  'function random' + 'LocalPoint',
+  'function current' + 'LocalFromWorld',
+  'function with' + 'CurrentLocal',
+  'carry' + 'SeamlessObjects(id',
+  'old' + 'Projectiles=' + 'sea' + 'mless',
+  'old' + 'MagicObjects=' + 'sea' + 'mless',
+  'seam' + 'less?0.18:1',
+  'old' + 'Pending=' + 'sea' + 'mless',
+  'P.transitionLockT=' + 'sea' + 'mless',
+  'keepWorld' + 'State',
+  'switch' + 'Map(area.id',
+]) {
+  if (src.includes(removedPattern)) throw new Error(`removed map transition is back: ${removedPattern}`);
 }
 
 for (const needle of [
   'world_data.js',
   'function findWorldAreaAt',
-  'function switchWorldEdgeIfNeeded',
   'function drawMinimap',
   'miniZoom',
   'a.minimap',
@@ -125,27 +152,36 @@ for (const needle of [
   'function pickTiledFallbackTile',
   'function drawTiledFallbackGround',
   'drawTiledFallbackGround(area,view,ts,dw,dh)',
-  'function worldLocalScale',
-  'function areaLocalScale',
-  'function areaLocalWidth',
-  'function areaLocalHeight',
-  'function clampUnitToMap',
-  'function areaLocalRawPoint',
+  'function clampUnitToDungeon',
+  'function settleUnitWorldPosition',
+  'function randomWorldPoint',
   'if(tiledWorldActive()){drawTiledTileLayers',
-  'if(!tiledWorldActive())for(const d of MAP.decos)',
-  'const lw=areaLocalWidth(a),lh=areaLocalHeight(a)',
-  'dh=dw',
+  'for(const d of MAP.decos)',
+  'function updateCachedWorldEnemies',
+  'updateCachedWorldEnemies(dt)',
+  'function runtimeForMap',
+  'function reconcileWorldEnemyLists',
+  'reconcileWorldEnemyLists()',
+  'function removeChestEverywhere',
+  'removeChestEverywhere(c)',
   'WORLD_DATA.tileLayers',
   'WORLD_DATA.tileImages',
   'function playerWorldPos',
   'function syncPlayerWorldPos',
   'function savedWorldSpawn',
   'function movePlayerWorld',
+  'function resetUnitAreaCrossAction',
+  'function moveUnitWorld',
+  'function enterWorldArea',
+  'reconcileWorldEnemyLists();if(!MAP.town&&!MAP.dungeon',
   'function setPlayerWorld',
+  'function worldPoint',
+  'function worldRect',
+  'function worldPoly',
   'function worldPointRef',
   'function syncPointWorld',
   'function syncUnitWorld',
-  'function randomLocalPoint',
+  'function sameWorldObject',
   'function syncEnemyWorld',
   'function syncBossWorld',
   'function syncDemonWorld',
@@ -153,12 +189,15 @@ for (const needle of [
   'function syncMagicWorld',
   'function syncNpcWorld',
   'function unitDistance',
+  'function playerTarget',
+  'd:pointDistance(map,x,y,P)',
+  'function playerSideTargets',
+  'const out=[P]',
   'function inPlayerView',
   'function combatActiveNearPlayer',
-  'function despawnFarFromPlayer',
+  'function enemyShouldSleep',
+  'function enemyShouldForget',
   'function transientObjectAlive',
-  'function relocalizeWorldObject',
-  'function carrySeamlessObjects',
   'function showAreaName',
   'function drawAreaName',
   'function drawWorldDecorations',
@@ -166,13 +205,14 @@ for (const needle of [
   'function drawWorldFieldStones',
   'function drawWorldTreasureChests',
   'function drawWorldNpcs',
-  'function mpVisualSpellLocal',
-  'function mpWorldEventLocal',
-  'mpWorldEventLocal(msg,PROJECTILE_PAD)',
-  'mpWorldEventLocal(msg,360)',
-  'mpWorldEventLocal(m,260)',
+  'function mpVisualSpellWorld',
+  'function mpWorldEventView',
+  'mpWorldEventView(msg,PROJECTILE_PAD)',
+  'mpWorldEventView(msg,360)',
+  'mpWorldEventView(m,260)',
   'syncPointWorld(payload.map,payload.x,payload.y)',
   'function cachedEnemiesNearPlayer',
+  'function allWorldEnemies',
   'function visibleWorldEnemies',
   'function processCachedEnemyDeaths',
   'function processWorldBossDeaths',
@@ -186,6 +226,9 @@ for (const needle of [
   'function minimapWorldFacilities',
   'function minimapWorldStones',
   'function syncWeatherWorld',
+  'function dropFieldChestNear',
+  'dropFieldChestNear(p.x,p.y,elite,en.enLv)',
+  'if(Math.random()<0.25)spawnTreasureChest()',
   'wrect:z.rect',
   'wx:p.wx',
   'syncEnemyWorld(en)',
@@ -201,8 +244,8 @@ for (const needle of [
   'function unitAim',
   'function pointAim',
   'function currentWorldView',
-  'function currentLocalFromWorld',
-  'function withCurrentLocal',
+  'function worldDisplayPoint',
+  'function displayWorldObject',
   'function worldObjInView',
   'function displayUnit',
   'function displayPoint',
@@ -211,19 +254,19 @@ for (const needle of [
   'pointDistance(map,x,y',
   'syncWeatherWorld({',
   'syncWeatherWorld(w)',
-  'despawnFarFromPlayer(e)',
+  'enemyShouldSleep(e)',
+  'enemyShouldForget(e)',
+  'allWorldEnemies():enemies.slice()',
   'transientObjectAlive(s',
-  'carrySeamlessObjects(id',
-  'seamless?0.18:1',
-  'showAreaName(MAP.name,seamless)',
+  'P.transitionLockT=1',
+  'showAreaName(MAP.name,false)',
   'drawAreaName();',
   'saveMapRuntime(MAPID)',
-  'oldPending=seamless?pending.filter',
+  'pending=[]',
   'function schedulePending',
   'function tickPending',
   'tickPending(dt)',
   'schedulePending(i*delay',
-  'pending=oldPending||[]',
   'syncEnemyWorld({...e,map:id})',
   'syncUnitWorld({...c},id',
   'restoreMapRuntime(id)',
@@ -287,7 +330,7 @@ for (const pattern of [
   /for\s*\(\s*let\s+i\s*=\s*0\s*;\s*i\s*<\s*5\s*;\s*i\+\+\s*\)\s*spawnEnemy/,
   /while\s*\(\s*enemies\.length\s*\+\s*enemyRespawns\.length\s*<\s*cap\s*\)/,
 ]) {
-  if (pattern.test(src)) throw new Error(`legacy random map spawn loop is back: ${pattern}`);
+  if (pattern.test(src)) throw new Error(`removed random map spawn loop is back: ${pattern}`);
 }
 
 const directMagicPush = [
@@ -362,6 +405,17 @@ if (missingEnemySpells.length) {
 
 for (const needle of ['mpu:P.macroPenaltyUntil', 'P.macroPenaltyUntil=d.mpu']) {
   if (!src.includes(needle)) throw new Error(`macro penalty save/apply missing: ${needle}`);
+}
+
+for (const needle of [
+  'SAVE_VERSION=18',
+  'function packWorldState',
+  'function applyWorldState',
+  'ws:packWorldState()',
+  'applyWorldState(d.ws)',
+  'd.ws=Array.isArray(d.ws)?d.ws:[]',
+]) {
+  if (!src.includes(needle)) throw new Error(`world state save/apply missing: ${needle}`);
 }
 
 {
