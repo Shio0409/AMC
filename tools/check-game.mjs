@@ -16,10 +16,26 @@ const externalScripts = ['maps.js', 'enemies.js', 'bestiary.js', 'enemy_spells.j
   .join('\n');
 const allSrc = `${src}\n${externalScripts}`;
 
+{
+  const loreFiles = [
+    'index.html',
+    '設定資料/AMC.md',
+    '設定資料/game_design_bible.md',
+    '設定資料/quest_story_design.md',
+  ].filter((file) => fs.existsSync(file));
+  const forbiddenStoryTerms = ['真エンド', '真エンディング', '真の結末', '賢者の記録中枢', '世界の記録中枢', '記録中枢'];
+  for (const file of loreFiles) {
+    const text = fs.readFileSync(file, 'utf8');
+    for (const term of forbiddenStoryTerms) {
+      if (text.includes(term)) throw new Error(`forbidden story term in ${file}: ${term}`);
+    }
+  }
+}
+
 function loadGameGlobals() {
   const instrumented = script.replace(
     /\}\)\(\);\s*$/,
-    `globalThis.__AMC_CHECK__ = { SPELLS, ENEMY_SPELLS, visibleSpellList, MAGIC_OBJECT_HANDLERS, AI_STATES, DEMON_AI_STATES, BOSS_PATTERN_ACTIONS, COMBAT_BALANCE, packSave: typeof packSave, applyPlayerState: typeof applyPlayerState, SAVE_VERSION };\n})();`,
+    `globalThis.__AMC_CHECK__ = { P, npcs, SPELLS, ENEMY_SPELLS, visibleSpellList, MAGIC_OBJECT_HANDLERS, AI_STATES, DEMON_AI_STATES, BOSS_PATTERN_ACTIONS, COMBAT_BALANCE, TITLE_PARTS, TITLE_FRONTS, TITLE_BACKS, TITLE_EFFECT_POOL, questCanonicalKey, questKeyMatches, questKillKey, progressKillQuests, normalizeQuest, unpackQuest, packSave: typeof packSave, applyPlayerState: typeof applyPlayerState, SAVE_VERSION };\n})();`,
   );
   if (instrumented === script) throw new Error('script instrumentation point not found');
   const sandbox = `
@@ -364,6 +380,98 @@ if (!game.COMBAT_BALANCE || !game.COMBAT_BALANCE.enemyRanged || !game.COMBAT_BAL
   throw new Error('combat balance tables are not loaded');
 }
 
+{
+  const allowedTitleEffects = new Set([
+    'INT', 'VIT', 'DEX', 'AGI', 'PIE', 'LUK', 'hp', 'mp',
+    'INT%', 'VIT%', 'DEX%', 'AGI%', 'PIE%', 'LUK%', 'allstat%',
+    'hp%', 'mp%', 'exp%', 'gem%', 'drop%', 'shop%', 'move%', 'castSpeed%',
+  ]);
+  const parts = game.TITLE_PARTS || [];
+  const fronts = game.TITLE_FRONTS || [];
+  const backs = game.TITLE_BACKS || [];
+  if (fronts.length !== 300 || backs.length !== 300 || parts.length !== 600) {
+    throw new Error(`title part count must be 300+300: ${fronts.length}+${backs.length}`);
+  }
+  const ids = new Set(parts.map((t) => t.id));
+  if (ids.size !== parts.length) throw new Error('title part ids must be unique');
+  const badTitles = parts.filter((t) => !t.name || !['front', 'back'].includes(t.side) || !t.effect || !allowedTitleEffects.has(t.effect.k) || !t.rule);
+  if (badTitles.length) throw new Error(`invalid title parts: ${badTitles.map((t) => t.id || t.name).join(', ')}`);
+}
+
+for (const needle of [
+  'return s+(setAffixes()[key]||0)+titleBonus(key)',
+  'let v=P.base[n]*2+titleBonus(n)',
+  "titleBonus('hp')",
+  "titleBonus('mp')",
+  "playerAffix('gem%')",
+  "playerAffix('exp%')",
+  "playerAffix('move%')",
+  "playerAffix('castSpeed%')",
+  'function titleShopPriceMul',
+  'titleShopPriceMul()',
+  "titleAddStat('gemEarned'",
+  'titleRecordKill(',
+  'titleRecordQuest(',
+  'function updateTitles(dt)',
+]) {
+  if (!src.includes(needle)) throw new Error(`title bonus hook missing: ${needle}`);
+}
+
+{
+  const legacy = game.unpackQuest(['slime', 'マナスライム', 3, 0, 120, 80, 1, 'low']);
+  const corrupt = game.unpackQuest(['slime', 'マナスライム', 3, 0, 120, 80, 1, 'low', '']);
+  const jpKey = game.unpackQuest(['mob', 'マナスライム', 'マナスライム', 3, 0, 120, 80, 1, 'low']);
+  const corruptObject = game.normalizeQuest({ type: 'slime', key: 'マナスライム', jp: 3, need: 0, count: 120, gem: 80, exp: 1, lv: 'low' });
+  for (const [label, q] of [['legacy', legacy], ['corrupt', corrupt], ['jpKey', jpKey], ['corruptObject', corruptObject]]) {
+    if (!q || q.type !== 'mob' || q.key !== 'slime' || q.jp !== 'マナスライム' || q.need !== 3 || q.count !== 0) {
+      throw new Error(`slime quest migration failed: ${label}`);
+    }
+  }
+  if (!game.questKeyMatches('slime', 'マナスライム') || !game.questKeyMatches('スライム', 'slime')) {
+    throw new Error('slime quest key aliases are not compatible');
+  }
+  if (game.questKillKey({ key: 'manaSlime', jp: 'マナスライム' }) !== 'slime' || game.questKillKey({ jp: 'マナスライム' }) !== 'slime') {
+    throw new Error('enemy kill key normalization is not compatible with mana slime');
+  }
+  const oldQuests = game.P.quests;
+  const oldNpcQuests = game.npcs.map((n) => n.q);
+  for (const n of game.npcs) n.q = null;
+  game.P.quests = [{ type: 'mob', key: 'slime', jp: 'マナスライム', need: 2, count: 0, gem: 0, exp: 0, lv: 1, rank: 'low' }];
+  game.progressKillQuests({ key: 'manaSlime', jp: 'マナスライム' });
+  if (game.P.quests[0].count !== 1) throw new Error('manaSlime enemy kill did not progress slime quest');
+  game.progressKillQuests('マナスライム');
+  if (game.P.quests[0].count !== 2) throw new Error('Japanese mana slime kill did not complete slime quest');
+  game.progressKillQuests('マナスライム');
+  if (game.P.quests[0].count !== 2) throw new Error('completed kill quest over-counted');
+  game.P.quests = oldQuests;
+  game.npcs.forEach((n, i) => { n.q = oldNpcQuests[i]; });
+}
+
+for (const needle of [
+  'function progressStoryKillQuests',
+  'function questKillKey',
+  'function progressQuestKillEntry',
+  'function progressMobKillQuests',
+  'function progressKillQuests',
+  'function processActiveEnemyDeaths',
+  'progressKillQuests(en)',
+  'if(!en||en.rewarded)return;en.rewarded=true',
+]) {
+  if (!src.includes(needle)) throw new Error(`kill quest progression hook missing: ${needle}`);
+}
+if (src.includes('questProgress(en.key);storyOnKill(en.key)')) {
+  throw new Error('enemy kill reward must use unified kill quest progression');
+}
+{
+  const active = src.indexOf('processActiveEnemyDeaths();');
+  const cached = src.indexOf('processCachedEnemyDeaths();', active);
+  const bosses = src.indexOf('processWorldBossDeaths();', cached);
+  const reconcile = src.indexOf('reconcileWorldEnemyLists();', bosses);
+  if (!(active >= 0 && cached > active && bosses > cached && reconcile > bosses)) {
+    throw new Error('enemy death rewards must run before world enemy reconciliation');
+  }
+}
+
 for (const state of ['wander', 'approach', 'windup', 'dash', 'recover']) {
   if (!game.AI_STATES || typeof game.AI_STATES[state] !== 'function') {
     throw new Error(`AI_STATES.${state} missing`);
@@ -408,7 +516,7 @@ for (const needle of ['mpu:P.macroPenaltyUntil', 'P.macroPenaltyUntil=d.mpu']) {
 }
 
 for (const needle of [
-  'SAVE_VERSION=18',
+  'SAVE_VERSION=22',
   'function packWorldState',
   'function applyWorldState',
   'ws:packWorldState()',
@@ -416,6 +524,195 @@ for (const needle of [
   'd.ws=Array.isArray(d.ws)?d.ws:[]',
 ]) {
   if (!src.includes(needle)) throw new Error(`world state save/apply missing: ${needle}`);
+}
+
+for (const needle of [
+  'const COSMETIC_SLOTS',
+  'function genCosmetic',
+  'function equipCosmetic',
+  'function drawCharacterCosmetics',
+  'cosmetics:cosmeticSummary(P.cosmetics)',
+  'ce:packCosmeticEquip()',
+  'applyCosmeticEquip(d.ce)',
+  "['look','見た目']",
+  'maybeDropCosmetic(x,y,boss,lv,0)',
+  'function debugAddCosmetic',
+  'debugAddCosmetic',
+]) {
+  if (!src.includes(needle)) throw new Error(`cosmetic equipment hook missing: ${needle}`);
+}
+
+for (const needle of [
+  'visitedAreas:new Set',
+  'va:[...(P.visitedAreas',
+  'function markVisitedArea',
+  'function hasVisitedArea',
+  'objectInVisitedArea',
+  "P.spellsSeen.add('マップ')",
+  'function stoneIsLearned(st)',
+  'function minimapStoneColor(st)',
+  'spell:s.spell,done:stoneIsLearned(s)',
+  'ctx.fillStyle=minimapStoneColor(st)',
+]) {
+  if (!src.includes(needle)) throw new Error(`visited map hook missing: ${needle}`);
+}
+
+if (src.includes("['world','マップ']")) {
+  throw new Error('world map tab must not be exposed from the Esc menu');
+}
+
+for (const needle of [
+  'function questSpawnMatch',
+  'questKeyMatches(key,k)',
+  'function spawnZoneMonster(z,map){const list=questEnemyListForZone',
+  'spawnZonesForMap(id).some(z=>questEnemyListHas(questEnemyListForZone(z,id),key))',
+  'const zs=spawnZonesForMap(id).filter(z=>questEnemyListHas(questEnemyListForZone(z,id),key))',
+  'function storyStepKillKeys',
+  'storyStepKillKeys(step).some(k=>questKeyMatches(k,key))',
+  'questLoc(storyStepKillKeys(step))',
+  'actualEnemyQuestTarget(keys,st.map)',
+]) {
+  if (!src.includes(needle)) throw new Error(`quest target alias/spawn hook missing: ${needle}`);
+}
+
+for (const needle of [
+  'function nearNpc(){let b=1e9,t=null;for(const n of npcs){const d=unitDistance(P,n)',
+  'const near=unitDistance(P,n)<100',
+  "if(a.done>=chestReq(a.obj)){finishChest(false);return;}",
+  "if(P.chest.done>=chestReq(P.chest.obj)){finishChest(false);return;}",
+]) {
+  if (!src.includes(needle)) throw new Error(`npc/chest interaction hook missing: ${needle}`);
+}
+
+for (const needle of [
+  "S('クエスト',['くえすと']",
+  "if(['クエスト','くえすと','quest','quests'].includes(said)){openQuestLog('quest')",
+  'function drawQuestLog',
+  'function questTrackerRows',
+  'P.questHudScroll',
+  "storyKind(q)==='main'&&(st.active||st.done||storyAvailable(q))",
+  'done?storySynopsis(cur):storyObjectiveText(cur)',
+]) {
+  if (!src.includes(needle)) throw new Error(`quest log/spell hook missing: ${needle}`);
+}
+
+{
+  const storyStart = src.indexOf('const STORY_QUESTS=[');
+  const storyEnd = src.indexOf(';\nconst STORY_BY_ID', storyStart);
+  if (storyStart < 0 || storyEnd < storyStart) throw new Error('STORY_QUESTS block not found');
+  const quests = vm.runInNewContext(
+    `${src.slice(storyStart, storyEnd + 1)}\nSTORY_QUESTS;`,
+    {},
+    { timeout: 5000 },
+  );
+
+  const aliasStart = src.indexOf('const QUEST_KEY_ALIASES=');
+  const aliasEnd = src.indexOf(';\nfunction questCanonicalKey', aliasStart);
+  if (aliasStart < 0 || aliasEnd < aliasStart) throw new Error('quest key alias block not found');
+  const aliasCtx = {};
+  vm.runInNewContext(
+    `${src.slice(aliasStart, aliasEnd + 1)}\nthis.QUEST_KEY_ALIASES=QUEST_KEY_ALIASES;\nthis.QUEST_SPAWN_EXTRAS=QUEST_SPAWN_EXTRAS;`,
+    aliasCtx,
+    { timeout: 5000 },
+  );
+
+  const enemyCtx = { window: {} };
+  vm.createContext(enemyCtx);
+  vm.runInContext(fs.readFileSync('enemies.js', 'utf8'), enemyCtx, { timeout: 5000 });
+  const enemies = enemyCtx.window.AMC_ENEMIES && enemyCtx.window.AMC_ENEMIES.ET;
+  if (!enemies) throw new Error('enemy definitions not loaded for story audit');
+
+  const worldCtx = { window: {} };
+  vm.createContext(worldCtx);
+  vm.runInContext(fs.readFileSync('world_data.js', 'utf8'), worldCtx, { timeout: 5000 });
+  const world = worldCtx.window.AMC_WORLD_DATA;
+  if (!world || !Array.isArray(world.areas)) throw new Error('world data not loaded for story audit');
+
+  const areaIds = new Set(world.areas.map((a) => a.id));
+  const npcIds = new Set((world.npcs || []).map((n) => `${n.area}:${(n.props && n.props.npc) || n.name || n.id}`));
+  const titleIds = new Set((game.TITLE_PARTS || []).map((t) => t.id));
+  const aliases = aliasCtx.QUEST_KEY_ALIASES || {};
+  const spawnExtras = aliasCtx.QUEST_SPAWN_EXTRAS || {};
+  const problems = [];
+  const ids = new Set();
+  const asList = (v) => (Array.isArray(v) ? v : (v ? [v] : []));
+  const keysFor = (key) => {
+    const out = [];
+    const add = (x) => {
+      if (x && !out.includes(x)) out.push(x);
+    };
+    for (const srcKey of asList(key)) {
+      add(srcKey);
+      for (const alias of aliases[srcKey] || []) add(alias);
+    }
+    return out;
+  };
+  const enemyOk = (key) => keysFor(key).some((k) => enemies[k]);
+  const zonesByArea = new Map();
+  for (const zone of world.spawnZones || []) {
+    const rows = zonesByArea.get(zone.area) || [];
+    rows.push(zone);
+    zonesByArea.set(zone.area, rows);
+  }
+  const zoneEnemyList = (zone, map) => {
+    const out = ((zone && zone.enemies && zone.enemies.length) ? zone.enemies : (zone && zone.monster ? [zone.monster] : [])).filter(Boolean);
+    for (const key of spawnExtras[map] || []) if (enemies[key] && !out.includes(key)) out.push(key);
+    return out;
+  };
+  const zoneHasKey = (zone, map, key) => keysFor(key).some((k) => zoneEnemyList(zone, map).includes(k));
+  const mapHasKillTarget = (map, key) => (zonesByArea.get(map) || []).some((zone) => zoneHasKey(zone, map, key));
+  const checkNpc = (ref, questId) => {
+    for (const id of asList(ref)) if (!npcIds.has(id)) problems.push(`missing npc ${questId}: ${id}`);
+  };
+  const checkMap = (ref, questId) => {
+    for (const id of asList(ref)) if (!areaIds.has(id)) problems.push(`missing map ${questId}: ${id}`);
+  };
+
+  for (const q of quests) {
+    if (ids.has(q.id)) problems.push(`duplicate story quest id: ${q.id}`);
+    ids.add(q.id);
+    if (!q.title || !q.storyKind) problems.push(`bad story quest header: ${q.id}`);
+    const stepCount = (q.steps || []).length;
+    const lineCount = (q.steps || []).reduce((n, step) => n + ((step.lines || []).length), 0);
+    if (q.id !== 'main_001_lindefy_record' && stepCount < 2) problems.push(`story quest too short ${q.id}: ${stepCount} steps`);
+    if (lineCount < 3) problems.push(`story quest needs dialogue ${q.id}: ${lineCount} lines`);
+    for (const dep of asList(q.after)) if (!ids.has(dep)) problems.push(`bad story quest prerequisite ${q.id} -> ${dep}`);
+    checkNpc(q.startNpc, q.id);
+    for (const titleId of asList(q.rewards && q.rewards.titles)) {
+      if (!titleIds.has(titleId)) problems.push(`missing title reward ${q.id}: ${titleId}`);
+    }
+    for (const step of q.steps || []) {
+      if (step.type === 'talk') checkNpc(step.npc, q.id);
+      if (step.map) checkMap(step.map, q.id);
+      if (step.type === 'kill') {
+        for (const key of [step.key, ...(step.keys || [])].filter(Boolean)) {
+          if (!enemyOk(key)) problems.push(`bad story kill target ${q.id}: ${key}`);
+        }
+        const killKeys = (step.keys && step.keys.length) ? step.keys : step.key;
+        if (step.map) {
+          for (const map of asList(step.map)) {
+            if (!mapHasKillTarget(map, killKeys)) problems.push(`story kill target not in map spawns ${q.id}: ${map} -> ${asList(killKeys).join('|')}`);
+          }
+        }
+      }
+    }
+  }
+
+  const main = quests.filter((q) => q.storyKind === 'main');
+  const sub = quests.filter((q) => q.storyKind === 'sub');
+  for (let i = 1; i < main.length; i += 1) {
+    if (asList(main[i].after)[0] !== main[i - 1].id) problems.push(`main story chain break: ${main[i].id}`);
+  }
+  if (!main.at(-2) || !asList(main.at(-2).flags).includes('main_clear')) {
+    problems.push('main_clear flag missing on final clear quest');
+  }
+  if (!main.at(-1) || !asList(main.at(-1).flags).includes('postgame_patrol_checked')) {
+    problems.push('postgame patrol flag missing');
+  }
+  if (quests.length !== 77 || main.length !== 17 || sub.length !== 60) {
+    problems.push(`story quest count changed: ${quests.length} (${main.length} main / ${sub.length} sub)`);
+  }
+  if (problems.length) throw new Error(`story quest audit failed:\n${problems.join('\n')}`);
 }
 
 {
