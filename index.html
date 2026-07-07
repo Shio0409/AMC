@@ -2427,7 +2427,7 @@ function applyTiledWorldData(){if(!WORLD_DATA||!Array.isArray(WORLD_DATA.areas))
   if(bossesHere.length){const p=worldPoint(a,bossesHere[0].x,bossesHere[0].y);m.bx=p.x;m.by=p.y;if(!m.bossDef){const lv=a.level||1;m.bossDef={jp:bossesHere[0].name||m.name+'の強敵',el:(bossesHere[0].props&&bossesHere[0].props.element)||'無',col:'#c08aff',hp:900+lv*90};}}
   if(!m.bx)m.bx=WORLD_W/2;if(!m.by)m.by=WORLD_H*.28;
  }
- npcs=npcs.filter(n=>n.tutorial);for(const [areaId,list] of npcByArea){const area=worldArea(areaId);for(const d of list){const p=worldPointRef(area,d.x,d.y),props=d.props||{},name=d.name||props.npc||d.id,base={home:areaId,map:areaId,slot:props.slot||0,name,storyId:props.storyId||props.story||areaId+':'+name,race:props.race||'人間',role:props.role||'住人',trait:props.trait||'おだやか',look:props.look||'',sprite:props.sprite||0};base.dl=townNpcLines(base);npcs.push({...base,idx:npcs.length,x:p.x,y:p.y,wx:p.wx,wy:p.wy,wAng:Math.random()*7,st:0,li:0,talk:false,tt:0,moveT:8+Math.random()*20,aff:0,done:0,q:null,offer:null});}}
+ npcs=npcs.filter(n=>n.tutorial);for(const [areaId,list] of npcByArea){const area=worldArea(areaId);for(const d of list){const p=worldPointRef(area,d.x,d.y),props=d.props||{},name=d.name||props.npc||d.id,base={home:areaId,map:areaId,slot:props.slot||0,name,storyId:props.storyId||props.story||areaId+':'+name,race:props.race||'人間',role:props.role||'住人',trait:props.trait||'おだやか',look:props.look||'',sprite:npcSpriteChoice(props.sprite,npcs.length)};base.dl=townNpcLines(base);npcs.push({...base,idx:npcs.length,x:p.x,y:p.y,wx:p.wx,wy:p.wy,wAng:Math.random()*7,st:0,li:0,talk:false,tt:0,moveT:8+Math.random()*20,walkT:Math.random()*4,face:{x:0,y:1},faceKey:'front',moving:false,aff:0,done:0,q:null,offer:null});}}
 }
 const TELEPORT_TOWNS=['town','windmere','goldhahn','univel','rowendil','miraLake','acrossPort','graubachCity','eisenroar','wallguard','lastHold'];
 let MAP=MAPS.town,MAPID='town';
@@ -2435,12 +2435,87 @@ const TUTOR_X=WORLD_W/2-300,TUTOR_Y=WORLD_H/2+190;
 function townSpawn(id){const m=MAPS[id||'town'],g=m&&m.facilities&&m.facilities.find(f=>f.type==='guild');return g?{x:g.x,y:g.y+70}:{x:TUTOR_X,y:TUTOR_Y+82};}
 // ===== NPC =====
 const NPC_BASE='assets/NPC/';
-const NPC_SPRITES=['ミラ-pixel-snapper.png','ガロ-pixel-snapper.png','ティナ-pixel-snapper.png','フェン-pixel-snapper.png','コウ-pixel-snapper.png','リル-pixel-snapper.png','オルト-pixel-snapper.png'];
+const NPC_SPRITES=[
+ 'ウサギ褐色男.png',
+ 'サーバルキャット女.png',
+ 'ロング黒耳猫女.png',
+ '褐色うさぎ男.png',
+ '褐色金髪猫男.png',
+ '褐色黒オオカミ男.png',
+ '褐色赤茶髪男.png',
+ '褐色茶色猫女.png',
+ '金耳茶髪猫男.png',
+ '金髪たれ耳ウサギ男.png',
+ '金髪たれ耳犬男.png',
+ '金髪リボンウサギ女.png',
+ '金髪リボン女.png',
+ '金髪黒メッシュ白耳猫女.png',
+ '金髪黒熊耳男.png',
+ '金髪黒耳狐.png',
+ '金髪黒耳猫.png',
+ '金髪黒耳猫男.png',
+ '金髪赤茶耳猫.png',
+ '金髪猫女.png',
+ '金髪白耳熊女.png',
+ '黒シャツ赤髪キツネ男.png',
+ '黒耳金髪猫女.png',
+ '黒髪ロング黒犬女.png',
+ '黒髪黒耳褐色キツネ男.png',
+ '黒髪赤メッシュロング女.png',
+ '黒髪赤耳黒翼男.png',
+ '黒髪赤服男.png',
+ '黒髪茶耳猫男.png',
+ '色白熊耳ロング女.png',
+ '色白黒耳白髪猫男.png',
+ '色白黒髪男.png',
+ '赤茶褐色猫男.png',
+ '赤白黒たれ耳ウサギ女.png',
+ '赤髪たれ耳ウサギ女.png',
+ '赤髪黄服男.png',
+ '赤髪熊女.png',
+ '赤髪熊男.png',
+ '赤髪色白女.png',
+ '赤髪男.png',
+ '赤髪猫男.png',
+ '茶キツネ男.png',
+ '茶色ロング白耳狐.png',
+ '茶色子犬男.png',
+ '茶長髪女.png',
+ '茶髪シャツ男.png',
+ '茶髪赤メッシュたれ耳女.png',
+ '茶髪猫女.png',
+ '茶髪猫男.png',
+ '長耳金髪坊主男.png',
+ '長耳猫白髪女.png',
+ '白うさぎ女.png',
+ '白うさぎ男.png',
+ '白たれ耳ウサギ女.png',
+ '白黄色耳羊男.png',
+ '白犬黒シャツ赤髪男.png',
+ '白耳金髪熊男.png',
+ '白耳金髪女.png',
+ '白赤猫女.png',
+ '白髪リボン羊女.png',
+ '白髪褐色たれ耳ウサギ男.png',
+ '白髪褐色たれ耳犬男.png',
+ '白髪熊女.png',
+ '白髪黒耳猫男.png',
+ '白髪女.png',
+ '白髪男.png',
+ '白髪羊女.png',
+ '白髪羊男.png',
+ '羊金髪女.png',
+];
 const NPC_CACHE={};
-function npcImg(idx){const name=NPC_SPRITES[idx];if(!name)return null;if(!NPC_CACHE[name]){const img=new Image();img.src=NPC_BASE+name;NPC_CACHE[name]=img;}return NPC_CACHE[name];}
-function drawNpcSprite(n,size){const img=npcImg(n.sprite!=null?n.sprite:(n.idx%NPC_SPRITES.length)),h=size||54,w=img&&img.naturalWidth?h*(img.naturalWidth/img.naturalHeight):h;
- if(img&&img.complete&&img.naturalWidth){ctx.save();ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=8;ctx.drawImage(img,n.x-w/2,n.y-h+18,w,h);ctx.restore();return true;}
- return false;}
+const NPC_CHIP_W=32,NPC_CHIP_H=32,NPC_DRAW_H=64,NPC_WALK_FRAMES=[0,1,2,1],NPC_IDLE_FRAMES=[1,1,0,1,1,2];
+const NPC_DIR_CHIP={front:[0,0],frontLeft:[0,3],left:[1,0],frontRight:[1,3],right:[2,0],backLeft:[2,3],back:[3,0],backRight:[3,3]};
+function npcSpriteName(idx){if(!NPC_SPRITES.length)return null;if(typeof idx==='string')return /\.png$/i.test(idx)?idx:idx+'.png';const n=Number.isFinite(Number(idx))?Math.trunc(Number(idx)):0;return NPC_SPRITES[((n%NPC_SPRITES.length)+NPC_SPRITES.length)%NPC_SPRITES.length];}
+function npcImg(idx){const name=npcSpriteName(idx);if(!name)return null;if(!NPC_CACHE[name]){const img=new Image();img.src=NPC_BASE+name;NPC_CACHE[name]=img;}return NPC_CACHE[name];}
+function npcSpriteChoice(raw,auto){if(typeof raw==='string'){const t=raw.trim();if(t&&!/^-?\d+$/.test(t))return t;}const n=Number(raw);if(Number.isFinite(n)&&n>=7)return n;return NPC_SPRITES.length?Math.abs(Math.trunc(auto||0))%NPC_SPRITES.length:0;}
+function npcFaceKey(face,fallback){const x=face&&Number.isFinite(face.x)?face.x:0,y=face&&Number.isFinite(face.y)?face.y:0;if(Math.abs(x)+Math.abs(y)<0.01)return fallback||'front';let a=Math.atan2(y,x);if(a<0)a+=Math.PI*2;return ['right','frontRight','front','frontLeft','left','backLeft','back','backRight'][Math.round(a/(Math.PI/4))%8];}
+function npcAnimFrame(n,moving){const seed=((n&&n.idx)||0)*0.37;if(moving){const t=(n&&n.walkT||0)*8+seed;return NPC_WALK_FRAMES[Math.floor(t)%NPC_WALK_FRAMES.length];}const t=performance.now()/650+seed;return NPC_IDLE_FRAMES[Math.floor(t)%NPC_IDLE_FRAMES.length];}
+function drawNpcChip(n,x,y,size,dir,frame){const img=npcImg(n&&n.sprite!=null?n.sprite:(n&&n.idx!=null?n.idx:0));if(!(img&&img.complete&&img.naturalWidth))return false;const key=dir||npcFaceKey(n&&n.face,n&&n.faceKey),chip=NPC_DIR_CHIP[key]||NPC_DIR_CHIP.front,f=frame==null?npcAnimFrame(n,!!(n&&n.moving)):frame,h=size||NPC_DRAW_H,w=h*(NPC_CHIP_W/NPC_CHIP_H),sx=(chip[1]+Math.max(0,Math.min(2,f)))*NPC_CHIP_W,sy=chip[0]*NPC_CHIP_H;ctx.save();ctx.imageSmoothingEnabled=false;ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=8;ctx.drawImage(img,sx,sy,NPC_CHIP_W,NPC_CHIP_H,x-w/2,y-h+18,w,h);ctx.restore();return true;}
+function drawNpcSprite(n,size){return drawNpcChip(n,n.x,n.y,size);}
 const PLAYER_BASE='assets/player/';
 const PLAYER_SPRITES={front:'front.png',back:'back.png',right:'right.png'};
 const PLAYER_CACHE={};
@@ -2589,8 +2664,9 @@ function townNpcLines(d){const town=(MAPS[d.home]&&MAPS[d.home].name)||d.home,h=
   [npcPick(close,h,8),npcPick(close,h,9)]
  ];}
 function npcHomePos(home,slot){const p=[[WORLD_W/2-250,WORLD_H/2-95],[WORLD_W/2+245,WORLD_H/2-88],[WORLD_W/2-180,WORLD_H/2+138],[WORLD_W/2+190,WORLD_H/2+132]][slot%4];return{x:p[0],y:p[1]};}
-const TOWN_NPC_DEFS=Object.entries(TOWN_NPC_DATA).flatMap(([home,list])=>list.map((a,slot)=>{const d={home,slot,name:a[0],storyId:home+':'+a[0],race:a[1],role:a[2],trait:a[3],look:a[4],sprite:a[5],rune:NPC_RUNE_POOL[(slot+home.length)%NPC_RUNE_POOL.length]};d.dl=townNpcLines(d);return d;}));
-let npcs=NPC_DEFS.filter(d=>d.tutorial).concat(TOWN_NPC_DEFS).map((d,idx)=>{const p=d.fixed?{x:TUTOR_X,y:TUTOR_Y}:npcHomePos(d.home,d.slot||0);return{...d,idx,map:d.home,x:p.x,y:p.y,wAng:Math.random()*7,st:0,li:0,talk:false,tt:0,moveT:8+Math.random()*20,aff:0,done:0,q:null,offer:null};});
+let townNpcSpriteSeq=0;
+const TOWN_NPC_DEFS=Object.entries(TOWN_NPC_DATA).flatMap(([home,list])=>list.map((a,slot)=>{const d={home,slot,name:a[0],storyId:home+':'+a[0],race:a[1],role:a[2],trait:a[3],look:a[4],sprite:npcSpriteChoice(a[5],townNpcSpriteSeq++),rune:NPC_RUNE_POOL[(slot+home.length)%NPC_RUNE_POOL.length]};d.dl=townNpcLines(d);return d;}));
+let npcs=NPC_DEFS.filter(d=>d.tutorial).concat(TOWN_NPC_DEFS).map((d,idx)=>{const p=d.fixed?{x:TUTOR_X,y:TUTOR_Y}:npcHomePos(d.home,d.slot||0);return{...d,idx,map:d.home,x:p.x,y:p.y,wAng:Math.random()*7,st:0,li:0,talk:false,tt:0,moveT:8+Math.random()*20,walkT:Math.random()*4,face:{x:0,y:1},faceKey:'front',moving:false,aff:0,done:0,q:null,offer:null};});
 // NPCごとの解放ルーン（高度ルーン）と固有レアレリック
 const NPC_RUNE=['アルティメット','クインタプル','エクストリーム','インフィニティ','ギガンティック','ショットガン','マシンガン','バラージ','サークル','スキャッター','ヘビー','インスタントリー'];
 function npcGiftRune(idx){const n=npcs&&npcs[idx];return (n&&n.rune)||NPC_RUNE[Math.abs(idx||0)%NPC_RUNE.length];}
@@ -2737,20 +2813,21 @@ function spawnPasser(){if(passers.length>=2)return;const R=a=>a[(Math.random()*a
  else if(edge===1){x=WORLD_W+30;y=140+Math.random()*(WORLD_H-280);vx=-spd;vy=(Math.random()-0.5)*0.5;}
  else if(edge===2){y=-30;x=140+Math.random()*(WORLD_W-280);vy=spd;vx=(Math.random()-0.5)*0.5;}
  else{y=WORLD_H+30;x=140+Math.random()*(WORLD_W-280);vy=-spd;vx=(Math.random()-0.5)*0.5;}
- passers.push({name:merchant?'行商人':R(PASS_A)+R(PASS_B),lines,li:0,x,y,vx,vy,say:1+Math.random()*3,col:merchant?'#ffd27a':'#cbb98c',cosmetics:{outfit:genCosmetic('outfit','C'),accessory:Math.random()<0.35?genCosmetic('accessory','C'):null,weapon:merchant?genCosmetic('weapon','U'):null,face:null},merchant,item,disc,price});}
+ passers.push({name:merchant?'行商人':R(PASS_A)+R(PASS_B),lines,li:0,x,y,vx,vy,say:1+Math.random()*3,col:merchant?'#ffd27a':'#cbb98c',sprite:NPC_SPRITES.length?((Math.random()*NPC_SPRITES.length)|0):0,idx:1000+passers.length,walkT:Math.random()*4,face:{x:vx,y:vy},moving:true,cosmetics:{outfit:genCosmetic('outfit','C'),accessory:Math.random()<0.35?genCosmetic('accessory','C'):null,weapon:merchant?genCosmetic('weapon','U'):null,face:null},merchant,item,disc,price});}
 function nearMerchant(){let best=null,bd=1e9;for(const p of passers){if(!p.merchant||!p.item)continue;const d=Math.hypot(P.x-p.x,P.y-p.y);if(d<95&&d<bd){best=p;bd=d;}}return best;}
 function buyMerchant(p){if(!p||!p.item)return;if(P.gem<p.price){flash('gem不足（必要◆'+fmt(p.price)+'）');se('error');return;}if(P.inv.length>=INV_MAX){flash('所持枠が一杯');se('error');return;}P.gem-=p.price;P.inv.push(p.item);dropSE(p.item.rar);flash('行商人から購入: '+p.item.name+' ◆'+fmt(p.price)+'（'+Math.round(p.disc*100)+'%OFF）');p.item=null;p.lines=['売り切れました。'];p.li=0;se('buy');}
 function updatePassers(dt){passerCD-=dt;if(passerCD<=0){spawnPasser();passerCD=120+Math.random()*120;}
- for(const p of passers){p.x+=p.vx*dt*60;p.y+=p.vy*dt*60;p.say-=dt;if(p.say<=0){p.li=(p.li+1)%p.lines.length;p.say=4+Math.random()*3;}}
+ for(const p of passers){p.x+=p.vx*dt*60;p.y+=p.vy*dt*60;p.walkT=(p.walkT||0)+dt;p.face={x:p.vx,y:p.vy};p.faceKey=npcFaceKey(p.face,p.faceKey);p.moving=true;p.say-=dt;if(p.say<=0){p.li=(p.li+1)%p.lines.length;p.say=4+Math.random()*3;}}
  passers=passers.filter(p=>p.x>-80&&p.x<WORLD_W+80&&p.y>-80&&p.y<WORLD_H+80);}
-function drawPassers(){for(const p of passers){ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,11,0,7);ctx.fill();ctx.fillStyle='#2a2218';ctx.beginPath();ctx.arc(p.x,p.y-2,4,0,7);ctx.fill();drawCharacterCosmetics(p.x,p.y,{x:p.vx,y:p.vy},0.8,p.cosmetics);
-  ctx.fillStyle=p.merchant?'#ffd27a':'#cfc8b0';ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText(p.name+(p.item?' ?'+fmt(p.price)+' '+Math.round(p.disc*100)+'%OFF':''),p.x,p.y-16);
-  const t=p.lines[p.li],w=Math.min(420,t.length*12+20),bx=p.x-w/2,by=p.y-50;ctx.fillStyle='rgba(18,16,12,.88)';ctx.strokeStyle=p.col;ctx.lineWidth=1.5;ctx.fillRect(bx,by,w,26);ctx.strokeRect(bx,by,w,26);ctx.fillStyle='#e8e0c8';ctx.font='11px system-ui';ctx.fillText(t,p.x,by+17);ctx.textAlign='left';}}
+function drawPassers(){for(const p of passers){const drew=drawNpcSprite(p,58);if(!drew){ctx.fillStyle=p.col;ctx.beginPath();ctx.arc(p.x,p.y,11,0,7);ctx.fill();ctx.fillStyle='#2a2218';ctx.beginPath();ctx.arc(p.x,p.y-2,4,0,7);ctx.fill();drawCharacterCosmetics(p.x,p.y,{x:p.vx,y:p.vy},0.8,p.cosmetics);}
+  ctx.fillStyle=p.merchant?'#ffd27a':'#cfc8b0';ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText(p.name+(p.item?' ?'+fmt(p.price)+' '+Math.round(p.disc*100)+'%OFF':''),p.x,drew?p.y-48:p.y-16);
+  const t=p.lines[p.li],w=Math.min(420,t.length*12+20),bx=p.x-w/2,by=drew?p.y-82:p.y-50;ctx.fillStyle='rgba(18,16,12,.88)';ctx.strokeStyle=p.col;ctx.lineWidth=1.5;ctx.fillRect(bx,by,w,26);ctx.strokeRect(bx,by,w,26);ctx.fillStyle='#e8e0c8';ctx.font='11px system-ui';ctx.fillText(t,p.x,by+17);ctx.textAlign='left';}}
 function syncNpcWorld(n){const a=worldArea(n.map);if(a){const p=worldPoint(a,n.x,n.y);n.wx=p.x;n.wy=p.y;}}
-function updateNpcs(dt){for(const n of npcs){if(n.reactT>0)n.reactT-=dt;if(n.fixed){n.map=n.home;n.x=TUTOR_X;n.y=TUTOR_Y;syncNpcWorld(n);}if(n.map!==MAPID){if(n.roam&&!n.fixed){n.moveT-=dt;if(n.moveT<=0){n.map=(n.map==='town')?'field':'town';n.moveT=20+Math.random()*30;n.x=WORLD_W/2+(Math.random()*400-200);n.y=WORLD_H/2+(Math.random()*300-150);syncNpcWorld(n);}}continue;}
+function faceNpc(n,x,y){if(Math.abs(x)+Math.abs(y)>0.01){n.face={x,y};n.faceKey=npcFaceKey(n.face,n.faceKey);}}
+function updateNpcs(dt){for(const n of npcs){if(n.reactT>0)n.reactT-=dt;n.moving=false;if(n.fixed){n.map=n.home;n.x=TUTOR_X;n.y=TUTOR_Y;syncNpcWorld(n);}if(n.map!==MAPID){if(n.roam&&!n.fixed){n.moveT-=dt;if(n.moveT<=0){n.map=(n.map==='town')?'field':'town';n.moveT=20+Math.random()*30;n.x=WORLD_W/2+(Math.random()*400-200);n.y=WORLD_H/2+(Math.random()*300-150);syncNpcWorld(n);}}continue;}
   const d=unitDistance(P,n);
-  if(d<100){n.talk=true;n.tt-=dt;if(n.tt<=0){const L=npcLines(n);n.li=(n.li+1)%L.length;n.tt=3.5;}}
-  else{if(n.talk){n.talk=false;n.li=0;}if(n.fixed)continue;n.st-=dt;if(n.st<=0){n.wAng=Math.random()*7;n.st=1.5+Math.random()*2.5;}n.x+=Math.cos(n.wAng)*0.7*dt*60;n.y+=Math.sin(n.wAng)*0.7*dt*60;settleUnitWorldPosition(n,n.map||MAPID,40);}}}
+  if(d<100){n.talk=true;faceNpc(n,P.x-n.x,P.y-n.y);n.tt-=dt;if(n.tt<=0){const L=npcLines(n);n.li=(n.li+1)%L.length;n.tt=3.5;}}
+  else{if(n.talk){n.talk=false;n.li=0;}if(n.fixed)continue;n.st-=dt;if(n.st<=0){n.wAng=Math.random()*7;n.st=1.5+Math.random()*2.5;}const ox=n.x,oy=n.y;n.x+=Math.cos(n.wAng)*0.7*dt*60;n.y+=Math.sin(n.wAng)*0.7*dt*60;settleUnitWorldPosition(n,n.map||MAPID,40);const dx=n.x-ox,dy=n.y-oy;n.moving=Math.hypot(dx,dy)>0.02;if(n.moving){n.walkT=(n.walkT||0)+dt;faceNpc(n,dx,dy);}}}}
 function nearNpc(){let b=1e9,t=null;for(const n of npcs){const d=unitDistance(P,n);if(d<100&&d<b){b=d;t=n;}}return t;}
 function genNpcOffers(n){return[createQuest('low','npc'),createQuest('mid','npc'),createQuest('high','npc')];}
 function npcAccept(n,o){if(n.q)return;if(!n.offers||!n.offers.length)n.offers=genNpcOffers(n);n.q=normalizeQuest(o||n.offers[0]);n.offers=[];n.offer=null;flash(n.name+'の依頼を受注：'+qLabel(n.q));se('quest');}
@@ -2761,14 +2838,14 @@ function npcBubbleLines(t,maxW){const chars=String(t||'').split(''),lines=[];let
 function drawNpcBubble(x,y,t,opt){opt=opt||{};ctx.save();ctx.textAlign='center';ctx.font=opt.font||'12px system-ui';const pad=10,lineH=15,maxW=opt.maxW||360,lines=npcBubbleLines(t,maxW-pad*2),tw=Math.max(opt.minW||48,Math.min(maxW,Math.max(...lines.map(l=>ctx.measureText(l).width))+pad*2)),th=lines.length*lineH+pad*2-2,bx=x-tw/2,by=y-th-(opt.tail||10);ctx.fillStyle=opt.fill||'rgba(20,18,14,.94)';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.fillRect(bx,by,tw,th);ctx.strokeRect(bx,by,tw,th);ctx.beginPath();ctx.moveTo(x-6,by+th);ctx.lineTo(x+6,by+th);ctx.lineTo(x,by+th+(opt.tail||10));ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle=opt.color||'#f6f2e8';for(let i=0;i<lines.length;i++)ctx.fillText(lines[i],bx+tw/2,by+pad+11+i*lineH);ctx.restore();}
 function drawStoryMarker(x,y,m){if(!m)return;const main=m.kind==='main',label=main?'MAIN':'SUB',w=main?52:42,h=18;ctx.save();ctx.textAlign='center';ctx.font='bold 10px system-ui';ctx.fillStyle=main?'rgba(255,210,74,.94)':'rgba(122,220,255,.94)';ctx.strokeStyle=main?'#3a2600':'#0c2a36';ctx.lineWidth=2;ctx.fillRect(x-w/2,y-h,w,h);ctx.strokeRect(x-w/2,y-h,w,h);ctx.fillStyle=main?'#1d1500':'#061820';ctx.fillText(label+(m.start?'!':'✓'),x,y-5);ctx.restore();}
 function drawNpcEntity(n,showStoryMarker=true){
-  if(!drawNpcSprite(n,75)){ctx.fillStyle=NPC_COLOR;ctx.beginPath();ctx.arc(n.x,n.y,12,0,7);ctx.fill();ctx.fillStyle='#1a160f';ctx.beginPath();ctx.arc(n.x,n.y-2,5,0,7);ctx.fill();}
+  if(!drawNpcSprite(n,NPC_DRAW_H)){ctx.fillStyle=NPC_COLOR;ctx.beginPath();ctx.arc(n.x,n.y,12,0,7);ctx.fill();ctx.fillStyle='#1a160f';ctx.beginPath();ctx.arc(n.x,n.y-2,5,0,7);ctx.fill();}
   if(n.cosmetics)drawCharacterCosmetics(n.x,n.y,{x:0,y:1},0.85,n.cosmetics);
-  if(showStoryMarker)drawStoryMarker(n.x,n.y-78,storyNpcMarker(n));
-  ctx.fillStyle='#fff';ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText(n.name,n.x,n.y-57);
-  ctx.fillStyle='#ffd24a';ctx.font='9px system-ui';ctx.fillText('★'.repeat(affLv(n))+' '+Math.floor(n.aff||0)+'%'+(n.q&&n.q.count>=n.q.need?' ✓報酬':n.q?' 依頼中':''),n.x,n.y-69);
+  if(showStoryMarker)drawStoryMarker(n.x,n.y-72,storyNpcMarker(n));
+  ctx.fillStyle='#fff';ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText(n.name,n.x,n.y-49);
+  ctx.fillStyle='#ffd24a';ctx.font='9px system-ui';ctx.fillText('★'.repeat(affLv(n))+' '+Math.floor(n.aff||0)+'%'+(n.q&&n.q.count>=n.q.need?' ✓報酬':n.q?' 依頼中':''),n.x,n.y-61);
   const near=unitDistance(P,n)<100;
-  if(n.reactT>0){drawNpcBubble(n.x,n.y-62,n.react||'！',{font:'bold 12px system-ui',maxW:360,fill:'rgba(34,24,20,.95)',color:'#fff4d0'});}
-  else if(n.talk||near){const L=npcLines(n),t=L[n.li%L.length];if(n.talk)drawNpcBubble(n.x,n.y-62,t,{font:'12px system-ui',maxW:420});ctx.fillStyle='#9fd0ff';ctx.font='10px system-ui';ctx.fillText('[F] 話す・依頼',n.x,n.y+30);}}
+  if(n.reactT>0){drawNpcBubble(n.x,n.y-54,n.react||'！',{font:'bold 12px system-ui',maxW:360,fill:'rgba(34,24,20,.95)',color:'#fff4d0'});}
+  else if(n.talk||near){const L=npcLines(n),t=L[n.li%L.length];if(n.talk)drawNpcBubble(n.x,n.y-54,t,{font:'12px system-ui',maxW:420});ctx.fillStyle='#9fd0ff';ctx.font='10px system-ui';ctx.fillText('[F] 話す・依頼',n.x,n.y+30);}}
 function drawNpcs(){for(const n of npcs){if(n.map!==MAPID)continue;drawNpcEntity(n);}}
 function drawWorldNpcs(cx,cy){if(MAP.dungeon||!WORLD_DATA)return;for(const n of npcs){if(n.map===MAPID||!worldObjInView(n,cx,cy,120))continue;drawNpcEntity(displayWorldObject(n),false);}}
 function drawTutorialTalk(n){clickAreas=[];ctx.fillStyle='rgba(6,10,8,.94)';ctx.fillRect(0,0,W,H);
@@ -2795,14 +2872,14 @@ function drawStoryTalk(n){const st=P.storyTalk;clickAreas=[];ctx.fillStyle='rgba
  ctx.textAlign='left';ctx.fillStyle=main?'#ffe08a':'#9fe8ff';ctx.font='bold 12px system-ui';ctx.fillText(main?'MAIN STORY':'SUB STORY',x0+24,y0+28);
  ctx.fillStyle='#fff';ctx.font='bold 20px system-ui';ctx.fillText(st.title||'',x0+24,y0+56);
  ctx.fillStyle='#8a9690';ctx.font='12px system-ui';ctx.fillText((n&&n.name||st.npc||'NPC')+' / Esc・Fで閉じる',x0+w-210,y0+34);
- const img=n&&npcImg(n.idx);if(img&&img.complete&&img.naturalWidth){const ph=138,pw=ph*(img.naturalWidth/img.naturalHeight);ctx.save();ctx.shadowColor='rgba(255,255,255,.35)';ctx.shadowBlur=8;ctx.drawImage(img,x0+w-pw-28,y0+74,pw,ph);ctx.restore();}
+ if(n)drawNpcChip(n,x0+w-96,y0+240,150,'front',1);
  let yy=y0+96;ctx.fillStyle='#f0ead8';ctx.font='14px system-ui';for(const raw of st.lines||[]){const lines=npcBubbleLines(raw,w-230);for(const l of lines){ctx.fillText(l,x0+28,yy);yy+=21;}yy+=8;}
  ctx.fillStyle=st.done?'#9fe07a':'#caa64b';ctx.font='bold 13px system-ui';ctx.fillText(st.done?'完了':('次: '+(st.next||'進行中')),x0+28,y0+h-44);
  if(msgT>0){ctx.textAlign='center';ctx.globalAlpha=Math.min(1,msgT);ctx.fillStyle='#ffe08a';ctx.font='bold 15px system-ui';ctx.fillText(msg,W/2,y0+h-16);ctx.globalAlpha=1;ctx.textAlign='left';}}
 function drawTalk(){const n=P.talkNpc;if(n.tutorial){drawTutorialTalk(n);return;}if(P.storyTalk){drawStoryTalk(n);return;}clickAreas=[];ctx.fillStyle='rgba(6,10,8,.93)';ctx.fillRect(0,0,W,H);
  const x0=150,y0=90,w=600,h=380;ctx.fillStyle='rgba(20,18,14,.98)';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.fillRect(x0,y0,w,h);ctx.strokeRect(x0,y0,w,h);
  ctx.textAlign='left';ctx.fillStyle='#fff';ctx.font='bold 18px system-ui';ctx.fillText(n.name,x0+24,y0+34);
- const img=npcImg(n.idx);if(img&&img.complete&&img.naturalWidth){const ph=151,pw=ph*(img.naturalWidth/img.naturalHeight);ctx.save();ctx.shadowColor='rgba(255,255,255,.45)';ctx.shadowBlur=10;ctx.drawImage(img,x0+w-pw-30,y0+44,pw,ph);ctx.restore();}
+ drawNpcChip(n,x0+w-94,y0+180,170,'front',1);
  ctx.fillStyle='#ffd24a';ctx.font='16px system-ui';ctx.fillText('好感度 '+'★'.repeat(affLv(n))+'☆'.repeat(5-affLv(n))+'  (Lv'+affLv(n)+'/5 '+Math.floor(n.aff||0)+'%)',x0+24,y0+62);
  ctx.fillStyle='#8a9690';ctx.font='12px system-ui';ctx.fillText('Esc / F で閉じる',x0+w-130,y0+34);
  const L=npcLines(n);ctx.fillStyle='#f0ead8';ctx.font='14px system-ui';ctx.fillText('「'+L[0]+'」',x0+24,y0+100);ctx.fillText('「'+L[1]+'」',x0+24,y0+124);
@@ -3573,7 +3650,7 @@ function npcLogKnown(n){return !!(n&&(n.tutorial||hasVisitedArea(n.home||n.map)|
 function npcLogQuestText(n){if(!n)return'-';const q=n.q||n.offer;if(q)return(q.claimed?'完了':(q.count>=q.need?'報告待ち':'進行中'))+'：'+qLabel(q);if(n.offers&&n.offers.length)return'依頼候補 '+n.offers.length+'件';return'依頼なし';}
 function npcLogEntries(){return npcs.map((n,idx)=>({n,idx,known:npcLogKnown(n),homeId:n.home||n.map||'town',home:(MAPS[n.home||n.map]&&MAPS[n.home||n.map].name)||(n.home||n.map||'不明')})).sort((a,b)=>(b.known-a.known)||a.home.localeCompare(b.home,'ja')||a.n.name.localeCompare(b.n.name,'ja'));}
 function npcLogRelationText(n){return'好感度 Lv.'+affLv(n)+' / '+Math.round(n.aff||0)+'%';}
-function drawNpcPortrait(n,x,y){const img=npcImg(n.sprite!=null?n.sprite:(n.idx%NPC_SPRITES.length));ctx.save();if(img&&img.complete&&img.naturalWidth){const h=86,w=h*img.naturalWidth/img.naturalHeight;ctx.drawImage(img,x-w/2,y-h+20,w,h);}else{ctx.fillStyle=NPC_COLOR;ctx.beginPath();ctx.arc(x,y-30,24,0,7);ctx.fill();ctx.fillStyle='#243044';ctx.beginPath();ctx.arc(x-8,y-34,3,0,7);ctx.arc(x+8,y-34,3,0,7);ctx.fill();}ctx.restore();}
+function drawNpcPortrait(n,x,y){ctx.save();if(!drawNpcChip(n,x,y,98,'front',1)){ctx.fillStyle=NPC_COLOR;ctx.beginPath();ctx.arc(x,y-30,24,0,7);ctx.fill();ctx.fillStyle='#243044';ctx.beginPath();ctx.arc(x-8,y-34,3,0,7);ctx.arc(x+8,y-34,3,0,7);ctx.fill();}ctx.restore();}
 function drawNpcLog(){clickAreas=[];tipAreas=[];ctx.fillStyle='rgba(4,8,8,.93)';ctx.fillRect(0,0,W,H);const x=70,y=36,w=760,h=520;ctx.fillStyle='rgba(15,19,22,.98)';ctx.strokeStyle='#9fe8ff';ctx.lineWidth=2;ctx.fillRect(x,y,w,h);ctx.strokeRect(x,y,w,h);ctx.textAlign='left';ctx.fillStyle='#dff7ff';ctx.font='bold 20px system-ui';ctx.fillText('NPC名鑑',x+22,y+36);const rows=npcLogEntries(),known=rows.filter(r=>r.known).length;ctx.fillStyle='#8fa4a8';ctx.font='12px system-ui';ctx.fillText('記録 '+known+' / '+rows.length+'   町を訪問するか会話すると詳しく開示されます',x+22,y+58);const lx=x+24,ly=y+92,row=24,vis=15,maxSc=Math.max(0,rows.length-vis);P.npcScroll=Math.max(0,Math.min(maxSc,P.npcScroll||0));if(P.npcSel==null&&rows.length)P.npcSel=(rows.find(r=>r.known)||rows[0]).idx;for(let i=0;i<vis&&i+P.npcScroll<rows.length;i++){const r=rows[i+P.npcScroll],n=r.n,yy=ly+i*row,sel=P.npcSel===r.idx;ctx.fillStyle=sel?'rgba(159,232,255,.16)':(r.known?'rgba(255,255,255,.045)':'rgba(80,80,80,.055)');ctx.fillRect(lx-4,yy-16,330,20);ctx.fillStyle=r.known?'#9fe8ff':'#666';ctx.font='bold 11px system-ui';ctx.fillText(r.known?'記録済':'未確認',lx,yy);ctx.fillStyle=r.known?'#e6f4ff':'#777';ctx.font='12px system-ui';drawClipText(r.known?n.name:'未確認の人物',lx+70,yy,140);ctx.fillStyle=r.known?'#9aa8a8':'#555';ctx.font='11px system-ui';drawClipText(r.known?r.home:'???',lx+216,yy,104);clickAreas.push({x:lx-4,y:yy-16,w:330,h:20,fn:()=>{P.npcSel=r.idx;se('ui');}});}if(maxSc>0){const sx=lx+338,sy=ly-16,sh=vis*row,kn=Math.max(18,sh*vis/rows.length),ky=sy+(sh-kn)*(P.npcScroll/maxSc);ctx.fillStyle='#223034';ctx.fillRect(sx,sy,6,sh);ctx.fillStyle='#9fe8ff';ctx.fillRect(sx,ky,6,kn);}
  const cur=rows.find(r=>r.idx===P.npcSel)||rows[0],rx=x+400;let ry=y+96;if(cur){const n=cur.n;if(cur.known){drawNpcPortrait(n,rx+250,ry+54);ctx.fillStyle='#9fe8ff';ctx.font='bold 12px system-ui';ctx.fillText(cur.home,rx,ry);ry+=26;ctx.fillStyle='#fff';ctx.font='bold 18px system-ui';drawClipText(n.name,rx,ry,250);ry+=30;ctx.fillStyle='#cfd6e0';ctx.font='12px system-ui';ctx.fillText((n.race||'人間')+' / '+(n.role||'住人')+' / '+(n.trait||'おだやか'),rx,ry);ry+=22;ctx.fillStyle='#cfd6e0';ctx.fillText('外見: '+(n.look||'記録なし'),rx,ry);ry+=22;ctx.fillStyle='#ffe08a';ctx.fillText(npcLogRelationText(n),rx,ry);ry+=22;ctx.fillStyle='#d8d0ff';ctx.fillText('贈り物: ルーン「'+npcGiftRune(n.idx)+'」',rx,ry);ry+=22;ctx.fillStyle='#9fe07a';ctx.fillText('依頼: '+npcLogQuestText(n),rx,ry);ry+=30;ctx.fillStyle='#ffe8b0';ctx.font='bold 12px system-ui';ctx.fillText('会話メモ',rx,ry);ry+=20;ctx.fillStyle='#dfe6e0';ctx.font='12px system-ui';const memo=(npcLines(n)||[]).join(' ');for(const line of npcBubbleLines(memo,300)){ctx.fillText(line,rx,ry);ry+=18;}}else{ctx.fillStyle='#777';ctx.font='bold 18px system-ui';ctx.fillText('未確認の人物',rx,ry);ry+=30;ctx.fillStyle='#777';ctx.font='12px system-ui';ctx.fillText('その人物がいる町を訪れると、名鑑に記録されます。',rx,ry);}}const bx=x+w-82,by=y+h-44;ctx.fillStyle='#243044';ctx.strokeStyle='#9fe8ff';ctx.lineWidth=2;ctx.fillRect(bx,by,58,28);ctx.strokeRect(bx,by,58,28);ctx.fillStyle='#dff7ff';ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillText('戻る',bx+29,by+19);clickAreas.push({x:bx,y:by,w:58,h:28,fn:()=>{P.npcLogMenu=false;se('ui');}});}
 function drawSaveMenu(){if(P.bestiaryMenu){drawBestiary();return;}if(P.stoneLogMenu){drawStoneLog();return;}if(P.storyLogMenu){drawStoryLog();return;}if(P.npcLogMenu){drawNpcLog();return;}clickAreas=[];tipAreas=[];let tab=P.saveTab||'save';if(tab==='world'){tab='save';P.saveTab='save';}ctx.fillStyle='rgba(4,8,8,.90)';ctx.fillRect(0,0,W,H);
