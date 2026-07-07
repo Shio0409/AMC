@@ -535,7 +535,7 @@ for (const needle of [
   'ce:packCosmeticEquip()',
   'applyCosmeticEquip(d.ce)',
   "['look','見た目']",
-  'maybeDropCosmetic(x,y,boss,lv,0)',
+  'maybeDropCosmetic(x,y,boss,lv,extra*0.35)',
   'function debugAddCosmetic',
   'debugAddCosmetic',
 ]) {
@@ -594,6 +594,19 @@ for (const needle of [
   'done?storySynopsis(cur):storyObjectiveText(cur)',
 ]) {
   if (!src.includes(needle)) throw new Error(`quest log/spell hook missing: ${needle}`);
+}
+
+for (const needle of [
+  'RARE_COLOR_VARIANTS',
+  'rareColorById',
+  "if(Math.random()<rc)return'rare'",
+  'mapWeatherSpawnAdd',
+  'spawnZoneMaxAlive',
+  'it:{weather:w}',
+  'function drawNpcLog',
+  "['NPC名鑑'",
+]) {
+  if (!src.includes(needle)) throw new Error(`npc/weather/rare hook missing: ${needle}`);
 }
 
 {
