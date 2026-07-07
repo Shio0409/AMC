@@ -2290,27 +2290,72 @@ function drawDecoAsset(d){const list=DECO_PICS[MAPID]||DECO_PICS[MAP.deco]||DECO
  if(!img.complete||!img.naturalWidth){fallbackDeco(d);return;}
  const huge=/大|火山|泉|遺跡/.test(name),large=/木|岩|樹氷|サボテン|枯れ木|水晶|アメジスト/.test(name),tiny=/草|花|茂み|石[1-4]|マグマ|溶岩/.test(name),w=(tiny?30:huge?92:large?72:48)*(0.9+d.t*0.32),h=w*(img.naturalHeight/img.naturalWidth);
  ctx.save();ctx.globalAlpha=0.96;ctx.drawImage(img,d.x-w/2,d.y-h+14,w,h);ctx.restore();}
-const TILE=32,TILE_BASE='assets/maptip/';
+const TILE=32,TILE_BASE='assets/maptip/',NEW_MAPCHIP='マップチップセット一式/mapchip2/MapChip/';
 const TILE_CACHE={};
-const MAP_TILES={
- town:{base:['cobblestone_32x32.png'],alt:['gravel_road_32x32.png'],patches:[{tile:'farm_field_32x32.png',size:8,chance:30,seed:1}],path:'gravel_road_32x32.png',seed:11},
- field:{base:['grassland_1_32x32.png','grassland_2_32x32.png'],patches:[{tile:'flower_field_32x32.png',size:7,chance:38,seed:1},{tile:'farm_field_32x32.png',size:9,chance:22,seed:2}],path:'unpaved_road_32x32.png',seed:21},
- forest:{base:['forest_32x32.png','woodland_32x32.png'],alt:['grassland_2_32x32.png'],patches:[{tile:'swamp_32x32.png',size:7,chance:24,seed:1}],path:'unpaved_road_32x32.png',seed:31},
- volcano:{base:['volcano_1_32x32.png','rocky_ground_32x32.png'],alt:['volcano_2_32x32.png','mountain_2_32x32.png'],path:'rocky_ground_32x32.png',seed:41},
- cavern:{base:['cave_32x32.png','mine_32x32.png'],alt:['ice_32x32.png','snow_mountain_32x32.png'],path:'gravel_road_32x32.png',seed:51},
- ruins:{base:['ancient_ruins_1_32x32.png','ancient_ruins_2_32x32.png'],alt:['ruins_32x32.png','rocky_ground_32x32.png'],path:'ruins_32x32.png',seed:61},
- desert:{base:['desert_32x32.png'],alt:['soil_32x32.png','rocky_ground_32x32.png'],path:'unpaved_road_32x32.png',seed:71},
- sky:{base:['grassland_2_32x32.png'],alt:['woodland_32x32.png','mountain_1_32x32.png'],patches:[{tile:'flower_field_32x32.png',size:8,chance:34,seed:1}],path:'gravel_road_32x32.png',seed:81},
- abyss:{base:['swamp_32x32.png','rocky_ground_32x32.png'],alt:['ruins_32x32.png','cave_32x32.png'],path:'ancient_ruins_2_32x32.png',seed:91},
- throne:{base:['ancient_ruins_2_32x32.png','volcano_1_32x32.png'],alt:['volcano_2_32x32.png','ruins_32x32.png'],path:'ruins_32x32.png',seed:101},
- grove:{base:['woodland_32x32.png','grassland_1_32x32.png'],alt:['forest_32x32.png'],patches:[{tile:'flower_field_32x32.png',size:8,chance:42,seed:1}],path:'unpaved_road_32x32.png',seed:111},
- crystal:{base:['ice_32x32.png','cave_32x32.png'],alt:['snow_mountain_32x32.png','mine_32x32.png'],path:'gravel_road_32x32.png',seed:121}
+function chipTile(name,row,col){return{name:NEW_MAPCHIP+name,chip:16,row:row==null?2:row,col};}
+function chipSet(list){return list.map(n=>n&&typeof n==='object'&&!Array.isArray(n)?n:Array.isArray(n)?chipTile(n[0],n[1],n[2]):chipTile(n));}
+const WTILE={
+ grass:chipTile('world.png',4,0),grassBright:chipTile('world.png',4,1),sand:chipTile('world.png',4,2),stone:chipTile('world.png',4,3),
+ meadow:chipTile('world.png',4,4),snow:chipTile('world.png',4,5),moss:chipTile('world.png',4,6),flower:chipTile('hana.png',0,0)
 };
-const POND_TILES={volcano:['volcano_2_32x32.png'],throne:['volcano_2_32x32.png'],abyss:['swamp_32x32.png'],cavern:['ice_32x32.png','pond_32x32.png'],crystal:['ice_32x32.png','pond_32x32.png'],default:['pond_32x32.png']};
-function tileImg(name){if(!TILE_CACHE[name]){const img=new Image();img.src=TILE_BASE+name;TILE_CACHE[name]=img;}return TILE_CACHE[name];}
+const MAP_TILES={
+ town:{base:[WTILE.stone],path:WTILE.stone,seed:11},
+ field:{base:[WTILE.grass,WTILE.grassBright],alt:[WTILE.meadow],patches:[{tile:WTILE.flower,size:10,chance:18,seed:1}],path:WTILE.sand,seed:21},
+ forest:{base:[WTILE.moss,WTILE.grass],alt:[WTILE.grassBright],patches:[{tile:WTILE.flower,size:11,chance:10,seed:1}],path:WTILE.sand,seed:31},
+ volcano:{base:[WTILE.stone,chipTile('yougan.png')],alt:[WTILE.sand],patches:[{tile:chipTile('yougan.png'),size:9,chance:26,seed:1}],path:WTILE.stone,seed:41},
+ cavern:{base:[WTILE.stone],alt:[chipTile('mizu1_doukutu1.png')],path:WTILE.stone,seed:51},
+ ruins:{base:[WTILE.stone],alt:[WTILE.sand],path:WTILE.stone,seed:61},
+ desert:{base:[WTILE.sand,chipTile('tuti1.png'),chipTile('tuti3.png')],alt:chipSet(['world_sabaku-tuti.png','world_kusa-sabaku.png']),path:WTILE.sand,seed:71},
+ sky:{base:[WTILE.meadow,WTILE.grassBright],alt:[WTILE.snow],patches:[{tile:WTILE.flower,size:10,chance:16,seed:1}],path:WTILE.sand,seed:81},
+ abyss:{base:[WTILE.moss,WTILE.stone],alt:[chipTile('mizu3_doukutu5.png')],path:WTILE.stone,seed:91},
+ throne:{base:[WTILE.stone,chipTile('yougan.png')],alt:[WTILE.sand],path:WTILE.stone,seed:101},
+ grove:{base:[WTILE.grass,WTILE.grassBright,WTILE.moss],alt:[WTILE.meadow],patches:[{tile:WTILE.flower,size:9,chance:24,seed:1}],path:WTILE.sand,seed:111},
+ crystal:{base:[WTILE.snow],alt:[chipTile('koori1.png'),chipTile('koori2.png')],path:WTILE.snow,seed:121}
+};
+const TILE_REPLACE={
+ 'cobblestone_32x32.png':[WTILE.stone],
+ 'gravel_road_32x32.png':[WTILE.sand],
+ 'unpaved_road_32x32.png':[WTILE.sand],
+ 'grassland_1_32x32.png':[WTILE.grass],
+ 'grassland_2_32x32.png':[WTILE.grassBright],
+ 'flower_field_32x32.png':[WTILE.grassBright],
+ 'farm_field_32x32.png':[WTILE.meadow],
+ 'forest_32x32.png':[WTILE.moss],
+ 'woodland_32x32.png':[WTILE.grass],
+ 'swamp_32x32.png':[WTILE.moss],
+ 'pond_32x32.png':[chipTile('mizu1.png'),chipTile('mizu2.png'),chipTile('world_umi1.png')],
+ 'desert_32x32.png':[WTILE.sand],
+ 'soil_32x32.png':[WTILE.sand],
+ 'rocky_ground_32x32.png':[WTILE.stone],
+ 'mountain_1_32x32.png':[WTILE.stone],
+ 'mountain_2_32x32.png':[WTILE.stone],
+ 'volcano_1_32x32.png':[WTILE.stone],
+ 'volcano_2_32x32.png':[chipTile('yougan.png')],
+ 'cave_32x32.png':[WTILE.stone],
+ 'mine_32x32.png':[WTILE.stone],
+ 'ice_32x32.png':[chipTile('koori1.png'),chipTile('koori2.png')],
+ 'snow_mountain_32x32.png':[chipTile('world_yama2-yuki.png'),WTILE.snow],
+ 'ancient_ruins_1_32x32.png':[WTILE.stone],
+ 'ancient_ruins_2_32x32.png':[WTILE.stone],
+ 'ruins_32x32.png':[WTILE.stone]
+};
+const SETTLEMENT_TILE_REPLACE={
+ 'gravel_road_32x32.png':[WTILE.stone],
+ 'unpaved_road_32x32.png':[WTILE.stone],
+ 'flower_field_32x32.png':[WTILE.stone],
+ 'farm_field_32x32.png':[WTILE.stone],
+ 'desert_32x32.png':[WTILE.stone],
+ 'soil_32x32.png':[WTILE.stone]
+};
+const POND_TILES={volcano:chipSet(['yougan.png']),throne:chipSet(['yougan.png']),abyss:chipSet(['mizu3.png','world_kusa-sitti.png']),cavern:chipSet(['mizu1_doukutu1.png','mizu2_doukutu3.png']),crystal:chipSet(['koori1.png','koori2.png','mizu1.png']),default:chipSet(['mizu1.png','mizu2.png','mizu3.png','world_umi1.png','world_umi2.png'])};
+function tileName(tile){return tile&&typeof tile==='object'?tile.name:tile;}
+function tileReplacement(name){if(SETTLEMENT_TILE_REPLACE[name]&&typeof currentWorldArea==='function'){const area=currentWorldArea();if(area&&tiledSettlementKind(area.kind))return SETTLEMENT_TILE_REPLACE[name];}return TILE_REPLACE[name];}
+function resolveTile(tile,tx,ty,seed){if(typeof tile==='string'){const list=tileReplacement(tile);if(list){const h=hashTile(tx||0,ty||0,seed||707);return list[(h>>>4)%list.length];}}return tile;}
+function tileImg(tile){const name=tileName(tile);if(!TILE_CACHE[name]){const img=new Image();img.src=TILE_BASE+name;TILE_CACHE[name]=img;}return TILE_CACHE[name];}
 function hashTile(x,y,seed){let h=((x*374761393)^(y*668265263)^(seed*2246822519))>>>0;h=(h^(h>>>13))*1274126177>>>0;return (h^(h>>>16))>>>0;}
-function drawTile(name,x,y,alpha){const img=tileImg(name);if(!img.complete||!img.naturalWidth)return false;ctx.globalAlpha=alpha||1;ctx.drawImage(img,x,y,TILE,TILE);ctx.globalAlpha=1;return true;}
-function drawTileScaled(name,x,y,w,h,alpha){const img=tileImg(name);if(!img.complete||!img.naturalWidth)return false;ctx.globalAlpha=alpha||1;ctx.drawImage(img,x,y,w,h);ctx.globalAlpha=1;return true;}
+function tileSource(tile,img,tx,ty,seed){if(!(tile&&typeof tile==='object'&&tile.chip))return{sx:0,sy:0,sw:img.naturalWidth,sh:img.naturalHeight};const cell=tile.chip||16,cols=Math.max(1,Math.floor(img.naturalWidth/cell)),rows=Math.max(1,Math.floor(img.naturalHeight/cell)),h=hashTile(tx||0,ty||0,(seed||0)+(tile.seed||0)),col=tile.col==null?(h%cols):tile.col,row=Math.max(0,Math.min(rows-1,tile.row==null?rows-1:tile.row));return{sx:(col%cols)*cell,sy:row*cell,sw:cell,sh:cell};}
+function drawTile(tile,x,y,alpha){tile=resolveTile(tile,x/TILE,y/TILE,909);const img=tileImg(tile);if(!img.complete||!img.naturalWidth)return false;const s=tileSource(tile,img,x/TILE,y/TILE,911);ctx.save();ctx.imageSmoothingEnabled=false;ctx.globalAlpha=alpha||1;ctx.drawImage(img,s.sx,s.sy,s.sw,s.sh,x,y,TILE,TILE);ctx.restore();ctx.globalAlpha=1;return true;}
+function drawTileScaled(tile,x,y,w,h,alpha){tile=resolveTile(tile,x/TILE,y/TILE,919);const img=tileImg(tile);if(!img.complete||!img.naturalWidth)return false;const s=tileSource(tile,img,x/TILE,y/TILE,923);ctx.save();ctx.imageSmoothingEnabled=false;ctx.globalAlpha=alpha||1;ctx.drawImage(img,s.sx,s.sy,s.sw,s.sh,x,y,w,h);ctx.restore();ctx.globalAlpha=1;return true;}
 function patchTile(tx,ty,cfg){if(!cfg.patches)return null;
  for(const p of cfg.patches){const size=p.size||8,cx=Math.floor(tx/size),cy=Math.floor(ty/size);
   for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const gx=cx+ox,gy=cy+oy,h=hashTile(gx,gy,cfg.seed+(p.seed||0)*97);
@@ -2337,7 +2382,7 @@ function drawTiledFallbackGround(area,view,ts,dw,dh){const minTx=Math.floor((vie
 function drawTiledTileLayers(cx,cy){if(!WORLD_DATA||!WORLD_DATA.tileLayers||!WORLD_DATA.tileLayers.length||!WORLD_DATA.tileImages||!WORLD_DATA.tileImages.length)return false;const area=currentWorldArea();if(!area||MAP.dungeon)return false;
  const view=currentWorldView(cx,cy,80),ts=WORLD_DATA.tileSize||TILE,minX=view.x-ts,maxX=view.x+view.w+ts,minY=view.y-ts,maxY=view.y+view.h+ts,dw=ts,dh=ts;let drawn=false;
  drawTiledFallbackGround(area,view,ts,dw,dh);
- const drawCell=(idx,gid,ch,alpha)=>{const ix=idx%ch.w,iy=(idx/ch.w)|0,gx=(ch.x+ix)*ts,gy=(ch.y+iy)*ts;if(gx+ts<minX||gx>maxX||gy+ts<minY||gy>maxY)return;const name=WORLD_DATA.tileImages[gid-1];if(!name)return;const img=tileImg(name);if(img.complete&&img.naturalWidth){ctx.globalAlpha=alpha;ctx.drawImage(img,gx,gy,dw+1,dh+1);ctx.globalAlpha=1;drawn=true;}else{ctx.fillStyle=MAP.ground;ctx.fillRect(gx,gy,dw,dh);}};
+ const drawCell=(idx,gid,ch,alpha)=>{const ix=idx%ch.w,iy=(idx/ch.w)|0,gx=(ch.x+ix)*ts,gy=(ch.y+iy)*ts;if(gx+ts<minX||gx>maxX||gy+ts<minY||gy>maxY)return;const name=WORLD_DATA.tileImages[gid-1];if(!name)return;if(drawTileScaled(name,gx,gy,dw+1,dh+1,alpha)){drawn=true;}else{ctx.fillStyle=MAP.ground;ctx.fillRect(gx,gy,dw,dh);}};
  for(const layer of WORLD_DATA.tileLayers){if(!layer||!layer.chunks||!layer.chunks.length)continue;const alpha=layer.opacity==null?1:layer.opacity;for(const ch of layer.chunks){const x0=ch.x*ts,y0=ch.y*ts,x1=x0+ch.w*ts,y1=y0+ch.h*ts;if(x1<minX||x0>maxX||y1<minY||y0>maxY)continue;if(ch.cells){for(let i=0;i<ch.cells.length;i+=2)drawCell(ch.cells[i],ch.cells[i+1],ch,alpha);}else if(ch.data){for(let i=0;i<ch.data.length;i++)if(ch.data[i])drawCell(i,ch.data[i],ch,alpha);}}}
  ctx.globalAlpha=1;return drawn;}
 function drawMapPaths(cx,cy){if(tiledWorldActive())return;const cfg=MAP_TILES[MAPID]||MAP_TILES.field;if(!cfg.path)return;const visible=(x,y,w,h)=>x+w>cx-40&&x<cx+W+40&&y+h>cy-40&&y<cy+FIELD_H+40;
