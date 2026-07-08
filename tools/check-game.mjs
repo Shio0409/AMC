@@ -164,10 +164,8 @@ for (const needle of [
   'function drawTiledTileLayers',
   'function tiledWorldActive',
   'function drawTileScaled',
-  'function tiledGroundCfg',
-  'function pickTiledFallbackTile',
-  'function drawTiledFallbackGround',
-  'drawTiledFallbackGround(area,view,ts,dw,dh)',
+  'function tiledWorldBackdrop',
+  'tiledWorldActive()?tiledWorldBackdrop():MAP.ground',
   'function clampUnitToDungeon',
   'function settleUnitWorldPosition',
   'function randomWorldPoint',
@@ -308,6 +306,14 @@ for (const needle of [
   'townSpawn(id)',
 ]) {
   if (!src.includes(needle)) throw new Error(`Tiled world runtime hook missing: ${needle}`);
+}
+
+for (const needle of [
+  'function drawTiledFallbackGround',
+  'drawTiledFallbackGround(area,view,ts,dw,dh)',
+  'function pickTiledFallbackTile',
+]) {
+  if (src.includes(needle)) throw new Error(`Tiled world runtime should draw painted tiles only, found: ${needle}`);
 }
 
 {
