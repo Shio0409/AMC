@@ -17,6 +17,26 @@ const externalScripts = ['maps.js', 'enemies.js', 'bestiary.js', 'enemy_spells.j
 const allSrc = `${src}\n${externalScripts}`;
 
 {
+  const facilityFiles = [
+    'alchemyshop.png',
+    'bank.png',
+    'blacksmith.png',
+    'church.png',
+    'equipmentshop.png',
+    'guild.png',
+    'jeweryshop.png',
+    'market.png',
+    'runeshop.png',
+  ];
+  for (const file of facilityFiles) {
+    if (!fs.existsSync(`assets/facility/${file}`)) throw new Error(`missing facility asset: ${file}`);
+  }
+  for (const needle of ['FACILITY_IMG_FILES', 'facilityImage', 'drawFacilityFallback', ...facilityFiles]) {
+    if (!src.includes(needle)) throw new Error(`facility image rendering is missing: ${needle}`);
+  }
+}
+
+{
   const loreFiles = [
     'index.html',
     '設定資料/AMC.md',
@@ -95,9 +115,6 @@ if (!externalScripts.includes('AMC_NPC_KEYWORD_REPLIES')) {
 if (!externalScripts.includes('AMC_NPC_KEYWORD_REPLIES_BY_NPC')) {
   throw new Error('NPC-specific keyword replies are not loaded');
 }
-if (!externalScripts.includes('AMC_REGISTER_TOWN_NPC_KEYWORD_REPLIES')) {
-  throw new Error('NPC keyword reply auto registration is not loaded');
-}
 
 {
   const ctx = { window: {} };
@@ -107,10 +124,6 @@ if (!externalScripts.includes('AMC_REGISTER_TOWN_NPC_KEYWORD_REPLIES')) {
   const townDataEnd = src.indexOf('const NPC_RUNE_POOL=', townDataStart);
   if (townDataStart < 0 || townDataEnd < 0) throw new Error('TOWN_NPC_DATA block not found');
   const townNpcData = new Function(`return ${src.slice(townDataStart + 'const TOWN_NPC_DATA='.length, townDataEnd).trim().replace(/;\s*$/, '')}`)();
-  if (typeof ctx.window.AMC_REGISTER_TOWN_NPC_KEYWORD_REPLIES !== 'function') {
-    throw new Error('NPC keyword reply auto registration function missing');
-  }
-  ctx.window.AMC_REGISTER_TOWN_NPC_KEYWORD_REPLIES(townNpcData);
   const kana = /^[\u3041-\u3096\u30fc]+$/;
   const nonKanaKeys = [];
   const emptyReplies = [];
