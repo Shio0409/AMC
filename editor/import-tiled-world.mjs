@@ -90,6 +90,32 @@ function decodeTileData(layer, data, expected) {
   return out;
 }
 
+function compactTileChunk(data) {
+  if (!data.some(Boolean)) return null;
+  const cells = [];
+  const runs = [];
+  for (let i = 0; i < data.length;) {
+    const gid = data[i];
+    if (!gid) {
+      i++;
+      continue;
+    }
+    const start = i;
+    let len = 1;
+    while (i + len < data.length && data[i + len] === gid) len++;
+    for (let j = 0; j < len; j++) cells.push(start + j, gid);
+    runs.push(start, len, gid);
+    i += len;
+  }
+  return runs.length * 3 < cells.length ? { runs } : { cells };
+}
+
+function normalizedChunk(x, y, w, h, rawData, gidToIndex) {
+  const data = rawData.map(gid => normalizeGid(gid, gidToIndex));
+  const payload = compactTileChunk(data);
+  return payload ? { x, y, w, h, ...payload } : null;
+}
+
 function collectTileLayers(map, gidToIndex) {
   const out = [];
   for (const layer of map.layers || []) {
@@ -98,25 +124,13 @@ function collectTileLayers(map, gidToIndex) {
     if (Array.isArray(layer.chunks)) {
       for (const chunk of layer.chunks) {
         const rawData = decodeTileData(layer, chunk.data || [], Number(chunk.width || 0) * Number(chunk.height || 0));
-        const data = rawData.map(gid => normalizeGid(gid, gidToIndex));
-        if (data.some(Boolean)) chunks.push({
-          x: Number(chunk.x || 0),
-          y: Number(chunk.y || 0),
-          w: Number(chunk.width || 0),
-          h: Number(chunk.height || 0),
-          cells: data.flatMap((gid, i) => gid ? [i, gid] : [])
-        });
+        const ch = normalizedChunk(Number(chunk.x || 0), Number(chunk.y || 0), Number(chunk.width || 0), Number(chunk.height || 0), rawData, gidToIndex);
+        if (ch) chunks.push(ch);
       }
     } else if (Array.isArray(layer.data)) {
       const rawData = decodeTileData(layer, layer.data, Number(layer.width || map.width || 0) * Number(layer.height || map.height || 0));
-      const data = rawData.map(gid => normalizeGid(gid, gidToIndex));
-      if (data.some(Boolean)) chunks.push({
-        x: Number(layer.x || 0),
-        y: Number(layer.y || 0),
-        w: Number(layer.width || map.width || 0),
-        h: Number(layer.height || map.height || 0),
-        cells: data.flatMap((gid, i) => gid ? [i, gid] : [])
-      });
+      const ch = normalizedChunk(Number(layer.x || 0), Number(layer.y || 0), Number(layer.width || map.width || 0), Number(layer.height || map.height || 0), rawData, gidToIndex);
+      if (ch) chunks.push(ch);
     }
     out.push({
       name: layer.name,

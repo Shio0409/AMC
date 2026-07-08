@@ -164,6 +164,7 @@ for (const needle of [
   'function drawTiledTileLayers',
   'function tiledWorldActive',
   'function drawTileScaled',
+  'ch.runs',
   'function tiledWorldBackdrop',
   'tiledWorldActive()?tiledWorldBackdrop():MAP.ground',
   'function clampUnitToDungeon',
@@ -329,6 +330,21 @@ for (const needle of [
   }
   if (!world.tileLayers.some((l) => Array.isArray(l.chunks) && l.chunks.length > 0)) {
     throw new Error('world_data.js must include painted Tiled tile chunks');
+  }
+  const ground = world.tileLayers.find((l) => l.name === 'Ground');
+  const groundTiles = (ground.chunks || []).reduce((sum, ch) => {
+    if (Array.isArray(ch.runs)) {
+      for (let i = 0; i < ch.runs.length; i += 3) sum += Number(ch.runs[i + 1] || 0);
+    } else if (Array.isArray(ch.cells)) {
+      sum += ch.cells.length / 2;
+    } else if (Array.isArray(ch.data)) {
+      sum += ch.data.filter(Boolean).length;
+    }
+    return sum;
+  }, 0);
+  const expectedGroundTiles = Math.round((world.width || 0) / (world.tileSize || 32)) * Math.round((world.height || 0) / (world.tileSize || 32));
+  if (groundTiles < expectedGroundTiles) {
+    throw new Error(`world_data.js Ground has unpainted cells: ${groundTiles}/${expectedGroundTiles}`);
   }
   if (!Array.isArray(world.decorations) || world.decorations.length < 1) {
     throw new Error('world_data.js must include Tiled Decoration objects');
