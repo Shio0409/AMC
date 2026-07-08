@@ -2776,8 +2776,17 @@ function reveal(c,n){return c>=n;}
 const NPC_CALL=['みら','がろ','てぃな','ふぇん','こう','りる','おると'];
 const NPC_REACT=['ナイス！','やるねぇ！','うわ、すごい！','お見事！','いいぞ！','カッコいい！','ふぉっふぉ、見事じゃ'];
 const NPC_KEYWORD_REPLIES=window.AMC_NPC_KEYWORD_REPLIES||[];
-function npcKeywordReply(text){const t=String(text||'').toLowerCase();for(const r of NPC_KEYWORD_REPLIES)if(r.keys.some(k=>t.includes(String(k).toLowerCase())))return r.replies[(Math.random()*r.replies.length)|0];return null;}
-function npcRespondToSpeech(text){const reply=npcKeywordReply(text);if(!reply)return false;let best=null,bd=180;for(const n of npcs){if(n.map!==MAPID)continue;const d=unitDistance(P,n);if(d<bd){best=n;bd=d;}}if(!best)return false;best.react=reply;best.reactT=2.8;best.talk=true;se('ui');return true;}
+const NPC_KEYWORD_REPLIES_BY_NPC=window.AMC_NPC_KEYWORD_REPLIES_BY_NPC||{};
+function npcDialogueArray(v){if(v==null)return[];return(Array.isArray(v)?v:[v]).map(x=>String(x||'').trim()).filter(Boolean);}
+function npcDialogueRawRows(src){if(Array.isArray(src))return src;if(src&&typeof src==='object')return Object.entries(src).map(([k,v])=>({keys:String(k).split(/[|,、]/),replies:v}));return[];}
+function npcDialogueRow(row){if(!row)return null;if(Array.isArray(row))return{keys:npcDialogueArray(row[0]),replies:npcDialogueArray(row[1])};if(typeof row!=='object')return null;const keys=npcDialogueArray(row.keys||row.key||row.words||row.word||row.triggers||row.trigger),replies=npcDialogueArray(row.replies||row.reply||row.lines||row.line||row.responses||row.response);return keys.length&&replies.length?{keys,replies}:null;}
+function npcDialogueReplies(text,src){const t=String(text||'').toLowerCase();for(const raw of npcDialogueRawRows(src)){const row=npcDialogueRow(raw);if(row&&row.keys.some(k=>t.includes(String(k).toLowerCase())))return row.replies;}return null;}
+function npcDialoguePick(replies,n,text){if(!replies||!replies.length)return null;const seed=(n?(npcStoryId(n)||n.name||n.idx):'default')+'|'+String(text||'')+'|'+Math.floor(performance.now()/900);return replies[npcHashText(seed)%replies.length];}
+function npcDialogueIds(n){const ids=[],add=v=>{v=String(v||'').trim();if(v&&!ids.includes(v))ids.push(v);};if(!n)return ids;add(npcStoryId(n));if(n.home&&n.name)add(n.home+':'+n.name);if(n.map&&n.name)add(n.map+':'+n.name);add(n.name);return ids;}
+function npcSpecificKeywordReply(n,text){for(const id of npcDialogueIds(n)){const reply=npcDialoguePick(npcDialogueReplies(text,NPC_KEYWORD_REPLIES_BY_NPC[id]),n,text);if(reply)return reply;}return null;}
+function npcKeywordReply(text,n){return npcDialoguePick(npcDialogueReplies(text,NPC_KEYWORD_REPLIES),n,text);}
+function npcReplyToSpeechFor(n,text){return npcSpecificKeywordReply(n,text)||npcKeywordReply(text,n);}
+function npcRespondToSpeech(text){let best=null,bd=180;for(const n of npcs){if(n.map!==MAPID)continue;const d=unitDistance(P,n);if(d<bd){best=n;bd=d;}}if(!best)return false;const reply=npcReplyToSpeechFor(best,text);if(!reply)return false;best.react=reply;best.reactT=2.8;best.talk=true;se('ui');return true;}
 applyTiledWorldData();
 function lockedRunes(){return RUNES.filter(r=>!BASIC_RUNES.includes(r.name)).map(r=>r.name);}
 function unlockAllMagic(){for(const s of SPELLS)P.spellsSeen.add(s.name);for(const r of RUNES)P.runes.add(r.name);flash('魔法とルーンを全開放しました');se('rune');}

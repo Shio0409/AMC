@@ -92,20 +92,62 @@ if (src.includes('const NPC_KEYWORD_REPLIES=[')) {
 if (!externalScripts.includes('AMC_NPC_KEYWORD_REPLIES')) {
   throw new Error('npc_dialogue.js is not loaded');
 }
+if (!externalScripts.includes('AMC_NPC_KEYWORD_REPLIES_BY_NPC')) {
+  throw new Error('NPC-specific keyword replies are not loaded');
+}
 
 {
   const ctx = { window: {} };
   vm.createContext(ctx);
   vm.runInContext(fs.readFileSync('npc_dialogue.js', 'utf8'), ctx);
-  const rows = ctx.window.AMC_NPC_KEYWORD_REPLIES || [];
   const kana = /^[\u3041-\u3096\u30fc]+$/;
   const nonKanaKeys = [];
-  rows.forEach((row, index) => {
-    for (const key of row.keys || []) {
-      if (!kana.test(key)) nonKanaKeys.push(`${index}:${key}`);
-    }
-  });
-  if (nonKanaKeys.length) throw new Error(`NPC dialogue keys must be hiragana only: ${nonKanaKeys.join(', ')}`);
+  const emptyReplies = [];
+  const asArray = (v) => v == null ? [] : (Array.isArray(v) ? v : [v]).map((x) => String(x || '').trim()).filter(Boolean);
+  const splitKeys = (v) => asArray(v).flatMap((key) => String(key).split(/[|,、]/).map((x) => x.trim()).filter(Boolean));
+  const rowsFrom = (src) => {
+    if (Array.isArray(src)) return src;
+    if (src && typeof src === 'object') return Object.entries(src).map(([keys, replies]) => ({ keys: splitKeys(keys), replies }));
+    return [];
+  };
+  const rowKeys = (row) => {
+    if (Array.isArray(row)) return splitKeys(row[0]);
+    if (row && typeof row === 'object') return splitKeys(row.keys || row.key || row.words || row.word || row.triggers || row.trigger);
+    return [];
+  };
+  const rowReplies = (row) => {
+    if (Array.isArray(row)) return asArray(row[1]);
+    if (row && typeof row === 'object') return asArray(row.replies || row.reply || row.lines || row.line || row.responses || row.response);
+    return [];
+  };
+  const checkRows = (src, label) => {
+    rowsFrom(src).forEach((row, index) => {
+      const keys = rowKeys(row);
+      const replies = rowReplies(row);
+      for (const key of keys) {
+        if (!kana.test(key)) nonKanaKeys.push(`${label}:${index}:${key}`);
+      }
+      if (keys.length && !replies.length) emptyReplies.push(`${label}:${index}`);
+    });
+  };
+  checkRows(ctx.window.AMC_NPC_KEYWORD_REPLIES || [], 'default');
+  const byNpc = ctx.window.AMC_NPC_KEYWORD_REPLIES_BY_NPC || {};
+  if (!Object.keys(byNpc).length) throw new Error('NPC-specific keyword replies are empty');
+  const emptyNpcRows = [];
+  for (const [npcId, rows] of Object.entries(byNpc)) {
+    if (!String(npcId).trim()) throw new Error('NPC-specific keyword reply has an empty NPC id');
+    checkRows(rows, `npc:${npcId}`);
+    if (!rowsFrom(rows).some((row) => rowKeys(row).length && rowReplies(row).length)) emptyNpcRows.push(npcId);
+  }
+  if (emptyNpcRows.length) {
+    throw new Error(`NPC-specific keyword reply has no usable rows: ${emptyNpcRows.join(', ')}`);
+  }
+  if (emptyReplies.length) {
+    throw new Error(`NPC dialogue rows must have at least one reply: ${emptyReplies.join(', ')}`);
+  }
+  if (nonKanaKeys.length) {
+    throw new Error(`NPC dialogue keys must be hiragana only: ${nonKanaKeys.join(', ')}`);
+  }
 }
 
 if (/\b(?:shots|eshots)\s*=\s*\[/.test(src)) {
