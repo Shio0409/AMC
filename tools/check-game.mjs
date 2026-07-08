@@ -95,11 +95,22 @@ if (!externalScripts.includes('AMC_NPC_KEYWORD_REPLIES')) {
 if (!externalScripts.includes('AMC_NPC_KEYWORD_REPLIES_BY_NPC')) {
   throw new Error('NPC-specific keyword replies are not loaded');
 }
+if (!externalScripts.includes('AMC_REGISTER_TOWN_NPC_KEYWORD_REPLIES')) {
+  throw new Error('NPC keyword reply auto registration is not loaded');
+}
 
 {
   const ctx = { window: {} };
   vm.createContext(ctx);
   vm.runInContext(fs.readFileSync('npc_dialogue.js', 'utf8'), ctx);
+  const townDataStart = src.indexOf('const TOWN_NPC_DATA=');
+  const townDataEnd = src.indexOf('const NPC_RUNE_POOL=', townDataStart);
+  if (townDataStart < 0 || townDataEnd < 0) throw new Error('TOWN_NPC_DATA block not found');
+  const townNpcData = new Function(`return ${src.slice(townDataStart + 'const TOWN_NPC_DATA='.length, townDataEnd).trim().replace(/;\s*$/, '')}`)();
+  if (typeof ctx.window.AMC_REGISTER_TOWN_NPC_KEYWORD_REPLIES !== 'function') {
+    throw new Error('NPC keyword reply auto registration function missing');
+  }
+  ctx.window.AMC_REGISTER_TOWN_NPC_KEYWORD_REPLIES(townNpcData);
   const kana = /^[\u3041-\u3096\u30fc]+$/;
   const nonKanaKeys = [];
   const emptyReplies = [];
@@ -133,6 +144,13 @@ if (!externalScripts.includes('AMC_NPC_KEYWORD_REPLIES_BY_NPC')) {
   checkRows(ctx.window.AMC_NPC_KEYWORD_REPLIES || [], 'default');
   const byNpc = ctx.window.AMC_NPC_KEYWORD_REPLIES_BY_NPC || {};
   if (!Object.keys(byNpc).length) throw new Error('NPC-specific keyword replies are empty');
+  const expectedNpcIds = Object.entries(townNpcData)
+    .flatMap(([home, list]) => (Array.isArray(list) ? list : []).map((row) => `${home}:${row[0]}`))
+    .concat(['チュートリアル案内人']);
+  const missingNpcIds = expectedNpcIds.filter((id) => !byNpc[id]);
+  if (missingNpcIds.length) {
+    throw new Error(`NPC-specific keyword replies missing NPCs: ${missingNpcIds.join(', ')}`);
+  }
   const emptyNpcRows = [];
   for (const [npcId, rows] of Object.entries(byNpc)) {
     if (!String(npcId).trim()) throw new Error('NPC-specific keyword reply has an empty NPC id');
