@@ -2342,21 +2342,14 @@ const TILE_REPLACE={
  'ancient_ruins_2_32x32.png':[WTILE.stone],
  'ruins_32x32.png':[WTILE.stone]
 };
-const SETTLEMENT_TILE_REPLACE={
- 'gravel_road_32x32.png':[WTILE.stone],
- 'unpaved_road_32x32.png':[WTILE.stone],
- 'flower_field_32x32.png':[WTILE.stone],
- 'farm_field_32x32.png':[WTILE.stone],
- 'desert_32x32.png':[WTILE.stone],
- 'soil_32x32.png':[WTILE.stone]
-};
 const POND_TILES={volcano:chipSet(['yougan.png']),throne:chipSet(['yougan.png']),abyss:chipSet(['mizu3.png','world_kusa-sitti.png']),cavern:chipSet(['mizu1_doukutu1.png','mizu2_doukutu3.png']),crystal:chipSet(['koori1.png','koori2.png','mizu1.png']),default:chipSet(['mizu1.png','mizu2.png','mizu3.png','world_umi1.png','world_umi2.png'])};
 function tileName(tile){return tile&&typeof tile==='object'?tile.name:tile;}
-function tileReplacement(name){if(SETTLEMENT_TILE_REPLACE[name]&&typeof currentWorldArea==='function'){const area=currentWorldArea();if(area&&tiledSettlementKind(area.kind))return SETTLEMENT_TILE_REPLACE[name];}return TILE_REPLACE[name];}
-function resolveTile(tile,tx,ty,seed){if(typeof tile==='string'){const list=tileReplacement(tile);if(list){const h=hashTile(tx||0,ty||0,seed||707);return list[(h>>>4)%list.length];}}return tile;}
+function tileReplacement(name,tx,ty){return TILE_REPLACE[name];}
+function resolveTile(tile,tx,ty,seed){if(typeof tile==='string'){const list=tileReplacement(tile,tx,ty);if(list){const h=hashTile(tx||0,ty||0,seed||707);return list[(h>>>4)%list.length];}}return tile;}
 function tileImg(tile){const name=tileName(tile);if(!TILE_CACHE[name]){const img=new Image();img.src=TILE_BASE+name;TILE_CACHE[name]=img;}return TILE_CACHE[name];}
 function hashTile(x,y,seed){let h=((x*374761393)^(y*668265263)^(seed*2246822519))>>>0;h=(h^(h>>>13))*1274126177>>>0;return (h^(h>>>16))>>>0;}
 function tileSource(tile,img,tx,ty,seed){if(!(tile&&typeof tile==='object'&&tile.chip))return{sx:0,sy:0,sw:img.naturalWidth,sh:img.naturalHeight};const cell=tile.chip||16,cols=Math.max(1,Math.floor(img.naturalWidth/cell)),rows=Math.max(1,Math.floor(img.naturalHeight/cell)),h=hashTile(tx||0,ty||0,(seed||0)+(tile.seed||0)),col=tile.col==null?(h%cols):tile.col,row=Math.max(0,Math.min(rows-1,tile.row==null?rows-1:tile.row));return{sx:(col%cols)*cell,sy:row*cell,sw:cell,sh:cell};}
+function drawTiledTileImage(name,x,y,w,h,alpha){const img=tileImg(name);if(!img.complete||!img.naturalWidth)return false;ctx.save();ctx.imageSmoothingEnabled=false;ctx.globalAlpha=alpha||1;ctx.drawImage(img,0,0,img.naturalWidth,img.naturalHeight,x,y,w,h);ctx.restore();ctx.globalAlpha=1;return true;}
 function drawTile(tile,x,y,alpha){tile=resolveTile(tile,x/TILE,y/TILE,909);const under=tile&&typeof tile==='object'&&tile.under,underDrawn=under?drawTile(under,x,y,alpha):false,img=tileImg(tile);if(!img.complete||!img.naturalWidth)return underDrawn;const s=tileSource(tile,img,x/TILE,y/TILE,911);ctx.save();ctx.imageSmoothingEnabled=false;ctx.globalAlpha=alpha||1;ctx.drawImage(img,s.sx,s.sy,s.sw,s.sh,x,y,TILE,TILE);ctx.restore();ctx.globalAlpha=1;return true;}
 function drawTileScaled(tile,x,y,w,h,alpha){tile=resolveTile(tile,x/TILE,y/TILE,919);const under=tile&&typeof tile==='object'&&tile.under,underDrawn=under?drawTileScaled(under,x,y,w,h,alpha):false,img=tileImg(tile);if(!img.complete||!img.naturalWidth)return underDrawn;const s=tileSource(tile,img,x/TILE,y/TILE,923);ctx.save();ctx.imageSmoothingEnabled=false;ctx.globalAlpha=alpha||1;ctx.drawImage(img,s.sx,s.sy,s.sw,s.sh,x,y,w,h);ctx.restore();ctx.globalAlpha=1;return true;}
 function patchTile(tx,ty,cfg){if(!cfg.patches)return null;
@@ -2382,7 +2375,7 @@ function settleUnitWorldPosition(u,map,pad){const id=map||u&&u.map||MAPID;if(MAP
 function randomWorldPoint(map,pad){const m=MAPS[map||MAPID],a=worldArea(map||MAPID),p=Math.max(0,pad||0),mw=mapWidth(map),mh=mapHeight(map);if(m&&m.dungeon)return{x:p+Math.random()*Math.max(1,mw-p*2),y:p+Math.random()*Math.max(1,mh-p*2)};if(a&&a.rect){for(let i=0;i<60;i++){const x=a.rect.x+p+Math.random()*Math.max(1,a.rect.w-p*2),y=a.rect.y+p+Math.random()*Math.max(1,a.rect.h-p*2);if(worldAreaContains(a,x,y))return{x,y,wx:x,wy:y};}const x=a.rect.x+a.rect.w/2,y=a.rect.y+a.rect.h/2;return{x,y,wx:x,wy:y};}return{x:p+Math.random()*Math.max(1,mw-p*2),y:p+Math.random()*Math.max(1,mh-p*2)};}
 function drawTiledTileLayers(cx,cy){if(!WORLD_DATA||!WORLD_DATA.tileLayers||!WORLD_DATA.tileLayers.length||!WORLD_DATA.tileImages||!WORLD_DATA.tileImages.length)return false;const area=currentWorldArea();if(!area||MAP.dungeon)return false;
  const view=currentWorldView(cx,cy,80),ts=WORLD_DATA.tileSize||TILE,minX=view.x-ts,maxX=view.x+view.w+ts,minY=view.y-ts,maxY=view.y+view.h+ts,dw=ts,dh=ts;let drawn=false;
- const drawCell=(idx,gid,ch,alpha)=>{const ix=idx%ch.w,iy=(idx/ch.w)|0,gx=(ch.x+ix)*ts,gy=(ch.y+iy)*ts;if(gx+ts<minX||gx>maxX||gy+ts<minY||gy>maxY)return;const name=WORLD_DATA.tileImages[gid-1];if(!name)return;if(drawTileScaled(name,gx,gy,dw+1,dh+1,alpha))drawn=true;};
+ const drawCell=(idx,gid,ch,alpha)=>{const ix=idx%ch.w,iy=(idx/ch.w)|0,gx=(ch.x+ix)*ts,gy=(ch.y+iy)*ts;if(gx+ts<minX||gx>maxX||gy+ts<minY||gy>maxY)return;const name=WORLD_DATA.tileImages[gid-1];if(!name)return;if(drawTiledTileImage(name,gx,gy,dw+1,dh+1,alpha))drawn=true;};
  for(const layer of WORLD_DATA.tileLayers){if(!layer||!layer.chunks||!layer.chunks.length)continue;const alpha=layer.opacity==null?1:layer.opacity;for(const ch of layer.chunks){const x0=ch.x*ts,y0=ch.y*ts,x1=x0+ch.w*ts,y1=y0+ch.h*ts;if(x1<minX||x0>maxX||y1<minY||y0>maxY)continue;if(ch.runs){for(let i=0;i<ch.runs.length;i+=3){const start=ch.runs[i],len=ch.runs[i+1],gid=ch.runs[i+2];for(let j=0;j<len;j++)drawCell(start+j,gid,ch,alpha);}}else if(ch.cells){for(let i=0;i<ch.cells.length;i+=2)drawCell(ch.cells[i],ch.cells[i+1],ch,alpha);}else if(ch.data){for(let i=0;i<ch.data.length;i++)if(ch.data[i])drawCell(i,ch.data[i],ch,alpha);}}}
  ctx.globalAlpha=1;return drawn;}
 function drawMapPaths(cx,cy){if(tiledWorldActive())return;const cfg=MAP_TILES[MAPID]||MAP_TILES.field;if(!cfg.path)return;const visible=(x,y,w,h)=>x+w>cx-40&&x<cx+W+40&&y+h>cy-40&&y<cy+FIELD_H+40;
@@ -2432,6 +2425,9 @@ function enemyShouldSleep(o){return !MAP.dungeon&&!enemyIsElite(o)&&!inPlayerVie
 function enemyShouldForget(o){return !MAP.dungeon&&!enemyIsElite(o)&&unitDistance(P,o)>FORGET_PAD;}
 function transientObjectAlive(o,pad){return o&&o.life>0&&(((o.map||MAPID)===MAPID)||worldNearPlayer(o,pad||PROJECTILE_PAD+520))&&inPlayerView(o,pad||PROJECTILE_PAD);}
 function worldPointRef(area,x,y,extra){const p=worldPoint(area,x,y);return Object.assign({x:p.x,y:p.y,wx:x,wy:y},extra||{});}
+const FACILITY_LAYOUT_SPACING=280,FACILITY_LAYOUT_MARGIN=120;
+function clampFacilityToArea(a,f,orig){if(!a||!a.rect)return;const r=a.rect,m=FACILITY_LAYOUT_MARGIN;f.x=Math.max(r.x+m,Math.min(r.x+r.w-m,f.x));f.y=Math.max(r.y+m,Math.min(r.y+r.h-m,f.y));if(!worldAreaContains(a,f.x,f.y)&&orig){for(let t=.85;t>=0;t-=.15){const x=orig.x+(f.x-orig.x)*t,y=orig.y+(f.y-orig.y)*t;if(worldAreaContains(a,x,y)){f.x=x;f.y=y;break;}}}f.wx=f.x;f.wy=f.y;}
+function spreadAreaFacilities(a,list){if(!Array.isArray(list)||list.length<2)return list;const originals=list.map(f=>({x:f.x,y:f.y}));for(let pass=0;pass<12;pass++){let moved=false;for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){const A=list[i],B=list[j],dx=B.x-A.x,dy=B.y-A.y,d=Math.hypot(dx,dy),need=FACILITY_LAYOUT_SPACING;if(d>=need)continue;const ang=d>0.01?Math.atan2(dy,dx):((hashId((A.type||'')+':'+(B.type||'')+':'+pass)%628)/100),push=(need-d)*.52,nx=Math.cos(ang),ny=Math.sin(ang);A.x-=nx*push;A.y-=ny*push;B.x+=nx*push;B.y+=ny*push;moved=true;}for(let k=0;k<list.length;k++)clampFacilityToArea(a,list[k],originals[k]);if(!moved)break;}return list;}
 function playerWorldPos(){const a=worldArea(MAPID);return a&&!MAP.dungeon?worldPoint(a,P.x,P.y):{x:P.x,y:P.y};}
 function syncPlayerWorldPos(){const p=playerWorldPos();P.wx=p.x;P.wy=p.y;P.worldArea=MAPID;return p;}
 function savedWorldSpawn(d){if(!d||!WORLD_DATA||d.wa===DUNGEON_ID)return null;const x=Number(d.wx),y=Number(d.wy);if(!Number.isFinite(x)||!Number.isFinite(y)||(!x&&!y))return null;const area=findWorldAreaAt(x,y,null)||worldArea(d.wa);if(!area||!MAPS[area.id]||area.id==='macroJail')return null;const p=worldPoint(area,x,y);return{id:area.id,x:p.x,y:p.y};}
@@ -2467,7 +2463,7 @@ function applyTiledWorldData(){if(!WORLD_DATA||!Array.isArray(WORLD_DATA.areas))
   const m=MAPS[a.id]=Object.assign(base,{name:a.name||base.name||a.id,mlv:Math.max(0,(a.level||1)-1),town,ground:base.ground||theme[0],gpond:base.gpond||theme[1],deco:base.deco||theme[2],ponds:base.ponds||[],decos:tdecos.length?tdecos:(base.decos||genDecos(seed,Math.max(12,Math.min(90,Math.round(((a.rect&&a.rect.w)||2800)*((a.rect&&a.rect.h)||2000)/190000))))),enemies:[...new Set(zones.flatMap(z=>questEnemyListForZone(z,a.id)).filter(Boolean))],boss:!!(base.boss||bossesHere.length),bossDef:baseBoss||null});
   m.worldArea={id:a.id,rect:a.rect,polygon:a.polygon,kind:a.kind,theme:a.theme};
   m.spawnZones=zones.map(z=>({id:z.id,monster:z.monster,enemies:questEnemyListForZone(z,a.id),baseLevel:z.baseLevel||z.level||a.level||1,levelVariance:z.levelVariance==null?3:z.levelVariance,maxAlive:z.maxAlive||z.max||2,spawnIntervalMin:z.spawnIntervalMin||8,spawnIntervalMax:z.spawnIntervalMax||20,minPlayerDistance:z.minPlayerDistance||260,rareChance:z.rareChance==null?0.02:z.rareChance,eliteChance:z.eliteChance==null?0.003:z.eliteChance,respawn:z.respawn!==false,shape:z.shape||'rect',rect:z.rect?worldRect(a,z.rect):null,wrect:z.rect||null,polygon:worldPoly(a,z.polygon),wpolygon:z.polygon||null,worldArea:a.id}));
-  m.facilities=(facByArea.get(a.id)||[]).map(f=>worldPointRef(a,f.x,f.y,{r:(f.props&&f.props.radius)||44,type:f.facility||f.props&&f.props.facility||'guild',label:f.name||f.id}));
+  m.facilities=spreadAreaFacilities(a,(facByArea.get(a.id)||[]).map(f=>worldPointRef(a,f.x,f.y,{r:(f.props&&f.props.radius)||44,type:f.facility||f.props&&f.props.facility||'guild',label:f.name||f.id})));
   m.stones=(stoneByArea.get(a.id)||[]).map((s,i)=>worldPointRef(a,s.x,s.y,{id:s.id||a.id+':stone:'+i,r:(s.props&&s.props.radius)||34,spell:s.spell}));
   if(bossesHere.length){const p=worldPoint(a,bossesHere[0].x,bossesHere[0].y);m.bx=p.x;m.by=p.y;if(!m.bossDef){const lv=a.level||1;m.bossDef={jp:bossesHere[0].name||m.name+'の強敵',el:(bossesHere[0].props&&bossesHere[0].props.element)||'無',col:'#c08aff',hp:900+lv*90};}}
   if(!m.bx)m.bx=WORLD_W/2;if(!m.by)m.by=WORLD_H*.28;
@@ -3451,6 +3447,7 @@ function update(dt){
 const FACILITY_IMG_BASE='assets/facility/';
 const FACILITY_IMG_FILES={equip:'equipmentshop.png',smith:'blacksmith.png',rune:'runeshop.png',jewel:'jeweryshop.png',alchemy:'alchemyshop.png',guild:'guild.png',market:'market.png',bank:'bank.png',church:'church.png'};
 const FACILITY_IMG_CACHE={};
+const FACILITY_DRAW_MIN=86,FACILITY_DRAW_MAX=132,FACILITY_DRAW_SCALE=2.55;
 function facilityType(f){return(f&&(f.type||f.facility||(f.props&&f.props.facility)))||'shop';}
 function facilityImage(type){const file=FACILITY_IMG_FILES[type];if(!file)return null;if(!FACILITY_IMG_CACHE[type]){const img=new Image();img.src=FACILITY_IMG_BASE+file;FACILITY_IMG_CACHE[type]=img;}return FACILITY_IMG_CACHE[type];}
 function facilityColor(type){return{equip:'#5ab0ff',smith:'#ffae5a',rune:'#ffcf8a',stone:'#d8d0ff',jewel:'#ff7ad0',alchemy:'#c08aff',guild:'#ffd24a',market:'#9fe8ff',bank:'#dfffe0',church:'#e8d8ff'}[type]||'#ffae5a';}
@@ -3459,10 +3456,10 @@ function drawFacilityFallback(f,type){const col=facilityColor(type);
   ctx.fillStyle='#1c140e';ctx.fillRect(f.x-9,f.y-2,18,24);ctx.strokeStyle=col;ctx.lineWidth=2;ctx.strokeRect(f.x-30,f.y-22,60,44);}
 function drawWorld(cx,cy){drawMapTiles(cx,cy);drawMapPaths(cx,cy);drawPondTiles();
  for(const d of MAP.decos){if(d.x<cx-80||d.x>cx+W+80||d.y<cy-90||d.y>cy+FIELD_H+50)continue;drawDecoAsset(d);}
-function drawFacility(f){const type=facilityType(f),col=facilityColor(type),img=facilityImage(type),size=Math.max(70,Math.min(110,(f.r||44)*2.15)),top=f.y-size+30;
+function drawFacility(f){const type=facilityType(f),col=facilityColor(type),img=facilityImage(type),size=Math.max(FACILITY_DRAW_MIN,Math.min(FACILITY_DRAW_MAX,(f.r||44)*FACILITY_DRAW_SCALE)),top=f.y-size+34;
   ctx.save();ctx.shadowColor=col;ctx.shadowBlur=7;
   if(img&&img.complete&&img.naturalWidth)ctx.drawImage(img,f.x-size/2,top,size,size);else drawFacilityFallback(f,type);
-  ctx.shadowBlur=0;ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='bold 12px system-ui';ctx.fillText(f.label||type,f.x,top-6);ctx.fillStyle='#cdb86a';ctx.font='9px system-ui';ctx.fillText('\u89e6\u308c\u3066\u5165\u5e97',f.x,f.y+36);ctx.restore();}
+  ctx.shadowBlur=0;ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='bold 12px system-ui';ctx.fillText(f.label||type,f.x,top-6);ctx.fillStyle='#cdb86a';ctx.font='9px system-ui';ctx.fillText('\u89e6\u308c\u3066\u5165\u5e97',f.x,f.y+42);ctx.restore();}
 const MYSTERY_STONE_IMG=new Image();MYSTERY_STONE_IMG.src='assets/pictures/mystery_stone.svg';
 function drawMysteryStone(st){ctx.save();ctx.shadowColor='#b48cff';ctx.shadowBlur=st.done?4:12;const w=54,h=72;if(MYSTERY_STONE_IMG.complete&&MYSTERY_STONE_IMG.naturalWidth)ctx.drawImage(MYSTERY_STONE_IMG,st.x-w/2,st.y-h+18,w,h);else{ctx.fillStyle='#777';ctx.beginPath();ctx.moveTo(st.x-22,st.y+16);ctx.lineTo(st.x-18,st.y-34);ctx.lineTo(st.x,st.y-52);ctx.lineTo(st.x+20,st.y-34);ctx.lineTo(st.x+18,st.y+16);ctx.closePath();ctx.fill();}
  ctx.shadowBlur=0;ctx.strokeStyle=st.done?'#777':'#d8d0ff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(st.x,st.y,st.r+Math.sin(performance.now()/300)*2,0,7);ctx.stroke();ctx.textAlign='center';ctx.fillStyle=st.done?'#aaa':'#eee8ff';ctx.font='bold 11px system-ui';ctx.fillText('謎の石碑',st.x,st.y+32);ctx.restore();drawStoryMarker(st.x,st.y-72,storyStoneMarker(st));}
@@ -3471,7 +3468,7 @@ function drawTreasureChest(c){const col=c.rar.col,open=P.chest&&P.chest.obj===c,
 function drawTreasureChests(){for(const c of treasureChests)drawTreasureChest(c);}
 function drawFacilities(){if(MAP.facilities)for(const f of MAP.facilities)drawFacility(f);}
 function drawWorldDecorations(cx,cy){if(MAP.dungeon||!WORLD_DATA)return;const view=currentWorldView(cx,cy,180);if(!view)return;for(const d of WORLD_DATA.decorations||[]){if(d.area===MAPID)continue;if(d.x<view.x-180||d.x>view.x+view.w+180||d.y<view.y-180||d.y>view.y+view.h+180)continue;drawDecoAsset(displayWorldObject({wx:d.x,wy:d.y,t:((hashId((d.id||d.area)+':world')%1000)/1000),pic:d.deco||d.props&&d.props.deco}));}}
-function drawWorldFacilities(cx,cy){if(MAP.dungeon||!WORLD_DATA)return;for(const id in MAPS){if(id===MAPID)continue;const m=MAPS[id];if(!m||!m.facilities)continue;for(const f of m.facilities){if(!worldObjInView(f,cx,cy,100))continue;drawFacility(displayWorldObject(f));}}}
+function drawWorldFacilities(cx,cy){if(MAP.dungeon||!WORLD_DATA)return;for(const id in MAPS){if(id===MAPID)continue;const m=MAPS[id];if(!m||!m.facilities)continue;for(const f of m.facilities){if(!worldObjInView(f,cx,cy,170))continue;drawFacility(displayWorldObject(f));}}}
 function drawWorldFieldStones(cx,cy){if(MAP.dungeon||!WORLD_DATA)return;for(const id in MAPS){if(id===MAPID)continue;const m=MAPS[id];if(!m||m.town||m.dungeon||!m.stones)continue;for(const st of m.stones){if(!worldObjInView(st,cx,cy,100))continue;const sid=st.id||id+':stone',o=displayWorldObject({...st,seen:!!(P.stoneSeen&&P.stoneSeen[sid]),done:!!((P.stones&&P.stones[sid])||(P.spellsSeen&&P.spellsSeen.has(st.spell)))});drawMysteryStone(o);}}}
 function drawWorldTreasureChests(cx,cy){if(MAP.dungeon||!WORLD_DATA)return;for(const rt of mapRuntime.values())for(const c of rt.treasureChests||[]){if(!worldObjInView(c,cx,cy,80))continue;drawTreasureChest(displayWorldObject(c));}}
 drawWorldDecorations(cx,cy);
@@ -3582,7 +3579,7 @@ function minimapHostileCanHitPlayer(u){if(!u||u.hp!=null&&u.hp<=0)return false;c
 const MINIMAP_HOSTILE_UPDATE_RANGE=ACTIVE_PAD+520;
 function minimapHostileInUpdateRange(u){if(!u||u.hp!=null&&u.hp<=0)return false;const map=minimapHostileMap(u);if(MAP.dungeon)return map===MAPID;if(map===MAPID){const d=pointDistance(map,u.x,u.y,P);return Number.isFinite(d)&&d<=MINIMAP_HOSTILE_UPDATE_RANGE;}return !!(WORLD_DATA&&worldNearPlayer(u,MINIMAP_HOSTILE_UPDATE_RANGE));}
 function minimapAreaPoly(a){const r=a.rect||{x:0,y:0,w:WORLD_W,h:WORLD_H};return a.polygon&&a.polygon.length?a.polygon:[{x:r.x,y:r.y},{x:r.x+r.w,y:r.y},{x:r.x+r.w,y:r.y+r.h},{x:r.x,y:r.y+r.h}];}
-function minimapWorldFacilities(){if(!WORLD_DATA)return[];return(WORLD_DATA.facilities||[]).map(f=>({wx:f.x,wy:f.y,type:f.facility||f.props&&f.props.facility||'guild'}));}
+function minimapWorldFacilities(){if(!WORLD_DATA)return[];const out=[];for(const id in MAPS){const m=MAPS[id];if(!m||!m.facilities)continue;for(const f of m.facilities)out.push({map:id,wx:Number.isFinite(f.wx)?f.wx:f.x,wy:Number.isFinite(f.wy)?f.wy:f.y,type:facilityType(f)});}return out;}
 function stoneIsLearned(st){return !!(st&&(st.done||(st.id&&P.stones&&P.stones[st.id])||(st.spell&&P.spellsSeen&&P.spellsSeen.has(st.spell))));}
 function minimapStoneColor(st){return stoneIsLearned(st)?'rgba(216,208,255,.28)':'#d8d0ff';}
 function minimapWorldStones(){if(!WORLD_DATA)return[];return(WORLD_DATA.stones||[]).map(s=>({id:s.id,map:s.area,wx:s.x,wy:s.y,spell:s.spell,done:stoneIsLearned(s)}));}

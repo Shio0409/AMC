@@ -55,7 +55,7 @@ const allSrc = `${src}\n${externalScripts}`;
 function loadGameGlobals() {
   const instrumented = script.replace(
     /\}\)\(\);\s*$/,
-    `globalThis.__AMC_CHECK__ = { P, npcs, SPELLS, ENEMY_SPELLS, visibleSpellList, MAGIC_OBJECT_HANDLERS, AI_STATES, DEMON_AI_STATES, BOSS_PATTERN_ACTIONS, COMBAT_BALANCE, TITLE_PARTS, TITLE_FRONTS, TITLE_BACKS, TITLE_EFFECT_POOL, questCanonicalKey, questKeyMatches, questKillKey, progressKillQuests, normalizeQuest, unpackQuest, packSave: typeof packSave, applyPlayerState: typeof applyPlayerState, SAVE_VERSION };\n})();`,
+    `globalThis.__AMC_CHECK__ = { P, MAPS, WORLD_DATA, npcs, SPELLS, ENEMY_SPELLS, visibleSpellList, MAGIC_OBJECT_HANDLERS, AI_STATES, DEMON_AI_STATES, BOSS_PATTERN_ACTIONS, COMBAT_BALANCE, TITLE_PARTS, TITLE_FRONTS, TITLE_BACKS, TITLE_EFFECT_POOL, questCanonicalKey, questKeyMatches, questKillKey, progressKillQuests, normalizeQuest, unpackQuest, packSave: typeof packSave, applyPlayerState: typeof applyPlayerState, SAVE_VERSION };\n})();`,
   );
   if (instrumented === script) throw new Error('script instrumentation point not found');
   const sandbox = `
@@ -235,6 +235,7 @@ for (const needle of [
   'a.minimap',
   'seedMapEnemies(id,enemies)',
   'function drawTiledTileLayers',
+  'function drawTiledTileImage',
   'function tiledWorldActive',
   'function drawTileScaled',
   'ch.runs',
@@ -338,6 +339,8 @@ for (const needle of [
   'function displayUnit',
   'function displayPoint',
   'function worldNearPlayer',
+  'spreadAreaFacilities',
+  'FACILITY_DRAW_SCALE',
   'unitDistance(P,',
   'pointDistance(map,x,y',
   'syncWeatherWorld({',
@@ -382,6 +385,13 @@ for (const needle of [
   if (!src.includes(needle)) throw new Error(`Tiled world runtime hook missing: ${needle}`);
 }
 
+if (/function drawTiledTileLayers[\s\S]*drawTileScaled\(name,/.test(src)) {
+  throw new Error('Tiled tile layers must draw baked Tiled images directly, not runtime tile replacements');
+}
+if (src.includes('SETTLEMENT_TILE_REPLACE')) {
+  throw new Error('area-dependent settlement tile replacement must stay removed; bake terrain in Tiled instead');
+}
+
 for (const needle of [
   'function drawTiledFallbackGround',
   'drawTiledFallbackGround(area,view,ts,dw,dh)',
@@ -397,6 +407,18 @@ for (const needle of [
   const world = ctx.window.AMC_WORLD_DATA;
   if (!world || !Array.isArray(world.tileImages) || world.tileImages.length < 1) {
     throw new Error('world_data.js must include tileImages from editor/maptiles.tsj');
+  }
+  const usedTileGids = new Set();
+  for (const layer of world.tileLayers || []) {
+    for (const ch of layer.chunks || []) {
+      if (Array.isArray(ch.runs)) for (let i = 0; i < ch.runs.length; i += 3) usedTileGids.add(ch.runs[i + 2]);
+      if (Array.isArray(ch.cells)) for (let i = 1; i < ch.cells.length; i += 2) usedTileGids.add(ch.cells[i]);
+      if (Array.isArray(ch.data)) for (const gid of ch.data) if (gid) usedTileGids.add(gid);
+    }
+  }
+  for (const file of ['desert_32x32.png', 'soil_32x32.png', 'unpaved_road_32x32.png']) {
+    const gid = world.tileImages.indexOf(file) + 1;
+    if (gid <= 0 || !usedTileGids.has(gid)) throw new Error(`world_data.js must keep baked Tiled terrain on layers: ${file}`);
   }
   if (!Array.isArray(world.tileLayers) || !world.tileLayers.some((l) => l.name === 'Ground')) {
     throw new Error('world_data.js must include Tiled tileLayers');
@@ -470,6 +492,21 @@ const missing = kinds.filter((kind) => !handled.has(kind));
 if (missing.length) throw new Error(`unhandled spell kinds: ${missing.join(', ')}`);
 
 const game = loadGameGlobals();
+
+{
+  const close = [];
+  for (const [areaId, map] of Object.entries(game.MAPS || {})) {
+    const facilities = Array.isArray(map && map.facilities) ? map.facilities : [];
+    for (let i = 0; i < facilities.length; i++) {
+      for (let j = i + 1; j < facilities.length; j++) {
+        const a = facilities[i], b = facilities[j];
+        const d = Math.hypot((a.x || 0) - (b.x || 0), (a.y || 0) - (b.y || 0));
+        if (d < 250) close.push(`${areaId}:${a.type || '?'}-${b.type || '?'}:${Math.round(d)}`);
+      }
+    }
+  }
+  if (close.length) throw new Error(`facilities are too close after layout: ${close.join(', ')}`);
+}
 
 if (!game.COMBAT_BALANCE || !game.COMBAT_BALANCE.enemyRanged || !game.COMBAT_BALANCE.boss) {
   throw new Error('combat balance tables are not loaded');
