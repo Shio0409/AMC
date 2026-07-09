@@ -54,8 +54,11 @@ const allSrc = `${src}\n${externalScripts}`;
       }
     }
   }
-  for (const needle of ['PLAYER_ASSET_BASE', 'PLAYER_ANIMS', 'playerFaceDir8', 'playerVisualState', 'remotePlayerVisualState', 'startPlayerCastAnim', 'castAnimT']) {
+  for (const needle of ['PLAYER_ASSET_BASE', 'PLAYER_ANIMS', 'PLAYER_LAST_READY', 'playerPathInfo', 'playerFramePath', 'preloadPlayerFrames', 'playerFaceDir8', 'playerVisualState', 'remotePlayerVisualState', 'startPlayerCastAnim', 'castAnimT']) {
     if (!src.includes(needle)) throw new Error(`player animation runtime hook missing: ${needle}`);
+  }
+  for (const removed of ['PLAYER_SPRITES', 'if(!drawPlayerSprite())', 'ctx.arc(x,y-30,18']) {
+    if (src.includes(removed)) throw new Error(`old player fallback rendering is back: ${removed}`);
   }
 }
 
