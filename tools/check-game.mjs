@@ -41,11 +41,15 @@ const allSrc = `${src}\n${externalScripts}`;
   for (const file of gearFiles) {
     if (!fs.existsSync(`assets/UI/${file}`)) throw new Error(`missing gear icon asset: ${file}`);
   }
-  for (const needle of ['GEAR_IMG_BASE', 'GEAR_FILES', 'GEAR_CACHE', 'gearImage', 'performance.now()/120', ...gearFiles]) {
+  for (const needle of ['GEAR_IMG_BASE', 'GEAR_FILES', 'GEAR_CACHE', 'GEAR_BUTTON_SIZE=44', 'gearImage', 'performance.now()/120', ...gearFiles]) {
     if (!src.includes(needle)) throw new Error(`gear icon rendering is missing: ${needle}`);
   }
-  for (const removed of ['for(let i=0;i<8;i++){ctx.rotate(Math.PI/4)', 'ctx.arc(0,0,8,0,7)', 'ctx.arc(0,0,3,0,7)']) {
-    if (src.includes(removed)) throw new Error(`old procedural gear rendering is back: ${removed}`);
+  const gearStart = src.indexOf('function drawGearButton');
+  const gearEnd = src.indexOf('function drawHUD', gearStart);
+  if (gearStart < 0 || gearEnd < 0) throw new Error('drawGearButton block not found');
+  const gearSource = src.slice(gearStart, gearEnd);
+  for (const removed of ['for(let i=0;i<8;i++){ctx.rotate(Math.PI/4)', 'ctx.arc(0,0,8,0,7)', 'ctx.arc(0,0,3,0,7)', 'ctx.fillRect(x,y,w,h);ctx.strokeRect(x,y,w,h)']) {
+    if (gearSource.includes(removed)) throw new Error(`old procedural gear rendering is back: ${removed}`);
   }
 }
 
