@@ -61,6 +61,13 @@ const allSrc = `${src}\n${externalScripts}`;
   const minimapEnd = src.indexOf('function drawMacroMeter', minimapStart);
   if (minimapStart < 0 || minimapEnd < 0) throw new Error('drawMinimap block not found');
   const minimapSource = src.slice(minimapStart, minimapEnd);
+  const hudPanelStart = src.indexOf('function hudPanel');
+  const hudPanelEnd = src.indexOf('function hudHit', hudPanelStart);
+  if (hudPanelStart < 0 || hudPanelEnd < 0) throw new Error('hudPanel block not found');
+  const hudPanelSource = src.slice(hudPanelStart, hudPanelEnd);
+  if (hudPanelSource.includes('strokeRect') || !hudPanelSource.includes("rgba(7,11,12,.18)")) {
+    throw new Error('HUD panels must be frameless with a very light background');
+  }
   for (const moved of ['eliteHere()', 'offElites', 'offDemons', "weathers.some(w=>w.map!==MAPID"]) {
     if (minimapSource.includes(moved)) throw new Error(`minimap side info must stay in HUD log: ${moved}`);
   }
