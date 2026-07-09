@@ -37,6 +37,19 @@ const allSrc = `${src}\n${externalScripts}`;
 }
 
 {
+  const gearFiles = ['gear1.png', 'gear2.png', 'gear3.png'];
+  for (const file of gearFiles) {
+    if (!fs.existsSync(`assets/UI/${file}`)) throw new Error(`missing gear icon asset: ${file}`);
+  }
+  for (const needle of ['GEAR_IMG_BASE', 'GEAR_FILES', 'GEAR_CACHE', 'gearImage', 'performance.now()/120', ...gearFiles]) {
+    if (!src.includes(needle)) throw new Error(`gear icon rendering is missing: ${needle}`);
+  }
+  for (const removed of ['for(let i=0;i<8;i++){ctx.rotate(Math.PI/4)', 'ctx.arc(0,0,8,0,7)', 'ctx.arc(0,0,3,0,7)']) {
+    if (src.includes(removed)) throw new Error(`old procedural gear rendering is back: ${removed}`);
+  }
+}
+
+{
   if (!fs.existsSync('assets/fonts/madoufmg.ttf')) {
     throw new Error('missing UI font asset: assets/fonts/madoufmg.ttf');
   }
