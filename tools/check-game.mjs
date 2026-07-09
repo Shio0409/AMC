@@ -54,6 +54,19 @@ const allSrc = `${src}\n${externalScripts}`;
 }
 
 {
+  for (const needle of ['minimapRect', 'questTrackerRect(){const m=minimapRect()', 'buffHudRect', 'mpHudRect', 'chatLogRect', 'drawHudLog', 'pushHudLog', 'hudLiveLogRows', 'P.buffHudScroll', 'P.chatHudScroll', 'player(msg,from){msg.seen=performance.now();mpTouchPlayer(msg);', 'drawPlayerList();drawHudLog();drawMinimap()']) {
+    if (!src.includes(needle)) throw new Error(`HUD layout hook missing: ${needle}`);
+  }
+  const minimapStart = src.indexOf('function drawMinimap');
+  const minimapEnd = src.indexOf('function drawMacroMeter', minimapStart);
+  if (minimapStart < 0 || minimapEnd < 0) throw new Error('drawMinimap block not found');
+  const minimapSource = src.slice(minimapStart, minimapEnd);
+  for (const moved of ['eliteHere()', 'offElites', 'offDemons', "weathers.some(w=>w.map!==MAPID"]) {
+    if (minimapSource.includes(moved)) throw new Error(`minimap side info must stay in HUD log: ${moved}`);
+  }
+}
+
+{
   if (!fs.existsSync('assets/fonts/madoufmg.ttf')) {
     throw new Error('missing UI font asset: assets/fonts/madoufmg.ttf');
   }
