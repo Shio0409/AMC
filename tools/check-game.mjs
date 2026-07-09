@@ -40,8 +40,11 @@ const allSrc = `${src}\n${externalScripts}`;
   if (!fs.existsSync('assets/fonts/madoufmg.ttf')) {
     throw new Error('missing UI font asset: assets/fonts/madoufmg.ttf');
   }
-  for (const needle of ['@font-face', 'MadouFmg', 'UI_FONT_STACK', 'applyUiFontSpec', 'installCanvasFont', 'loadUiFont()', 'Promise.all([loadInitialSave(),loadUiFont()])']) {
+  for (const needle of ['@font-face', 'MadouFmg', 'UI_FONT_STACK', 'applyUiFontSpec', 'installCanvasFont', 'loadUiFont()', 'LOGICAL_W=900', 'resizeCanvasForDisplay', 'setCanvasTransform', 'devicePixelRatio', 'const W=LOGICAL_W,H=LOGICAL_H', 'Promise.all([loadInitialSave(),loadUiFont()])']) {
     if (!src.includes(needle)) throw new Error(`UI font hook missing: ${needle}`);
+  }
+  if (src.includes('ctx.setTransform(1,0,0,1,0,0)')) {
+    throw new Error('canvas must reset to the logical high-DPI transform, not raw identity');
   }
 }
 
