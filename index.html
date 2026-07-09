@@ -4,7 +4,8 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AMC ― プロト（詠唱時間・ステ・装備）</title>
 <style>
- *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#070a08;color:#e8eefc;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;}
+ @font-face{font-family:"MadouFmg";src:url("assets/fonts/madoufmg.ttf") format("truetype");font-display:block}
+ *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#070a08;color:#e8eefc;font-family:"MadouFmg","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;}
  .wrap{position:relative;min-height:100%;display:flex;align-items:center;justify-content:center;padding:0;}
  h1{display:none}
  #game{display:block;background:#0c1410;width:min(100vw,150vh);height:min(100vh,66.6667vw);}
@@ -52,6 +53,11 @@
 <script>
 (function(){'use strict';
 const cv=document.getElementById('game'),ctx=cv.getContext('2d');
+const UI_FONT_NAME='MadouFmg',UI_FONT_STACK='"MadouFmg","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif';
+function applyUiFontSpec(v){let s=String(v||'10px sans-serif');if(s.includes(UI_FONT_NAME))return s;s=s.replace(/\bsystem-ui\b/g,'__AMC_UI_FONT__').replace(/\bsans-serif\b/g,'__AMC_UI_FONT__');return s.replace(/__AMC_UI_FONT__/g,UI_FONT_STACK);}
+function installCanvasFont(c){try{const d=Object.getOwnPropertyDescriptor(Object.getPrototypeOf(c),'font');if(!d||!d.set||!d.get)return;Object.defineProperty(c,'font',{get(){return d.get.call(c);},set(v){d.set.call(c,applyUiFontSpec(v));}});c.font=c.font;}catch(e){}}
+function loadUiFont(){try{if(document.fonts&&document.fonts.load)return Promise.all([document.fonts.load('12px "MadouFmg"'),document.fonts.ready]).catch(()=>{});}catch(e){}return Promise.resolve();}
+installCanvasFont(ctx);
 const W=cv.width,H=cv.height,FIELD_H=H-96,AGGRO=270,MOB_AGGRO=AGGRO*1.8,DEMON_AGGRO=AGGRO*2,DEMON_ATTACK_RANGE=AGGRO,WORLD_W=2600,WORLD_H=2000;
 const BOSS_AGGRO=470;
 const ACTIVE_PAD=760, SLEEP_PAD=2200, FORGET_PAD=6400, PROJECTILE_PAD=460;
@@ -4094,7 +4100,7 @@ function drawPredict(){for(const c of P.channels){const s=c.spell,m=c.mod||{radi
 document.getElementById('ref').innerHTML='<b>M</b> キーで魔法・ルーン一覧を表示　／　属性相性: 火→風→土→水→火';
 async function loadInitialSave(){let loaded=await loadFromIndexedDb(true);if(!loaded&&loadFromCookie(true)){loaded=true;saveToIndexedDb(true);}if(!loaded){const sp=townSpawn('town');enterStandaloneArea('town',sp.x,sp.y);}}
 function loop(now){try{let dt=(now-last)/1000;last=now;if(dt>0.05)dt=0.05;update(dt);render();}catch(e){const t=performance.now();if(t>loopErrT){loopErrT=t+3000;console.error(e);msg='処理エラーを検出しました';msgT=2;}}requestAnimationFrame(loop);}
-loadInitialSave().finally(()=>requestAnimationFrame(loop));
+Promise.all([loadInitialSave(),loadUiFont()]).finally(()=>requestAnimationFrame(loop));
 })();
 </script>
 </body>

@@ -37,6 +37,15 @@ const allSrc = `${src}\n${externalScripts}`;
 }
 
 {
+  if (!fs.existsSync('assets/fonts/madoufmg.ttf')) {
+    throw new Error('missing UI font asset: assets/fonts/madoufmg.ttf');
+  }
+  for (const needle of ['@font-face', 'MadouFmg', 'UI_FONT_STACK', 'applyUiFontSpec', 'installCanvasFont', 'loadUiFont()', 'Promise.all([loadInitialSave(),loadUiFont()])']) {
+    if (!src.includes(needle)) throw new Error(`UI font hook missing: ${needle}`);
+  }
+}
+
+{
   const playerDirs = ['south', 'south-east', 'east', 'north-east', 'north', 'north-west', 'west', 'south-west'];
   const playerAnimSets = [
     ['A_cute_mage_girl_with/animations/Breathing_Idle', 4],
