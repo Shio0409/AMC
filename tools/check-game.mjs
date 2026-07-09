@@ -37,6 +37,29 @@ const allSrc = `${src}\n${externalScripts}`;
 }
 
 {
+  const playerDirs = ['south', 'south-east', 'east', 'north-east', 'north', 'north-west', 'west', 'south-west'];
+  const playerAnimSets = [
+    ['A_cute_mage_girl_with/animations/Breathing_Idle', 4],
+    ['A_cute_mage_girl_with/animations/Walk', 6],
+    ['casting_spells/animations/Cross_Punch', 6],
+  ];
+  if (!fs.existsSync('assets/player/Player/metadata.json')) {
+    throw new Error('missing player animation metadata');
+  }
+  for (const dir of playerDirs) {
+    for (const [base, frames] of playerAnimSets) {
+      for (let i = 0; i < frames; i += 1) {
+        const file = `assets/player/Player/${base}/${dir}/frame_${String(i).padStart(3, '0')}.png`;
+        if (!fs.existsSync(file)) throw new Error(`missing player animation frame: ${file}`);
+      }
+    }
+  }
+  for (const needle of ['PLAYER_ASSET_BASE', 'PLAYER_ANIMS', 'playerFaceDir8', 'playerVisualState', 'remotePlayerVisualState', 'startPlayerCastAnim', 'castAnimT']) {
+    if (!src.includes(needle)) throw new Error(`player animation runtime hook missing: ${needle}`);
+  }
+}
+
+{
   const loreFiles = [
     'index.html',
     '設定資料/AMC.md',

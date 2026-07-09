@@ -1,0 +1,249 @@
+{
+  "group_id": "c2aacae4-ab26-40a8-8d4f-b3d5ea20f271",
+  "states": [
+    {
+      "character": {
+        "id": "5aee6eec-e568-4650-8d6f-0b1ec8c3b425",
+        "name": "A cute mage girl with",
+        "prompt": "A cute mage girl with short, boyish white hair, wearing a layered fantasy robe with gold trim, standing in a confident stance, holding a small wooden staff, low top-down perspective, black outline.",
+        "size": {
+          "width": 124,
+          "height": 124
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-07-08T10:10:39.76153+00:00"
+      },
+      "folder": "A_cute_mage_girl_with",
+      "frames": {
+        "rotations": {
+          "south": "A_cute_mage_girl_with/rotations/south.png",
+          "south-east": "A_cute_mage_girl_with/rotations/south-east.png",
+          "east": "A_cute_mage_girl_with/rotations/east.png",
+          "north-east": "A_cute_mage_girl_with/rotations/north-east.png",
+          "north": "A_cute_mage_girl_with/rotations/north.png",
+          "north-west": "A_cute_mage_girl_with/rotations/north-west.png",
+          "west": "A_cute_mage_girl_with/rotations/west.png",
+          "south-west": "A_cute_mage_girl_with/rotations/south-west.png"
+        },
+        "animations": {
+          "Walk": {
+            "north": [
+              "A_cute_mage_girl_with/animations/Walk/north/frame_000.png",
+              "A_cute_mage_girl_with/animations/Walk/north/frame_001.png",
+              "A_cute_mage_girl_with/animations/Walk/north/frame_002.png",
+              "A_cute_mage_girl_with/animations/Walk/north/frame_003.png",
+              "A_cute_mage_girl_with/animations/Walk/north/frame_004.png",
+              "A_cute_mage_girl_with/animations/Walk/north/frame_005.png"
+            ],
+            "south": [
+              "A_cute_mage_girl_with/animations/Walk/south/frame_000.png",
+              "A_cute_mage_girl_with/animations/Walk/south/frame_001.png",
+              "A_cute_mage_girl_with/animations/Walk/south/frame_002.png",
+              "A_cute_mage_girl_with/animations/Walk/south/frame_003.png",
+              "A_cute_mage_girl_with/animations/Walk/south/frame_004.png",
+              "A_cute_mage_girl_with/animations/Walk/south/frame_005.png"
+            ],
+            "south-west": [
+              "A_cute_mage_girl_with/animations/Walk/south-west/frame_000.png",
+              "A_cute_mage_girl_with/animations/Walk/south-west/frame_001.png",
+              "A_cute_mage_girl_with/animations/Walk/south-west/frame_002.png",
+              "A_cute_mage_girl_with/animations/Walk/south-west/frame_003.png",
+              "A_cute_mage_girl_with/animations/Walk/south-west/frame_004.png",
+              "A_cute_mage_girl_with/animations/Walk/south-west/frame_005.png"
+            ],
+            "south-east": [
+              "A_cute_mage_girl_with/animations/Walk/south-east/frame_000.png",
+              "A_cute_mage_girl_with/animations/Walk/south-east/frame_001.png",
+              "A_cute_mage_girl_with/animations/Walk/south-east/frame_002.png",
+              "A_cute_mage_girl_with/animations/Walk/south-east/frame_003.png",
+              "A_cute_mage_girl_with/animations/Walk/south-east/frame_004.png",
+              "A_cute_mage_girl_with/animations/Walk/south-east/frame_005.png"
+            ],
+            "north-east": [
+              "A_cute_mage_girl_with/animations/Walk/north-east/frame_000.png",
+              "A_cute_mage_girl_with/animations/Walk/north-east/frame_001.png",
+              "A_cute_mage_girl_with/animations/Walk/north-east/frame_002.png",
+              "A_cute_mage_girl_with/animations/Walk/north-east/frame_003.png",
+              "A_cute_mage_girl_with/animations/Walk/north-east/frame_004.png",
+              "A_cute_mage_girl_with/animations/Walk/north-east/frame_005.png"
+            ],
+            "east": [
+              "A_cute_mage_girl_with/animations/Walk/east/frame_000.png",
+              "A_cute_mage_girl_with/animations/Walk/east/frame_001.png",
+              "A_cute_mage_girl_with/animations/Walk/east/frame_002.png",
+              "A_cute_mage_girl_with/animations/Walk/east/frame_003.png",
+              "A_cute_mage_girl_with/animations/Walk/east/frame_004.png",
+              "A_cute_mage_girl_with/animations/Walk/east/frame_005.png"
+            ],
+            "west": [
+              "A_cute_mage_girl_with/animations/Walk/west/frame_000.png",
+              "A_cute_mage_girl_with/animations/Walk/west/frame_001.png",
+              "A_cute_mage_girl_with/animations/Walk/west/frame_002.png",
+              "A_cute_mage_girl_with/animations/Walk/west/frame_003.png",
+              "A_cute_mage_girl_with/animations/Walk/west/frame_004.png",
+              "A_cute_mage_girl_with/animations/Walk/west/frame_005.png"
+            ],
+            "north-west": [
+              "A_cute_mage_girl_with/animations/Walk/north-west/frame_000.png",
+              "A_cute_mage_girl_with/animations/Walk/north-west/frame_001.png",
+              "A_cute_mage_girl_with/animations/Walk/north-west/frame_002.png",
+              "A_cute_mage_girl_with/animations/Walk/north-west/frame_003.png",
+              "A_cute_mage_girl_with/animations/Walk/north-west/frame_004.png",
+              "A_cute_mage_girl_with/animations/Walk/north-west/frame_005.png"
+            ]
+          },
+          "Breathing_Idle": {
+            "north": [
+              "A_cute_mage_girl_with/animations/Breathing_Idle/north/frame_000.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/north/frame_001.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/north/frame_002.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/north/frame_003.png"
+            ],
+            "south-west": [
+              "A_cute_mage_girl_with/animations/Breathing_Idle/south-west/frame_000.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/south-west/frame_001.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/south-west/frame_002.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/south-west/frame_003.png"
+            ],
+            "south": [
+              "A_cute_mage_girl_with/animations/Breathing_Idle/south/frame_000.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/south/frame_001.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/south/frame_002.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/south/frame_003.png"
+            ],
+            "south-east": [
+              "A_cute_mage_girl_with/animations/Breathing_Idle/south-east/frame_000.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/south-east/frame_001.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/south-east/frame_002.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/south-east/frame_003.png"
+            ],
+            "east": [
+              "A_cute_mage_girl_with/animations/Breathing_Idle/east/frame_000.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/east/frame_001.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/east/frame_002.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/east/frame_003.png"
+            ],
+            "north-east": [
+              "A_cute_mage_girl_with/animations/Breathing_Idle/north-east/frame_000.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/north-east/frame_001.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/north-east/frame_002.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/north-east/frame_003.png"
+            ],
+            "north-west": [
+              "A_cute_mage_girl_with/animations/Breathing_Idle/north-west/frame_000.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/north-west/frame_001.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/north-west/frame_002.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/north-west/frame_003.png"
+            ],
+            "west": [
+              "A_cute_mage_girl_with/animations/Breathing_Idle/west/frame_000.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/west/frame_001.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/west/frame_002.png",
+              "A_cute_mage_girl_with/animations/Breathing_Idle/west/frame_003.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "ae96105d-d7f0-4009-933a-b60c3b196903",
+        "name": "casting  spells",
+        "prompt": "A cute mage girl with short, boyish white hair, wearing a layered fantasy robe with gold trim, standing in a confident stance, holding a small wooden staff, low top-down perspective, black outline.",
+        "size": {
+          "width": 124,
+          "height": 124
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-07-08T10:23:59.272609+00:00"
+      },
+      "folder": "casting_spells",
+      "frames": {
+        "rotations": {
+          "south": "casting_spells/rotations/south.png",
+          "south-east": "casting_spells/rotations/south-east.png",
+          "east": "casting_spells/rotations/east.png",
+          "north-east": "casting_spells/rotations/north-east.png",
+          "north": "casting_spells/rotations/north.png",
+          "north-west": "casting_spells/rotations/north-west.png",
+          "west": "casting_spells/rotations/west.png",
+          "south-west": "casting_spells/rotations/south-west.png"
+        },
+        "animations": {
+          "Cross_Punch": {
+            "east": [
+              "casting_spells/animations/Cross_Punch/east/frame_000.png",
+              "casting_spells/animations/Cross_Punch/east/frame_001.png",
+              "casting_spells/animations/Cross_Punch/east/frame_002.png",
+              "casting_spells/animations/Cross_Punch/east/frame_003.png",
+              "casting_spells/animations/Cross_Punch/east/frame_004.png",
+              "casting_spells/animations/Cross_Punch/east/frame_005.png"
+            ],
+            "south": [
+              "casting_spells/animations/Cross_Punch/south/frame_000.png",
+              "casting_spells/animations/Cross_Punch/south/frame_001.png",
+              "casting_spells/animations/Cross_Punch/south/frame_002.png",
+              "casting_spells/animations/Cross_Punch/south/frame_003.png",
+              "casting_spells/animations/Cross_Punch/south/frame_004.png",
+              "casting_spells/animations/Cross_Punch/south/frame_005.png"
+            ],
+            "south-east": [
+              "casting_spells/animations/Cross_Punch/south-east/frame_000.png",
+              "casting_spells/animations/Cross_Punch/south-east/frame_001.png",
+              "casting_spells/animations/Cross_Punch/south-east/frame_002.png",
+              "casting_spells/animations/Cross_Punch/south-east/frame_003.png",
+              "casting_spells/animations/Cross_Punch/south-east/frame_004.png",
+              "casting_spells/animations/Cross_Punch/south-east/frame_005.png"
+            ],
+            "north": [
+              "casting_spells/animations/Cross_Punch/north/frame_000.png",
+              "casting_spells/animations/Cross_Punch/north/frame_001.png",
+              "casting_spells/animations/Cross_Punch/north/frame_002.png",
+              "casting_spells/animations/Cross_Punch/north/frame_003.png",
+              "casting_spells/animations/Cross_Punch/north/frame_004.png",
+              "casting_spells/animations/Cross_Punch/north/frame_005.png"
+            ],
+            "west": [
+              "casting_spells/animations/Cross_Punch/west/frame_000.png",
+              "casting_spells/animations/Cross_Punch/west/frame_001.png",
+              "casting_spells/animations/Cross_Punch/west/frame_002.png",
+              "casting_spells/animations/Cross_Punch/west/frame_003.png",
+              "casting_spells/animations/Cross_Punch/west/frame_004.png",
+              "casting_spells/animations/Cross_Punch/west/frame_005.png"
+            ],
+            "north-east": [
+              "casting_spells/animations/Cross_Punch/north-east/frame_000.png",
+              "casting_spells/animations/Cross_Punch/north-east/frame_001.png",
+              "casting_spells/animations/Cross_Punch/north-east/frame_002.png",
+              "casting_spells/animations/Cross_Punch/north-east/frame_003.png",
+              "casting_spells/animations/Cross_Punch/north-east/frame_004.png",
+              "casting_spells/animations/Cross_Punch/north-east/frame_005.png"
+            ],
+            "north-west": [
+              "casting_spells/animations/Cross_Punch/north-west/frame_000.png",
+              "casting_spells/animations/Cross_Punch/north-west/frame_001.png",
+              "casting_spells/animations/Cross_Punch/north-west/frame_002.png",
+              "casting_spells/animations/Cross_Punch/north-west/frame_003.png",
+              "casting_spells/animations/Cross_Punch/north-west/frame_004.png",
+              "casting_spells/animations/Cross_Punch/north-west/frame_005.png"
+            ],
+            "south-west": [
+              "casting_spells/animations/Cross_Punch/south-west/frame_000.png",
+              "casting_spells/animations/Cross_Punch/south-west/frame_001.png",
+              "casting_spells/animations/Cross_Punch/south-west/frame_002.png",
+              "casting_spells/animations/Cross_Punch/south-west/frame_003.png",
+              "casting_spells/animations/Cross_Punch/south-west/frame_004.png",
+              "casting_spells/animations/Cross_Punch/south-west/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.0",
+  "export_date": "2026-07-09T02:45:51.274961"
+}
