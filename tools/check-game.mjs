@@ -164,7 +164,6 @@ const required = [
   'syncCombatEvent',
   'packPlayerState',
   'applyPlayerState',
-  'unitRef',
   'startDungeon',
   'buildDungeonMap',
   'advanceDungeonFloor',
@@ -555,6 +554,46 @@ if (directMagicPush.length) {
   throw new Error(`direct magic object push found: ${directMagicPush.join(', ')}`);
 }
 
+{
+  const removedFunctions = [
+    'bossHitPlayer',
+    'minimapHostileCanHitPlayer',
+    'minimapHostileThreatRange',
+    'minimapZoom',
+    'questProgress',
+    'storyOnInspect',
+    'storyOnKill',
+    'unitRef',
+    'worldRectIntersectsView',
+  ];
+  for (const name of removedFunctions) {
+    if (new RegExp(`\\bfunction\\s+${name}\\s*\\(`).test(src)) {
+      throw new Error(`removed unused function is back: ${name}`);
+    }
+  }
+  for (const needle of [
+    'SIMULATION_STEP=1/60',
+    'MAX_CATCH_UP_STEPS=5',
+    'while(simulationLag>=SIMULATION_STEP',
+    'update(SIMULATION_STEP)',
+    'if(steps>0)render()',
+    'finally(startGameLoop)',
+    'mapRuntimeAgeT-=dt',
+    'worldEnemyListFrame===renderFrame',
+    'function tiledLayerChunks()',
+    'for(const entry of tiledLayerChunks())',
+    'function worldDecorationCells()',
+    'const WORLD_DRAW_CELL=512',
+    'minimapWorldFacilityCache',
+    'minimapWorldStoneCache',
+  ]) {
+    if (!src.includes(needle)) throw new Error(`runtime optimization hook missing: ${needle}`);
+  }
+  if (src.includes('if(dt>0.05)dt=0.05;update(dt);render();')) {
+    throw new Error('variable-rate legacy game loop is back');
+  }
+}
+
 const kinds = [...new Set([...src.matchAll(/kind:\s*['"]([^'"]+)/g)].map((m) => m[1]))].sort();
 const handled = new Set([
   'self', 'meteo', 'mix', 'impact', 'front', 'fan', 'zone', 'aura', 'multi',
@@ -700,7 +739,12 @@ if (spellsWithoutTypeDef.length) {
   throw new Error(`SPELLS without typeDef: ${spellsWithoutTypeDef.join(', ')}`);
 }
 
-const visibleEnemySpells = game.visibleSpellList().filter((s) => s.enemyOnly).map((s) => s.name);
+const visibleSpells = game.visibleSpellList();
+if (visibleSpells !== game.visibleSpellList()) {
+  throw new Error('visibleSpellList must reuse its immutable player spell list');
+}
+if (!Object.isFrozen(visibleSpells)) throw new Error('visible player spell list must be immutable');
+const visibleEnemySpells = visibleSpells.filter((s) => s.enemyOnly).map((s) => s.name);
 if (visibleEnemySpells.length) {
   throw new Error(`enemyOnly spells visible: ${visibleEnemySpells.join(', ')}`);
 }
@@ -758,7 +802,7 @@ for (const needle of [
   "P.spellsSeen.add('マップ')",
   'function stoneIsLearned(st)',
   'function minimapStoneColor(st)',
-  'spell:s.spell,done:stoneIsLearned(s)',
+  'spell:s.spell}));return minimapWorldStoneCache',
   'ctx.fillStyle=minimapStoneColor(st)',
 ]) {
   if (!src.includes(needle)) throw new Error(`visited map hook missing: ${needle}`);
