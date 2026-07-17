@@ -65,11 +65,58 @@ const allSrc = `${src}\n${externalScripts}`;
   const hudPanelEnd = src.indexOf('function hudHit', hudPanelStart);
   if (hudPanelStart < 0 || hudPanelEnd < 0) throw new Error('hudPanel block not found');
   const hudPanelSource = src.slice(hudPanelStart, hudPanelEnd);
-  if (hudPanelSource.includes('strokeRect') || !hudPanelSource.includes("rgba(7,11,12,.18)")) {
-    throw new Error('HUD panels must be frameless with a very light background');
+  for (const needle of ['UI_THEME', 'uiFrame', 'uiBackdrop', 'uiCornerOrnaments', 'uiMeter', 'uiPill', 'uiButton']) {
+    if (!src.includes(needle)) throw new Error(`arcane UI theme hook missing: ${needle}`);
+  }
+  if (!hudPanelSource.includes('uiFrame') || !hudPanelSource.includes('hudFrameOptions')) {
+    throw new Error('HUD panels must use the configurable shared arcane frame');
+  }
+  for (const needle of ['HUD_OPACITY_DEFAULT', 'HUD_OPACITY_KEY', 'setHudOpacity', "hudPanel(r,'強化 / 状態','#caa64b','buff')", "hudPanel(r,'マルチ','#7fb0ff','multi')", "hudPanel(r,'チャットログ','#9fe8ff','chat')", "hudFrameOptions('quest'", 'uiWrapText', 'uiLayoutTextRows', 'drawScrollableTextRows', 'P.multiHudScroll', 'P.questDetailScroll', 'P.tooltipScroll', 'P.storyDetailScroll', 'P.npcDetailScroll', 'P.stoneDetailScroll', 'drawStoneShop', 'drawStoneIconUi', 'HUD_VITAL_ANIM', 'vitalAnimSample', "drawVitalMeter('hp'", "drawVitalMeter('mp'"]) {
+    if (!src.includes(needle)) throw new Error(`configurable/wrapping UI hook missing: ${needle}`);
+  }
+  for (const needle of ['ARCANE CHART', 'uiFrame(mx-6,my-21']) {
+    if (!minimapSource.includes(needle)) throw new Error(`themed minimap hook missing: ${needle}`);
+  }
+  const hudStart = src.indexOf('function drawHUD');
+  const hudEnd = src.indexOf('function drawSaveStatus', hudStart);
+  const hudSource = src.slice(hudStart, hudEnd);
+  for (const needle of ['VITALITY  /  HP', 'ARCANA  /  MP', 'UI_THEME.brassHi', 'uiAlpha(UI_THEME.mana,.45)']) {
+    if (!hudSource.includes(needle)) throw new Error(`themed bottom HUD hook missing: ${needle}`);
   }
   for (const moved of ['eliteHere()', 'offElites', 'offDemons', "weathers.some(w=>w.map!==MAPID"]) {
     if (minimapSource.includes(moved)) throw new Error(`minimap side info must stay in HUD log: ${moved}`);
+  }
+}
+
+{
+  for (const needle of ['TELEPORT_SPARK_COLORS', 'PARRY_SPARK_COLORS', 'teleportSparkFx', 'teleportTrailFx', 'parrySparkFx', 'drawSpecialFx', 'drawParticleFx', 'drawParticleLayer', 'drawStarParticleFx', 'depart?16:22', 'PARRY_SPARK_COLORS,24', "fxKind:'arcaneRing'", "fxKind:'parryRing'"]) {
+    if (!src.includes(needle)) throw new Error(`sparkle combat effect hook missing: ${needle}`);
+  }
+  const starDrawStart = src.indexOf('function drawStarParticleFx');
+  const starDrawEnd = src.indexOf('const NPC_COLOR', starDrawStart);
+  if (starDrawStart < 0 || starDrawEnd < 0) throw new Error('batched star particle renderer not found');
+  const starDrawSource = src.slice(starDrawStart, starDrawEnd);
+  for (const expensive of ['shadowBlur', 'ctx.rotate(', 'Math.sin(']) {
+    if (starDrawSource.includes(expensive)) throw new Error(`star particles must avoid per-particle ${expensive}`);
+  }
+  if (src.includes('depart?30:38') || src.includes('PARRY_SPARK_COLORS,42')) {
+    throw new Error('sparkle particle budget regressed to the expensive version');
+  }
+}
+
+{
+  const stoneImageDecls = src.match(/const MYSTERY_STONE_IMG=new Image\(\)/g) || [];
+  const drawWorldStart = src.indexOf('function drawWorld(cx,cy)');
+  const stoneImageStart = src.indexOf('const MYSTERY_STONE_IMG=new Image()');
+  if (stoneImageDecls.length !== 1 || stoneImageStart < 0 || stoneImageStart > drawWorldStart) {
+    throw new Error('mystery stone image must be cached once outside the world render loop');
+  }
+  const stoneDrawStart = src.indexOf('function drawMysteryStone(st)');
+  const stoneDrawEnd = src.indexOf('function drawFieldStones', stoneDrawStart);
+  if (stoneDrawStart < 0 || stoneDrawEnd < 0) throw new Error('mystery stone renderer not found');
+  const stoneDrawSource = src.slice(stoneDrawStart, stoneDrawEnd);
+  if (stoneDrawSource.includes('performance.now()') || stoneDrawSource.includes('Math.sin(')) {
+    throw new Error('mystery stone world marker must not flicker or pulse every frame');
   }
 }
 
