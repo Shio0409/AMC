@@ -102,6 +102,13 @@ const allSrc = `${src}\n${externalScripts}`;
   if (src.includes('depart?30:38') || src.includes('PARRY_SPARK_COLORS,42')) {
     throw new Error('sparkle particle budget regressed to the expensive version');
   }
+  for (const needle of ['FX_MAX=96', 'PARTICLE_MAX=260', 'effectDensityCount', 'particleVisible', 'drawParticleLayer(cx,cy)', "fxKind:'healSpiral'", "fxKind:'shieldHex'", "fxKind:'glyphRing'", "fxKind:'lootBeam'", "fxKind:'impactBloom'", "fxKind:'dashEcho'", 'healSparkFx', 'buffSparkFx', 'ritualSparkFx', 'lootSparkFx', 'defeatSparkFx', 'dodgeSparkFx']) {
+    if (!src.includes(needle)) throw new Error(`lightweight event effect hook missing: ${needle}`);
+  }
+  if (!src.includes('if(f.x!==undefined&&(f.x<cx-pad')) throw new Error('offscreen effect culling is missing');
+  for (const needle of ['drawWeatherFx(cx,cy)', 'effectDensityCount(18,8)', 'effectDensityCount(Math.min(48,8+len*2),6)']) {
+    if (!src.includes(needle)) throw new Error(`adaptive effect budget hook missing: ${needle}`);
+  }
 }
 
 {
